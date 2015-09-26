@@ -1,0 +1,10 @@
+DESCRIPTION:
+  [A nice description would be nice here]
+
+COMMANDS: 
+  [application domain] [command] - executes the supplied command against the given domain
+  
+  list - lists all available domains
+
+  help - displays this help file
+
