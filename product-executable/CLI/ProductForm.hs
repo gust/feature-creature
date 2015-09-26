@@ -1,4 +1,5 @@
 module CLI.ProductForm where
+  import qualified CLI.DataFiles as Paths
   import qualified Products.Product as P
 
   execProductCommand :: [String] -> IO ()
@@ -13,5 +14,5 @@ module CLI.ProductForm where
     P.createProduct productName
 
   showProductCommandUsage :: IO ()
-  showProductCommandUsage = putStrLn "showProductCommandUsage"
+  showProductCommandUsage = Paths.showProductCommandUsageFile
 
