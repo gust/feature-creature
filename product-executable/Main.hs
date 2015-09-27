@@ -1,6 +1,5 @@
 module Main where
   import qualified CLI.Base as CLI
-  import Data.List                       (intersperse)
   import System.Environment              (getArgs)
 
   main :: IO ()

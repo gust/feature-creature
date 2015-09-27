@@ -1,4 +1,4 @@
-module CLI.Base 
+module CLI.Base
   ( showUsage
   , parseCommand
   , execCommand
