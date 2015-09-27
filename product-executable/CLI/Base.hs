@@ -18,7 +18,7 @@ module CLI.Base
 
   parseCommand :: [String] -> Maybe Command
   parseCommand []     = Nothing
-  parseCommand (x:xs) = Just (Command x xs)
+  parseCommand (x:xs) = Just (Command { command = x, arguments = xs })
 
   showUsage :: IO ()
   showUsage = Paths.showBaseUsageFile
