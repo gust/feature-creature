@@ -7,9 +7,10 @@ module CLI.Base
   import qualified CLI.DataFiles as Paths
   import qualified CLI.ProductForm as PF
 
-  data Command = Command { command :: String
-                         , arguments :: [String] 
-                         } deriving (Show)
+  data Command = Command 
+    { command :: String
+    , arguments :: [String] 
+    } deriving (Show)
 
   execCommand :: Command -> IO ()
   execCommand (Command "product" args) = PF.execProductCommand args

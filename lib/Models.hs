@@ -6,7 +6,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies #-}
 
-module Products.Model where
+module Models where
   import Database.Persist.TH
   import Data.Time
 

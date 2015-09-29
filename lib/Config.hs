@@ -46,5 +46,3 @@ module Config
   parsePort :: Maybe String -> Maybe Int
   parsePort Nothing = Nothing
   parsePort (Just p) = Just (read p)
-
-

@@ -14,14 +14,19 @@ data-files:          data/cli/*.txt
 cabal-version:       >=1.10
 
 library
-  exposed-modules:   Products.Product
-                     , Products.Model
+  exposed-modules:   Config
+                     , Database
+                     , Models
 
   build-depends:     base >=4.7 && < 5.0
-                     , esqueleto
+                     , bytestring
+                     , monad-logger
+                     , mtl
                      , persistent
                      , persistent-template
+                     , persistent-postgresql
                      , time
+                     , transformers
 
   ghc-options:       -Wall
                      -fwarn-unused-matches 
@@ -33,14 +38,7 @@ library
 
 executable feature-creature
   build-depends:     base >=4.7 && <4.8
-                     , bytestring
                      , feature-creature
-                     , esqueleto
-                     , monad-logger
-                     , persistent
-                     , persistent-template
-                     , persistent-postgresql
-                     , transformers
 
   ghc-options:       -Wall
                      -fwarn-unused-matches 
