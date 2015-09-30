@@ -10,7 +10,7 @@ module CLI.ProductForm where
   showCreateProductForm :: IO ()
   showCreateProductForm = do
     productName <- (putStrLn "Project Name: ") >> getLine
-    putStrLn $ "Project " ++ productName ++ " created!"
+    putStrLn $ "Product " ++ productName ++ " created!"
 
   showProductCommandUsage :: IO ()
   showProductCommandUsage = Paths.showProductCommandUsageFile

@@ -17,6 +17,7 @@ library
   exposed-modules:   Config
                      , Database
                      , Models
+                     , Products.Product
 
   build-depends:     base >=4.7 && < 5.0
                      , bytestring
@@ -25,6 +26,7 @@ library
                      , persistent
                      , persistent-template
                      , persistent-postgresql
+                     , text
                      , time
                      , transformers
 
@@ -39,6 +41,7 @@ library
 executable feature-creature
   build-depends:     base >=4.7 && <4.8
                      , feature-creature
+                     , transformers
 
   ghc-options:       -Wall
                      -fwarn-unused-matches 
