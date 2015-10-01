@@ -39,7 +39,7 @@ library
   hs-source-dirs:    lib
 
 executable feature-creature
-  build-depends:     base >=4.7 && <4.8
+  build-depends:     base >=4.7 && < 5.0
                      , feature-creature
                      , transformers
 
