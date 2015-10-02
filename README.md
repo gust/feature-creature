@@ -13,10 +13,11 @@ specific instructions.
 ## Building feature-creature
 feature-creature uses [Cabal](http://www.haskell.org/cabal/) as a build tool.
 
-After cloning the repository, change to the newly created feature-creature directory and run
-```
-cabal install
-```
+* clone the repository
+* change to the newly created `feature-creature` directory (or the directory you specified)
+* run `cabal sandbox init` (optional, but recommended to isolate dependencies)
+* run `cabal install`
+
 After a successful build, Cabal will output the location of the feature-creature binary.
 
 ---
