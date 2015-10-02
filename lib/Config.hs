@@ -29,11 +29,11 @@ module Config
 
   readDbConnectionString :: IO DbConnectionString
   readDbConnectionString = do
-    _dbname   <- getEnv "DB_NAME"
-    _user     <- lookupEnv "DB_USER"
-    _password <- lookupEnv "DB_PASS"
-    _host     <- lookupEnv "DB_HOST"
-    _port     <- lookupEnv "DB_PORT"
+    _dbname   <- getEnv "FC_DB_NAME"
+    _user     <- lookupEnv "FC_DB_USER"
+    _password <- lookupEnv "FC_DB_PASS"
+    _host     <- lookupEnv "FC_DB_HOST"
+    _port     <- lookupEnv "FC_DB_PORT"
 
     return DbConnectionString {
       dbname   = _dbname,
