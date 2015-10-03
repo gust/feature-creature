@@ -1,17 +1,16 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Products.Product where
-  import Control.Monad.Trans.Class (MonadTrans)
-  import Control.Monad.IO.Class (MonadIO)
-  import Database
-  import qualified Database.Persist as DB
+  import Data.Text
+  import Database (runDB)
   import qualified Database.Persist.Postgresql as DB
   import GHC.Int (Int64)
   import Models
 
+  data Product = Product { name :: Text }
 
-  createProduct :: (MonadTrans t, MonadIO (t Database.ConfigM)) =>
-       Product -> t Database.ConfigM Int64
+  createProduct :: Product -> IO Int64
   createProduct p = do
-    newProduct <- runDB $ DB.insert p
+    newProduct <- runDB $ DB.insert $ productToModel p
     return $ DB.fromSqlKey newProduct
+
+  productToModel :: Product -> ProductModel
+  productToModel p = ProductModel (name p)

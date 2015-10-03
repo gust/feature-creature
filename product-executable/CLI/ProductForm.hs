@@ -1,5 +1,7 @@
 module CLI.ProductForm where
   import qualified CLI.DataFiles as Paths
+  import Data.Text (pack)
+  import Products.Product
 
   execProductCommand :: [String] -> IO ()
   execProductCommand (cmd:_) 
@@ -10,7 +12,8 @@ module CLI.ProductForm where
   showCreateProductForm :: IO ()
   showCreateProductForm = do
     productName <- (putStrLn "Project Name: ") >> getLine
-    putStrLn $ "Product " ++ productName ++ " created!"
+    id <- createProduct $ Product (pack productName)
+    putStrLn $ "Product " ++ (show id) ++ " created!"
 
   showProductCommandUsage :: IO ()
   showProductCommandUsage = Paths.showProductCommandUsageFile
