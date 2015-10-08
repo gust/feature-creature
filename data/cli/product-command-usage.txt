@@ -2,7 +2,8 @@ DESCRIPTION:
   A list of commands executable against the 'product' domain
 
 COMMANDS: 
-  add - Displays an interactive form guiding the user through product creation
+  list - Displays a list of all products
+  add  - Displays an interactive form guiding the user through product creation
 
   help - displays this help file
 
