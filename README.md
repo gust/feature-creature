@@ -23,16 +23,30 @@ After a successful build, Cabal will output the location of the feature-creature
 ---
 
 ## Example Usage
-#### Environment setup
-The application depends on certain environment variables to exist in order to funcation
-properly. The environment variables can be added by executing the follwing commands
+The application depends on a database and certain environment variables to exist in order to 
+funcation properly. 
+#### Quick Environment Setup
+Prerequisites: The quick setup script assumes Postgresql is already installed.
+
+The quick setup script will add required environment variables, create a database user,
+and create a database for feature-creature to use. Please view the source file for all 
+default values.
+
+If there already exists a database or database user, an error message will be echoed and 
+can be safely ignored.
+```
+# from the project root
+source ./scripts/development/bootstrap-env.sh
+```
+#### Custom Environment Setup
+The environment variables can be added by executing the follwing commands
 within the terminal session in which you plan to run feature-creature.
 ```
-export DB_NAME="[db-name-here]"        # required
-export DB_HOST="[db-hostname here]"    # optional. defaults to 'localhost'
-export DB_PORT="[db-port-number-here]" # optional. defaults to '5432'
-export DB_USER="[db-username-here]"    # optional.
-export DB_PASS="[db-password-here]"    # optional.
+export FC_DB_NAME="[db-name-here]"        # required
+export FC_DB_HOST="[db-hostname here]"    # optional. defaults to 'localhost'
+export FC_DB_PORT="[db-port-number-here]" # optional. defaults to '5432'
+export FC_DB_USER="[db-username-here]"    # optional.
+export FC_DB_PASS="[db-password-here]"    # optional.
 ```
 #### Running the application
 Execute the binary and follow the CLI output help pages to discover existing functionality.
