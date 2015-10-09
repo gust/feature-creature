@@ -2,7 +2,7 @@ module CLI.ProductForm where
   import qualified CLI.DataFiles as Paths
   import Data.List (intersperse)
   import Data.Text (pack)
-  import Products.Product
+  import qualified Products.Product as P
 
   execProductCommand :: [String] -> IO ()
   execProductCommand (cmd:_) 
@@ -13,15 +13,23 @@ module CLI.ProductForm where
 
   showCreateProductForm :: IO ()
   showCreateProductForm = do
-    prodName <- (putStrLn "Project Name: ") >> getLine
+    prodName    <- (putStrLn "Project Name: ") >> getLine
     prodRepoUrl <- (putStrLn "Git repository url: ") >> getLine
-    prodId <- createProduct $ Product (pack prodName) (pack prodRepoUrl)
-    putStrLn $ "Product " ++ (show prodId) ++ " created!"
+    prodId      <- P.createProduct $ P.Product (pack prodName) (pack prodRepoUrl)
+
+    let message = "Product " ++ (show prodId) ++ " created!"
+    let prod = P.Product (pack prodName) (pack prodRepoUrl)
+    putStrLn message >> updateRepo prod prodId
+
+  updateRepo :: P.Product -> P.ProductID -> IO ()
+  updateRepo prod prodId = do
+    result <- P.updateRepo prod prodId
+    either putStrLn putStrLn result
 
   showProductCommandUsage :: IO ()
   showProductCommandUsage = Paths.showProductCommandUsageFile
 
   listAllProducts :: IO ()
   listAllProducts = do
-    prods <- findProducts
+    prods <- P.findProducts
     putStrLn $ concat . (intersperse "\n") $ map show prods
