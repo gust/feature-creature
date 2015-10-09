@@ -5,7 +5,8 @@ module Products.Product where
   import GHC.Int (Int64)
   import Models
 
-  data Product = Product { productName :: T.Text 
+  data Product = Product { productName :: T.Text
+                         , repoUrl :: T.Text
                          } deriving (Show)
 
   findProducts :: IO [Product]
@@ -19,7 +20,7 @@ module Products.Product where
     return $ DB.fromSqlKey newProduct
 
   productToModel :: Product -> ProductModel
-  productToModel p = ProductModel (productName p)
+  productToModel p = ProductModel (productName p) (repoUrl p)
 
   modelToProduct :: DB.Entity ProductModel -> Product
-  modelToProduct (DB.Entity _ pm) = Product (productModelName pm)
+  modelToProduct (DB.Entity _ pm) = Product (productModelName pm) (productModelRepoUrl pm)

@@ -14,7 +14,8 @@ module CLI.ProductForm where
   showCreateProductForm :: IO ()
   showCreateProductForm = do
     prodName <- (putStrLn "Project Name: ") >> getLine
-    prodId <- createProduct $ Product (pack prodName)
+    prodRepoUrl <- (putStrLn "Git repository url: ") >> getLine
+    prodId <- createProduct $ Product (pack prodName) (pack prodRepoUrl)
     putStrLn $ "Product " ++ (show prodId) ++ " created!"
 
   showProductCommandUsage :: IO ()

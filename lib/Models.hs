@@ -13,5 +13,6 @@ module Models where
   share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
     ProductModel json sql=products
       name Text
+      repoUrl Text
       deriving Show
   |]
