@@ -33,7 +33,7 @@ module Products.Product
     let repoPath = path ++ "repo/"
     doesRepoExist <- doesDirectoryExist repoPath
     case doesRepoExist of
-      True  -> undefined -- gitPull repoPath
+      True  -> Git.pull repoPath
       False -> Git.clone repoPath gitUrl
 
   productDir :: FilePath -> Int64 -> FilePath
