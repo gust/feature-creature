@@ -4,8 +4,14 @@ A live editor for Cucumber features
 ---
 
 ## Dependencies
-feature-creature uses Postgresql for data persistence. Refer to the
+Postgresql for data persistence. Refer to the
+
 [Postgres Installation Guide](http://www.postgresql.org/download/) for system
+specific instructions.
+
+Git for Cucumber feature file retrieval and synchronization.
+
+[Git Installation Guide](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) for system
 specific instructions.
 
 ---
@@ -47,6 +53,10 @@ export FC_DB_HOST="[db-hostname here]"    # optional. defaults to 'localhost'
 export FC_DB_PORT="[db-port-number-here]" # optional. defaults to '5432'
 export FC_DB_USER="[db-username-here]"    # optional.
 export FC_DB_PASS="[db-password-here]"    # optional.
+
+# required. must be a writable location
+# defaults to the "$HOME/feature-creature/data"
+export FC_DATA_FILES_PATH="[path-to-application-data-files]"
 ```
 #### Running the application
 Execute the binary and follow the CLI output help pages to discover existing functionality.
