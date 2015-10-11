@@ -4,9 +4,11 @@ module Products.Product
   , findProducts
   , createProduct
   , updateRepo
+  , productRepositoryDir
   ) where
 
   import qualified Config as Cfg
+  import Control.Applicative ((<$>))
   import qualified Data.Text as T
   import Database (runDB)
   import qualified Database.Persist.Postgresql as DB
@@ -21,30 +23,35 @@ module Products.Product
 
   type ProductID = Int64
 
+  productDir :: ProductID -> IO FilePath
+  productDir prodID = (++ productDirectory) <$> Cfg.gitRepositoryStorePath
+    where
+      productDirectory = "products/" ++ (show prodID)
+
+  productRepositoryDir :: ProductID -> IO FilePath
+  productRepositoryDir prodID = (++ "/repo") <$> (productDir prodID)
+
   updateRepo :: Product -> ProductID -> IO (Either String String)
-  updateRepo prod prodId = do
-    basePath <- Cfg.gitRepositoryStorePath
-    let prodPath = productDir basePath prodId
-    createDirectoryIfMissing True prodPath
-    updateGitRepo prodPath (repoUrl prod)
+  updateRepo prod prodID = do
+    prodRepoPath <- productRepositoryDir prodID
+    createRequiredDirectories prodID >> updateGitRepo prodRepoPath (repoUrl prod)
+
+  createRequiredDirectories :: ProductID -> IO ()
+  createRequiredDirectories prodID = productDir prodID >>= createDirectoryIfMissing True
 
   updateGitRepo :: FilePath -> T.Text -> IO (Either String String)
-  updateGitRepo path gitUrl = do
-    let repoPath = path ++ "repo/"
+  updateGitRepo repoPath gitUrl = do
     doesRepoExist <- doesDirectoryExist repoPath
     case doesRepoExist of
       True  -> Git.pull repoPath
       False -> Git.clone repoPath gitUrl
-
-  productDir :: FilePath -> Int64 -> FilePath
-  productDir basePath prodId = basePath ++ "products/" ++ (show prodId) ++ "/"
 
   findProducts :: IO [Product]
   findProducts = do
     allProducts <- runDB $ DB.selectList [] []
     return $ map modelToProduct (allProducts :: [DB.Entity ProductModel])
 
-  createProduct :: Product -> IO Int64
+  createProduct :: Product -> IO ProductID
   createProduct p = do
     newProduct <- runDB $ DB.insert $ productToModel p
     return $ DB.fromSqlKey newProduct
@@ -52,6 +59,5 @@ module Products.Product
   productToModel :: Product -> ProductModel
   productToModel p = ProductModel (productName p) (repoUrl p)
 
-  -- FIXME: the ID should be set, if known
   modelToProduct :: DB.Entity ProductModel -> Product
   modelToProduct (DB.Entity _ pm) = Product (productModelName pm) (productModelRepoUrl pm)
