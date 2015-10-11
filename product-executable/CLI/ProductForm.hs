@@ -5,11 +5,15 @@ module CLI.ProductForm where
   import qualified Products.Product as P
 
   execProductCommand :: [String] -> IO ()
-  execProductCommand (cmd:_) 
+  execProductCommand (cmd:args) 
     | cmd == "list"     = listAllProducts
     | cmd == "add"      = showCreateProductForm 
+    | cmd == "features" = showFeatures args
     | otherwise         = showProductCommandUsage
   execProductCommand [] = showProductCommandUsage
+
+  showFeatures :: [String] -> IO ()
+  showFeatures = undefined
 
   showCreateProductForm :: IO ()
   showCreateProductForm = do
@@ -20,11 +24,11 @@ module CLI.ProductForm where
     let message = "Product " ++ (show prodId) ++ " created!"
     let prod = P.Product (pack prodName) (pack prodRepoUrl)
     updateRepo prod prodId >> putStrLn message
-
-  updateRepo :: P.Product -> P.ProductID -> IO ()
-  updateRepo prod prodId = do
-    result <- P.updateRepo prod prodId
-    either putStrLn putStrLn result
+    where
+      updateRepo :: P.Product -> P.ProductID -> IO ()
+      updateRepo prod prodId = do
+        result <- P.updateRepo prod prodId
+        either putStrLn putStrLn result
 
   showProductCommandUsage :: IO ()
   showProductCommandUsage = Paths.showProductCommandUsageFile
