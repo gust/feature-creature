@@ -9,6 +9,7 @@ module Products.Product
 
   import qualified Config as Cfg
   import Control.Applicative ((<$>))
+  import Control.Monad.Except (runExceptT)
   import qualified Data.Text as T
   import Database (runDB)
   import qualified Database.Persist.Postgresql as DB
@@ -43,8 +44,8 @@ module Products.Product
   updateGitRepo repoPath gitUrl = do
     doesRepoExist <- doesDirectoryExist repoPath
     case doesRepoExist of
-      True  -> Git.pull repoPath
-      False -> Git.clone repoPath gitUrl
+      True  -> runExceptT (Git.pull repoPath)
+      False -> runExceptT (Git.clone repoPath gitUrl)
 
   findProducts :: IO [Product]
   findProducts = do

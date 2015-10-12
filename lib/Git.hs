@@ -1,27 +1,26 @@
-module Git where
-  import Control.Applicative ((<$>))
+module Git 
+  ( clone
+  , pull
+  ) where
+
+  import Control.Monad.Except (ExceptT, throwError)
+  import Control.Monad.IO.Class (liftIO)
   import qualified Data.Text as T
   import System.Process (readProcessWithExitCode)
   import System.Exit (ExitCode(ExitFailure, ExitSuccess))
 
-  clone :: FilePath -> T.Text -> IO (Either String String)
-  clone path url = parseResult' <$> cloneCmd'
-    where
-      parseResult' :: (ExitCode, String, String) -> Either String String
-      parseResult' = parseResult "Repo successfully cloned!"
+  type GitExceptT = ExceptT String IO
 
-      cloneCmd' :: IO (ExitCode, String, String)
-      cloneCmd' = readProcessWithExitCode "git" ["clone", (T.unpack url), path] ""
+  clone :: FilePath -> T.Text -> GitExceptT String
+  clone path url = do
+    result <- liftIO $ readProcessWithExitCode "git" ["clone", (T.unpack url), path] ""
+    parseResult result
 
-  pull :: FilePath -> IO (Either String String)
-  pull path = parseResult' <$> pullCmd'
-    where
-      parseResult' :: (ExitCode, String, String) -> Either String String
-      parseResult' = parseResult "Repo successfully updated!"
+  pull :: FilePath -> GitExceptT String
+  pull path = do
+    result <- liftIO $ readProcessWithExitCode "git" ["-C", path, "pull"] ""
+    parseResult result
 
-      pullCmd' :: IO (ExitCode, String, String)
-      pullCmd' = readProcessWithExitCode "git" ["-C", path, "pull"] ""
-
-  parseResult :: String -> (ExitCode, String, String) -> Either String String
-  parseResult _ (ExitFailure _, _, err) = Left err
-  parseResult successMsg (ExitSuccess, _, _)     = Right successMsg
+  parseResult :: (ExitCode, String, String) -> GitExceptT String
+  parseResult (ExitFailure _, stdout, stderr) = throwError $ stderr ++ stdout
+  parseResult (ExitSuccess, stdout, stderr)   = return $ stderr ++ stdout

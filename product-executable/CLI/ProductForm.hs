@@ -19,7 +19,7 @@ module CLI.ProductForm where
 
     let message = "Product " ++ (show prodId) ++ " created!"
     let prod = P.Product (pack prodName) (pack prodRepoUrl)
-    putStrLn message >> updateRepo prod prodId
+    updateRepo prod prodId >> putStrLn message
 
   updateRepo :: P.Product -> P.ProductID -> IO ()
   updateRepo prod prodId = do
