@@ -2,18 +2,16 @@ module CLI.ProductForm where
   import qualified CLI.DataFiles as Paths
   import Data.List (intersperse)
   import Data.Text (pack)
+  import qualified CLI.FeaturesForm as FF
   import qualified Products.Product as P
 
   execProductCommand :: [String] -> IO ()
   execProductCommand (cmd:args) 
+    | cmd == "features" = FF.showFeatures args
     | cmd == "list"     = listAllProducts
     | cmd == "add"      = showCreateProductForm 
-    | cmd == "features" = showFeatures args
     | otherwise         = showProductCommandUsage
   execProductCommand [] = showProductCommandUsage
-
-  showFeatures :: [String] -> IO ()
-  showFeatures = undefined
 
   showCreateProductForm :: IO ()
   showCreateProductForm = do

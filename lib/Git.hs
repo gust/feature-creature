@@ -6,8 +6,8 @@ module Git
   import Control.Monad.Except (ExceptT, throwError)
   import Control.Monad.IO.Class (liftIO)
   import qualified Data.Text as T
-  import System.Process (readProcessWithExitCode)
   import System.Exit (ExitCode(ExitFailure, ExitSuccess))
+  import System.Process (readProcessWithExitCode)
 
   type GitExceptT = ExceptT String IO
 
