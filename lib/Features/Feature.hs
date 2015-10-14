@@ -1,7 +1,6 @@
 module Features.Feature where
   import Data.List (stripPrefix)
   import Data.Maybe (mapMaybe)
-  import Control.Applicative ((<$>))
   import System.Exit (ExitCode(ExitFailure, ExitSuccess))
   import System.Process (readProcessWithExitCode)
 

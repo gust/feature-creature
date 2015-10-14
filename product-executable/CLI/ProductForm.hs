@@ -1,5 +1,6 @@
 module CLI.ProductForm where
   import qualified CLI.DataFiles as Paths
+  import Control.Monad.Except (runExceptT)
   import Data.List (intersperse)
   import Data.Text (pack)
   import qualified CLI.FeaturesForm as FF
@@ -25,7 +26,7 @@ module CLI.ProductForm where
     where
       updateRepo :: P.Product -> P.ProductID -> IO ()
       updateRepo prod prodId = do
-        result <- P.updateRepo prod prodId
+        result <- runExceptT (P.updateRepo prod prodId)
         either putStrLn putStrLn result
 
   showProductCommandUsage :: IO ()
