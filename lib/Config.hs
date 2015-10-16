@@ -1,5 +1,6 @@
 module Config 
-  ( dbConnectionString 
+  ( dbConnectionString
+  , gitRepositoryStorePath
   ) where
 
   import Control.Applicative ((<$>))
@@ -46,3 +47,7 @@ module Config
   parsePort :: Maybe String -> Maybe Int
   parsePort Nothing = Nothing
   parsePort (Just p) = Just (read p)
+
+  gitRepositoryStorePath :: IO String
+  gitRepositoryStorePath = getEnv "FC_DATA_FILES_PATH"
+
