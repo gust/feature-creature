@@ -1,11 +1,14 @@
 module CLI.ProductForm where
   import qualified CLI.DataFiles as Paths
+  import Control.Monad.Except (runExceptT)
   import Data.List (intersperse)
   import Data.Text (pack)
+  import qualified CLI.FeaturesForm as FF
   import qualified Products.Product as P
 
   execProductCommand :: [String] -> IO ()
-  execProductCommand (cmd:_) 
+  execProductCommand (cmd:args) 
+    | cmd == "features" = FF.showFeatures args
     | cmd == "list"     = listAllProducts
     | cmd == "add"      = showCreateProductForm 
     | otherwise         = showProductCommandUsage
@@ -20,11 +23,11 @@ module CLI.ProductForm where
     let message = "Product " ++ (show prodId) ++ " created!"
     let prod = P.Product (pack prodName) (pack prodRepoUrl)
     updateRepo prod prodId >> putStrLn message
-
-  updateRepo :: P.Product -> P.ProductID -> IO ()
-  updateRepo prod prodId = do
-    result <- P.updateRepo prod prodId
-    either putStrLn putStrLn result
+    where
+      updateRepo :: P.Product -> P.ProductID -> IO ()
+      updateRepo prod prodId = do
+        result <- runExceptT (P.updateRepo prod prodId)
+        either putStrLn putStrLn result
 
   showProductCommandUsage :: IO ()
   showProductCommandUsage = Paths.showProductCommandUsageFile

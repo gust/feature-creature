@@ -7,9 +7,10 @@ module Products.Product
   , productRepositoryDir
   ) where
 
+  import CommonCreatures (WithErr)
   import qualified Config as Cfg
   import Control.Applicative ((<$>))
-  import Control.Monad.Except (runExceptT)
+  import Control.Monad.IO.Class (liftIO)
   import qualified Data.Text as T
   import Database (runDB)
   import qualified Database.Persist.Postgresql as DB
@@ -32,20 +33,20 @@ module Products.Product
   productRepositoryDir :: ProductID -> IO FilePath
   productRepositoryDir prodID = (++ "/repo") <$> (productDir prodID)
 
-  updateRepo :: Product -> ProductID -> IO (Either String String)
+  updateRepo :: Product -> ProductID -> WithErr String
   updateRepo prod prodID = do
-    prodRepoPath <- productRepositoryDir prodID
-    createRequiredDirectories prodID >> updateGitRepo prodRepoPath (repoUrl prod)
+    prodRepoPath <- liftIO $ productRepositoryDir prodID
+    (liftIO $ createRequiredDirectories prodID) >> updateGitRepo prodRepoPath (repoUrl prod)
 
   createRequiredDirectories :: ProductID -> IO ()
   createRequiredDirectories prodID = productDir prodID >>= createDirectoryIfMissing True
 
-  updateGitRepo :: FilePath -> T.Text -> IO (Either String String)
+  updateGitRepo :: FilePath -> T.Text -> WithErr String
   updateGitRepo repoPath gitUrl = do
-    doesRepoExist <- doesDirectoryExist repoPath
+    doesRepoExist <- liftIO $ doesDirectoryExist repoPath
     case doesRepoExist of
-      True  -> runExceptT (Git.pull repoPath)
-      False -> runExceptT (Git.clone repoPath gitUrl)
+      True  -> Git.pull repoPath
+      False -> Git.clone repoPath gitUrl
 
   findProducts :: IO [Product]
   findProducts = do

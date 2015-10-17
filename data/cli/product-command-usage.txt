@@ -4,6 +4,7 @@ DESCRIPTION:
 COMMANDS: 
   list - Displays a list of all products
   add  - Displays an interactive form guiding the user through product creation
+  features [list] - Displays a list of all imported feature files
 
   help - displays this help file
 
