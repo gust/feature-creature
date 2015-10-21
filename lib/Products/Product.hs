@@ -19,10 +19,6 @@ module Products.Product
   import Models
   import System.Directory (doesDirectoryExist, createDirectoryIfMissing)
 
-  data Product = Product { productName :: T.Text
-                         , repoUrl :: T.Text
-                         } deriving (Show)
-
   type ProductID = Int64
 
   productDir :: ProductID -> IO FilePath
@@ -36,7 +32,7 @@ module Products.Product
   updateRepo :: Product -> ProductID -> WithErr String
   updateRepo prod prodID = do
     prodRepoPath <- liftIO $ productRepositoryDir prodID
-    (liftIO $ createRequiredDirectories prodID) >> updateGitRepo prodRepoPath (repoUrl prod)
+    (liftIO $ createRequiredDirectories prodID) >> updateGitRepo prodRepoPath (productRepoUrl prod)
 
   createRequiredDirectories :: ProductID -> IO ()
   createRequiredDirectories prodID = productDir prodID >>= createDirectoryIfMissing True
@@ -48,18 +44,12 @@ module Products.Product
       True  -> Git.pull repoPath
       False -> Git.clone repoPath gitUrl
 
-  findProducts :: IO [Product]
+  findProducts :: IO [DB.Entity Product]
   findProducts = do
-    allProducts <- runDB $ DB.selectList [] []
-    return $ map modelToProduct (allProducts :: [DB.Entity ProductModel])
+    allProducts <- runDB $ DB.selectList ([] :: [DB.Filter Product]) []
+    return $ allProducts
 
   createProduct :: Product -> IO ProductID
   createProduct p = do
-    newProduct <- runDB $ DB.insert $ productToModel p
+    newProduct <- runDB $ DB.insert p
     return $ DB.fromSqlKey newProduct
-
-  productToModel :: Product -> ProductModel
-  productToModel p = ProductModel (productName p) (repoUrl p)
-
-  modelToProduct :: DB.Entity ProductModel -> Product
-  modelToProduct (DB.Entity _ pm) = Product (productModelName pm) (productModelRepoUrl pm)

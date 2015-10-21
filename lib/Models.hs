@@ -11,7 +11,7 @@ module Models where
   import Data.Text (Text)
 
   share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
-    ProductModel json sql=products
+    Product json sql=products
       name Text
       repoUrl Text
       deriving Show
