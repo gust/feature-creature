@@ -1,6 +1,8 @@
 # feature-creature
 A live editor for Cucumber features
 
+![](http://www.homecinemachoice.com/sites/18/images/article_images_month/2012-07/universal%20monsters%20news%2001.jpg)
+
 ---
 
 ## Dependencies
