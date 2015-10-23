@@ -1,5 +1,5 @@
 DESCRIPTION:
-  [A nice description would be nice here]
+  Feature creature is a tool for documenting how products work!
 
 COMMANDS: 
   [application domain] [command] - executes the supplied command against the given domain

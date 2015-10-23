@@ -1,6 +1,7 @@
 DESCRIPTION:
-  A list of all application domains
+  A list of all feature creature domains
 
 AVAILABLE DOMAINS: 
   product - Example commands: 'list' 'show' 'add' 'delete'
+  user_roles - Example commands: 'add' 'list'
 

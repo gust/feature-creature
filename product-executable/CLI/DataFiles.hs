@@ -31,6 +31,14 @@ module CLI.DataFiles where
 
 
 
+  showUserRolesCommandUsageFile:: IO ()
+  showUserRolesCommandUsageFile = getUserRolesCommandUsageFilePath >>= showFileContents
+
+  getUserRolesCommandUsageFilePath :: IO String
+  getUserRolesCommandUsageFilePath = Paths.getDataFileName "data/cli/user-roles-command-usage.txt"
+
+
+
   showFileContents :: FilePath -> IO ()
   showFileContents filePath = do
     fileContents <- readFile filePath
