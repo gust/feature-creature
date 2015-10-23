@@ -7,10 +7,10 @@ module CLI.ProductForm where
   import qualified Products.Product as P
 
   execProductCommand :: [String] -> IO ()
-  execProductCommand (cmd:args) 
+  execProductCommand (cmd:args)
     | cmd == "features" = FF.showFeatures args
     | cmd == "list"     = listAllProducts
-    | cmd == "add"      = showCreateProductForm 
+    | cmd == "add"      = showCreateProductForm
     | otherwise         = showProductCommandUsage
   execProductCommand [] = showProductCommandUsage
 

@@ -6,6 +6,7 @@ module CLI.Base
 
   import qualified CLI.DataFiles as Paths
   import qualified CLI.ProductForm as PF
+  import qualified CLI.UserRolesForm as UR
 
   data Command = Command 
     { command :: String
@@ -14,6 +15,7 @@ module CLI.Base
 
   execCommand :: Command -> IO ()
   execCommand (Command "product" args) = PF.execProductCommand args
+  execCommand (Command "user_roles" args) = UR.execUserRolesCommand args
   execCommand (Command "list" _)       = listAllDomains
   execCommand (Command _ _)            = showUsage
 
