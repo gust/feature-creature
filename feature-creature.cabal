@@ -60,6 +60,7 @@ executable feature-creature-web
                     , mtl
                     , servant
                     , servant-client
+                    , servant-docs
                     , servant-server
                     , text
                     , time
