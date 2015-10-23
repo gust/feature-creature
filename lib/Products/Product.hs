@@ -1,10 +1,11 @@
 module Products.Product 
   ( Product(Product)
   , ProductID
-  , findProducts
   , createProduct
-  , updateRepo
+  , findProducts
   , productRepositoryDir
+  , toProduct
+  , updateRepo
   ) where
 
   import CommonCreatures (WithErr)
@@ -48,6 +49,9 @@ module Products.Product
   findProducts = do
     allProducts <- runDB $ DB.selectList ([] :: [DB.Filter Product]) []
     return $ allProducts
+
+  toProduct :: DB.Entity Product -> Product
+  toProduct dbEntity = DB.entityVal dbEntity
 
   createProduct :: Product -> IO ProductID
   createProduct p = do

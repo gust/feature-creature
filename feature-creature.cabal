@@ -52,7 +52,7 @@ executable feature-creature-web
                     , either >= 4.4.1 && < 4.5.0
                     , feature-creature
                     , http-client > 0.4 && < 0.5
-                    , persistent-postgresql >= 2.2.1 && < 2.3
+                    , mtl >= 2.2.1 && < 2.3
                     , servant
                     , servant-client
                     , servant-server

@@ -9,6 +9,7 @@ module Main where
 
   server :: Server API.ProductsAPI
   server = API.products
+      :<|> API.productsFeatures
 
   -- 'serve' comes from servant and hands you a WAI Application,
   -- which you can think of as an "abstract" web application,
