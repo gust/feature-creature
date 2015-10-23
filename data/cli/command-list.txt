@@ -4,4 +4,5 @@ DESCRIPTION:
 AVAILABLE DOMAINS: 
   product - Example commands: 'list' 'show' 'add' 'delete'
   user_roles - Example commands: 'add' 'list'
+  domain_terms - Example commands: 'add' 'list'
 

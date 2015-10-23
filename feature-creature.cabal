@@ -22,6 +22,7 @@ library
                      , Models
                      , Products.Product
                      , UserRoles.UserRole
+                     , DomainTerms.DomainTerm
                      , Git
 
   build-depends:     base >=4.7 && < 5.0
