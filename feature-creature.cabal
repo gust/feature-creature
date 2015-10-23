@@ -49,7 +49,10 @@ library
 executable feature-creature-web
   build-depends:     aeson >= 0.10.0.0 && < 0.10.1.0
                     , base >=4.7 && < 5.0
+                    , either >= 4.4.1 && < 4.5.0
+                    , feature-creature
                     , http-client > 0.4 && < 0.5
+                    , persistent-postgresql >= 2.2.1 && < 2.3
                     , servant
                     , servant-client
                     , servant-server
