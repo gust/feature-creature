@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Data.DirectoryTree 
+module Data.DirectoryTree
   ( DirectoryTree
   , addToDirectoryTree
   , createNode
