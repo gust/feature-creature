@@ -1,13 +1,12 @@
 module CLI.DomainTermsForm(execDomainTermsCommand) where
   import qualified CLI.DataFiles as Paths
   import Data.Text(pack)
-  import Data.Int(Int64)
   import Data.List (intersperse)
-  import Models(ProductId(..), toKey, DomainTerm, Entity)
+  import Models(ProductId, toKey, DomainTerm, Entity)
   import qualified DomainTerms.DomainTerm as DomainTerm
 
   execDomainTermsCommand :: [String] -> IO ()
-  execDomainTermsCommand ("add":args) = showCreateDomainTermForm
+  execDomainTermsCommand ("add":_) = showCreateDomainTermForm
   execDomainTermsCommand ("list":[]) = listDomainTerms Nothing
   execDomainTermsCommand ("list":productIdStr:[]) = listDomainTerms $ Just productIdStr
   execDomainTermsCommand _ = showDomainTermsCommandUsage

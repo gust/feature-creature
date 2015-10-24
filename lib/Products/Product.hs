@@ -10,7 +10,6 @@ module Products.Product
 
   import CommonCreatures (WithErr)
   import qualified Config as Cfg
-  import Control.Applicative ((<$>))
   import Control.Monad.IO.Class (liftIO)
   import qualified Data.Text as T
   import Database (runDB)

@@ -2,7 +2,6 @@
 
 module Features.Feature where
   import CommonCreatures (WithErr)
-  import Control.Applicative ((<$>))
   import Data.DirectoryTree (DirectoryTree, createNode, addToDirectoryTree)
   import Data.List (stripPrefix)
   import Data.Maybe (mapMaybe)
