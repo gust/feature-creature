@@ -26,6 +26,12 @@ module Models where
       title Text
       description Text
       deriving Show
+
+    DomainTerm json sql=domain_terms
+      productId ProductId
+      title Text
+      description Text
+      deriving Show
   |]
 
   toKey :: (Integral i, ToBackendKey SqlBackend record) => i -> Key record

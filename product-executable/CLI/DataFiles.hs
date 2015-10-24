@@ -31,6 +31,14 @@ module CLI.DataFiles where
 
 
 
+  showDomainTermsCommandUsageFile:: IO ()
+  showDomainTermsCommandUsageFile = getDomainTermsCommandUsageFilePath >>= showFileContents
+
+  getDomainTermsCommandUsageFilePath :: IO String
+  getDomainTermsCommandUsageFilePath = Paths.getDataFileName "data/cli/domain-terms-command-usage.txt"
+
+
+
   showUserRolesCommandUsageFile:: IO ()
   showUserRolesCommandUsageFile = getUserRolesCommandUsageFilePath >>= showFileContents
 
