@@ -29,7 +29,7 @@ module ProductsAPI where
       ]
 
   instance SD.ToSample DirectoryTree DirectoryTree where
-    toSample _ = Just $ Node "creature" [Node "monster" []]
+    toSample _ = Just $ featureDirectoryExample
 
   instance SD.ToCapture (Capture "id" P.ProductID) where
     toCapture _ = SD.DocCapture "id" "Product id"
@@ -53,3 +53,17 @@ module ProductsAPI where
     case result of
       Left msg -> error msg
       Right tree -> return tree
+
+  featureDirectoryExample :: DirectoryTree
+  featureDirectoryExample = rootNode
+    where
+      rootNode = Node "features" [creatures]
+      creatures = Node "creatures" [swampThing, wolfman]
+      swampThing = Node "swamp-thing" [
+        Node "vegetable-mind-control.feature" [],
+        Node "limb-regeneration.feature" []
+        ]
+      wolfman = Node "wolfman" [
+        Node "shape-shifting.feature" [],
+        Node "animal-instincts.feature" []
+        ]
