@@ -61,7 +61,13 @@ export FC_DB_PASS="[db-password-here]"    # optional.
 export FC_DATA_FILES_PATH="[path-to-application-data-files]"
 ```
 #### Running the application
+__CLI__
 Execute the binary and follow the CLI output help pages to discover existing functionality.
+`dist/build/feature-creature/feature-creature`
+
+__API__
+- Start the web server `dist/build/feature-creature-web/feature-creature-web`
+- View available endpoints `curl http://localhost:8081/docs` or visit the [API wiki page](https://github.com/gust/feature-creature/wiki/API-Documentation)
 
 ---
 
