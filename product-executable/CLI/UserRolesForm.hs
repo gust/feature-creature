@@ -1,13 +1,12 @@
 module CLI.UserRolesForm(execUserRolesCommand) where
   import qualified CLI.DataFiles as Paths
   import Data.Text(pack)
-  import Data.Int(Int64)
   import Data.List (intersperse)
-  import Models(ProductId(..), toKey, UserRole, Entity)
+  import Models(ProductId, toKey, UserRole, Entity)
   import qualified UserRoles.UserRole as UserRole
 
   execUserRolesCommand :: [String] -> IO ()
-  execUserRolesCommand ("add":args) = showCreateUserRoleForm
+  execUserRolesCommand ("add":_) = showCreateUserRoleForm
   execUserRolesCommand ("list":[]) = listUserRoles Nothing
   execUserRolesCommand ("list":productIdStr:[]) = listUserRoles $ Just productIdStr
   execUserRolesCommand _ = showUserRolesCommandUsage

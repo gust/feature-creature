@@ -3,7 +3,6 @@ module Config
   , gitRepositoryStorePath
   ) where
 
-  import Control.Applicative ((<$>))
   import Data.ByteString.Char8 (ByteString, pack)
   import Data.List (intersperse)
   import System.Environment (getEnv, lookupEnv)
