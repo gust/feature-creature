@@ -6,6 +6,7 @@ module Main where
   import ProductsAPI (ProductsAPI , productsServer)
   import Network.Wai
   import Network.Wai.Handler.Warp
+  import Network.Wai.Middleware.AddHeaders
   import Servant
 
   type FeatureCreatureAPI = ProductsAPI :<|> Raw
@@ -14,11 +15,14 @@ module Main where
   main = run 8081 app
 
   server :: Server FeatureCreatureAPI
-  server = productsServer 
+  server = productsServer
       :<|> Docs.documentationServer
 
   api :: Proxy FeatureCreatureAPI
   api = Proxy
 
+  addResponseHeaders :: Middleware
+  addResponseHeaders = addHeaders [("Access-Control-Allow-Origin", "*")]
+
   app :: Application
-  app = serve api server
+  app = addResponseHeaders $ serve api server

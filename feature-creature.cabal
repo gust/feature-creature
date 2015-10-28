@@ -67,6 +67,7 @@ executable feature-creature-web
                     , transformers
                     , transformers-compat
                     , wai
+                    , wai-extra
                     , warp
 
   ghc-options:       -Wall

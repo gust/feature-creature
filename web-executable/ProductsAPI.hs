@@ -29,10 +29,12 @@ module ProductsAPI
                                , repoUrl   :: T.Text 
                                } deriving (Show)
 
-  type Handler a = EitherT ServantErr IO a
+  type Handler a           = EitherT ServantErr IO a
 
-  type ProductsAPI = "products" :> Get '[JSON] [APIProduct]
-                :<|> "products" :> Capture "id" P.ProductID :> "features" :> Get '[JSON] DirectoryTree
+  type ProductsAPI = "products" :> ( Get '[JSON] [APIProduct]
+                                :<|> Capture "id" P.ProductID :> FeaturesAPI
+                                   )
+  type FeaturesAPI = "features" :> Get '[JSON] DirectoryTree
 
   instance ToJSON APIProduct where
     toJSON (APIProduct prodID prodName prodRepoUrl) = object ["id" .= prodID, "name" .= prodName, "repoUrl" .= prodRepoUrl]
@@ -44,7 +46,7 @@ module ProductsAPI
       ]
 
   instance SD.ToSample DirectoryTree DirectoryTree where
-    toSample _ = Just $ featureDirectoryExample
+    toSample _ = Just featureDirectoryExample
 
   instance SD.ToCapture (Capture "id" P.ProductID) where
     toCapture _ = SD.DocCapture "id" "Product id"
