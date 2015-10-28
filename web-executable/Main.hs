@@ -1,18 +1,24 @@
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeOperators #-}
+
 module Main where
-  import qualified API
+  import Documentation as Docs
+  import ProductsAPI (ProductsAPI , productsServer)
   import Network.Wai
   import Network.Wai.Handler.Warp
   import Servant
 
+  type FeatureCreatureAPI = ProductsAPI :<|> Raw
+
   main :: IO ()
   main = run 8081 app
 
-  server :: Server API.ProductsAPI
-  server = API.products
-      :<|> API.productsFeatures
+  server :: Server FeatureCreatureAPI
+  server = productsServer 
+      :<|> Docs.documentationServer
 
-  -- 'serve' comes from servant and hands you a WAI Application,
-  -- which you can think of as an "abstract" web application,
-  -- not yet a webserver.
+  api :: Proxy FeatureCreatureAPI
+  api = Proxy
+
   app :: Application
-  app = serve API.productsAPI server
+  app = serve api server
