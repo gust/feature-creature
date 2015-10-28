@@ -5,15 +5,16 @@ module Products.Product
   , findProducts
   , productRepositoryDir
   , toProduct
+  , toProductID
   , updateRepo
   ) where
 
   import CommonCreatures (WithErr)
-  import qualified Config as Cfg
+  import qualified Config                       as Cfg
   import Control.Monad.IO.Class (liftIO)
-  import qualified Data.Text as T
+  import qualified Data.Text                    as T
   import Database (runDB)
-  import qualified Database.Persist.Postgresql as DB
+  import qualified Database.Persist.Postgresql  as DB
   import GHC.Int (Int64)
   import qualified Git
   import Models
@@ -48,6 +49,9 @@ module Products.Product
   findProducts = do
     allProducts <- runDB $ DB.selectList ([] :: [DB.Filter Product]) []
     return $ allProducts
+
+  toProductID :: DB.Entity Product -> ProductID
+  toProductID dbEntity = DB.fromSqlKey . DB.entityKey $ dbEntity
 
   toProduct :: DB.Entity Product -> Product
   toProduct dbEntity = DB.entityVal dbEntity
