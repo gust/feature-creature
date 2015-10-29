@@ -12,7 +12,7 @@ module Documentation where
   -- not sure of the type here. snippet taken from: http://haskell-servant.github.io/tutorial/docs.html
   documentationServer _ respond = respond $ responseLBS ok200 [plain] docsBS
     where
-      plain = ("Content-Type", "text/plain")
+      plain       = ("Content-Type", "text/plain")
 
   docsBS :: ByteString
   docsBS = encodeUtf8
@@ -21,4 +21,3 @@ module Documentation where
          $ SD.docsWithIntros [intro] productsAPI
     where
       intro = SD.DocIntro "feature-creature" ["![](http://www.homecinemachoice.com/sites/18/images/article_images_month/2012-07/universal%20monsters%20news%2001.jpg)", "Welcome to our API", "Feel free to dig around"]
-

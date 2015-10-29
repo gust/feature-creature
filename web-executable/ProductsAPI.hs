@@ -5,31 +5,48 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module ProductsAPI where
+module ProductsAPI
+  ( ProductsAPI
+  , productsAPI
+  , productsServer
+  ) where
+
   import Control.Monad.Except (runExceptT)
   import Control.Monad.IO.Class (liftIO)
   import Control.Monad.Trans.Either
+  import Data.Aeson
   import Data.DirectoryTree
+  import qualified Data.Text        as T
   import Data.Tree (Tree(Node))
   import qualified Features.Feature as F
   import qualified Products.Product as P
   import Servant
-  import qualified Servant.Docs as SD
+  import qualified Servant.Docs     as SD
+  import Models
 
+  data APIProduct = APIProduct { productID :: P.ProductID
+                               , name      :: T.Text
+                               , repoUrl   :: T.Text 
+                               } deriving (Show)
 
-  type Handler a = EitherT ServantErr IO a
+  type Handler a           = EitherT ServantErr IO a
 
-  type ProductsAPI = "products" :> Get '[JSON] [P.Product]
-                :<|> "products" :> Capture "id" P.ProductID :> "features" :> Get '[JSON] DirectoryTree
+  type ProductsAPI = "products" :> ( Get '[JSON] [APIProduct]
+                                :<|> Capture "id" P.ProductID :> FeaturesAPI
+                                   )
+  type FeaturesAPI = "features" :> Get '[JSON] DirectoryTree
 
-  instance SD.ToSample [P.Product] [P.Product] where
+  instance ToJSON APIProduct where
+    toJSON (APIProduct prodID prodName prodRepoUrl) = object ["id" .= prodID, "name" .= prodName, "repoUrl" .= prodRepoUrl]
+
+  instance SD.ToSample [APIProduct] [APIProduct] where
     toSample _ = Just $
-      [ P.Product "monsters" "http://monsters.com/repo.git"
-      , P.Product "creatures" "ssh://creatures.com/repo.git"
+      [ APIProduct 1 "monsters" "http://monsters.com/repo.git"
+      , APIProduct 2 "creatures" "ssh://creatures.com/repo.git"
       ]
 
   instance SD.ToSample DirectoryTree DirectoryTree where
-    toSample _ = Just $ featureDirectoryExample
+    toSample _ = Just featureDirectoryExample
 
   instance SD.ToCapture (Capture "id" P.ProductID) where
     toCapture _ = SD.DocCapture "id" "Product id"
@@ -41,10 +58,17 @@ module ProductsAPI where
   productsAPI :: Proxy ProductsAPI
   productsAPI = Proxy
 
-  products :: Handler [P.Product]
+  products :: Handler [APIProduct]
   products = do
     prods <- liftIO P.findProducts
-    return $ map P.toProduct prods
+    return $ map toProduct prods
+      where
+        toProduct dbProduct = do
+          let dbProd   = P.toProduct dbProduct
+          let dbProdID = P.toProductID dbProduct
+          APIProduct { productID      = dbProdID
+                     , name    = productName dbProd
+                     , repoUrl = productRepoUrl dbProd }
 
   productsFeatures :: P.ProductID -> Handler DirectoryTree
   productsFeatures prodID = do
