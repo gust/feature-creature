@@ -25,7 +25,8 @@ library
                      , DomainTerms.DomainTerm
                      , Git
 
-  build-depends:     base
+  build-depends:     aeson
+                     , base
                      , bytestring
                      , containers
                      , directory

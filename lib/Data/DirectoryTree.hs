@@ -1,4 +1,6 @@
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 
 module Data.DirectoryTree
   ( DirectoryTree
@@ -6,11 +8,15 @@ module Data.DirectoryTree
   , createNode
   ) where
 
+  import Data.Aeson
   import Data.List (partition)
   import qualified Data.Text as T
   import Data.Tree (Tree(Node))
 
   type DirectoryTree = Tree FilePath
+
+  instance ToJSON DirectoryTree where
+    toJSON (Node label forest) = object ["label" .= label, "forest" .= forest]
 
   createNode :: FilePath -> DirectoryTree
   createNode file = Node file []

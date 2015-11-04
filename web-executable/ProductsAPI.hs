@@ -37,7 +37,11 @@ module ProductsAPI
   type FeaturesAPI = "features" :> Get '[JSON] DirectoryTree
 
   instance ToJSON APIProduct where
-    toJSON (APIProduct prodID prodName prodRepoUrl) = object ["id" .= prodID, "name" .= prodName, "repoUrl" .= prodRepoUrl]
+    toJSON (APIProduct prodID prodName prodRepoUrl) = object [
+      "id" .= prodID
+      , "name" .= prodName
+      , "repoUrl" .= prodRepoUrl
+      ]
 
   instance SD.ToSample [APIProduct] [APIProduct] where
     toSample _ = Just $
@@ -66,9 +70,9 @@ module ProductsAPI
         toProduct dbProduct = do
           let dbProd   = P.toProduct dbProduct
           let dbProdID = P.toProductID dbProduct
-          APIProduct { productID      = dbProdID
-                     , name    = productName dbProd
-                     , repoUrl = productRepoUrl dbProd }
+          APIProduct { productID = dbProdID
+                     , name      = productName dbProd
+                     , repoUrl   = productRepoUrl dbProd }
 
   productsFeatures :: P.ProductID -> Handler DirectoryTree
   productsFeatures prodID = do
