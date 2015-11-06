@@ -26,7 +26,7 @@ library
                      , Git
 
   build-depends:     aeson
-                     , base
+                     , base >= 4.8.1.0 && < 4.8.3.0
                      , bytestring
                      , containers
                      , directory
