@@ -16,6 +16,7 @@ module ProductsAPI
   import Control.Monad.Trans.Either
   import Data.Aeson
   import Data.DirectoryTree
+  import qualified Data.List        as L
   import qualified Data.Text        as T
   import Data.Tree (Tree(Node))
   import qualified Features.Feature as F
@@ -29,6 +30,10 @@ module ProductsAPI
                                , repoUrl   :: T.Text 
                                } deriving (Show)
 
+  data APIFeature = APIFeature { featureID :: F.FeatureFile
+                               , description :: F.Feature
+                               }
+
   type Handler a           = EitherT ServantErr IO a
 
   type ProductsAPI = "products" :> ( Get '[JSON] [APIProduct]
@@ -39,15 +44,21 @@ module ProductsAPI
   type FeaturesAPI = "features" :> Get '[JSON] DirectoryTree
 
   type FeatureAPI  = "feature"  :> QueryParam "path" F.FeatureFile
-                                :> Get '[JSON] F.Feature
+                                :> Get '[JSON] APIFeature
 
 
   instance ToJSON APIProduct where
-    toJSON (APIProduct prodID prodName prodRepoUrl) = object [
-      "id" .= prodID
-      , "name" .= prodName
-      , "repoUrl" .= prodRepoUrl
-      ]
+    toJSON (APIProduct prodID prodName prodRepoUrl) =
+      object [ "id" .= prodID
+             , "name"    .= prodName
+             , "repoUrl" .= prodRepoUrl
+             ]
+
+  instance ToJSON APIFeature where
+    toJSON (APIFeature featureID description) =
+      object [ "featureID"     .= featureID
+             , "description" .= description
+             ]
 
   instance SD.ToSample [APIProduct] [APIProduct] where
     toSample _ = Just $
@@ -58,8 +69,10 @@ module ProductsAPI
   instance SD.ToSample DirectoryTree DirectoryTree where
     toSample _ = Just featureDirectoryExample
 
-  instance SD.ToSample F.Feature F.Feature where
-    toSample _ = Just "hello!"
+  instance SD.ToSample APIFeature APIFeature where
+    toSample _ = Just $ APIFeature { featureID = "/features/werewolves/hunting.feature"
+                                   , description = featureFileSample
+                                   }
 
   instance SD.ToCapture (Capture "id" P.ProductID) where
     toCapture _ = SD.DocCapture "id" "Product id"
@@ -101,7 +114,7 @@ module ProductsAPI
       Left msg -> error msg
       Right tree -> return tree
 
-  productsFeature :: P.ProductID -> Maybe F.FeatureFile -> Handler F.Feature
+  productsFeature :: P.ProductID -> Maybe F.FeatureFile -> Handler APIFeature
   productsFeature prodID Nothing = do
     error "Missing required query param 'path'"
   productsFeature prodID (Just path) = do
@@ -109,7 +122,9 @@ module ProductsAPI
     result  <- liftIO $ runExceptT (F.getFeature (prodDir ++ path))
     case result of
       Left msg -> error msg
-      Right feature -> return feature
+      Right feature -> return $ APIFeature { featureID = path
+                                           , description = feature
+                                           }
 
   featureDirectoryExample :: DirectoryTree
   featureDirectoryExample = rootNode
@@ -124,3 +139,22 @@ module ProductsAPI
         Node "shape-shifting.feature" [],
         Node "animal-instincts.feature" []
         ]
+
+  featureFileSample :: F.Feature
+  featureFileSample = concat . (L.intersperse "\n") $ [ "@some-feature-tag"
+                                                      , "Feature: Slaying a Werewolf"
+                                                      , "  As a Werewolf Hunter"
+                                                      , "  So that I can collect my Reward"
+                                                      , "  I want to slay a Werewolf"
+                                                      , ""
+                                                      , "  Scenario: Slaying a Werewolf in human form"
+                                                      , "    Given I am a Werewolf Hunter"
+                                                      , "    When I slay a Werewolf in human form"
+                                                      , "    Then I collect a Reward from the Townspeople"
+                                                      , ""
+                                                      , "  Scenario: Slaying a Werewolf in wolf form"
+                                                      , "    Given I am a Werewolf Hunter"
+                                                      , "    When I attempt to slay a Werewolf in wolf form"
+                                                      , "    Then I am brutally ripped limb from limb"
+                                                      , "    And no Reward is collected"
+                                                      ]
