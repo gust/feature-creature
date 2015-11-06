@@ -17,7 +17,7 @@ module Features.Feature where
   getFeatures :: FilePath -> WithErr DirectoryTree
   getFeatures path = buildDirectoryTree <$> findFeatureFiles path
 
-  getFeature :: FilePath -> WithErr Feature
+  getFeature :: FeatureFile -> WithErr Feature
   getFeature path = do
     fileExists <- liftIO $ doesFileExist path
     case fileExists of

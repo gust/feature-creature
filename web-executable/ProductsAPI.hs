@@ -33,8 +33,14 @@ module ProductsAPI
 
   type ProductsAPI = "products" :> ( Get '[JSON] [APIProduct]
                                 :<|> Capture "id" P.ProductID :> FeaturesAPI
+                                :<|> Capture "id" P.ProductID :> FeatureAPI
                                    )
+
   type FeaturesAPI = "features" :> Get '[JSON] DirectoryTree
+
+  type FeatureAPI  = "feature"  :> QueryParam "path" F.FeatureFile
+                                :> Get '[JSON] F.Feature
+
 
   instance ToJSON APIProduct where
     toJSON (APIProduct prodID prodName prodRepoUrl) = object [
@@ -52,12 +58,25 @@ module ProductsAPI
   instance SD.ToSample DirectoryTree DirectoryTree where
     toSample _ = Just featureDirectoryExample
 
+  instance SD.ToSample F.Feature F.Feature where
+    toSample _ = Just "hello!"
+
   instance SD.ToCapture (Capture "id" P.ProductID) where
     toCapture _ = SD.DocCapture "id" "Product id"
+
+  instance SD.ToParam (QueryParam "path" F.FeatureFile) where
+    toParam _ = SD.DocQueryParam
+      "path"
+      [ "/features/werewolf/transformation.feature",
+        "/features/swampthing/regeneration.feature"
+      ]
+      "FeatureFile id (relative file path)"
+      SD.Normal
 
   productsServer :: Server ProductsAPI
   productsServer = products
               :<|> productsFeatures
+              :<|> productsFeature
 
   productsAPI :: Proxy ProductsAPI
   productsAPI = Proxy
@@ -77,10 +96,20 @@ module ProductsAPI
   productsFeatures :: P.ProductID -> Handler DirectoryTree
   productsFeatures prodID = do
     prodDir <- liftIO $ P.productRepositoryDir prodID
-    result <- liftIO $ runExceptT (F.getFeatures prodDir)
+    result  <- liftIO $ runExceptT (F.getFeatures prodDir)
     case result of
       Left msg -> error msg
       Right tree -> return tree
+
+  productsFeature :: P.ProductID -> Maybe F.FeatureFile -> Handler F.Feature
+  productsFeature prodID Nothing = do
+    error "Missing required query param 'path'"
+  productsFeature prodID (Just path) = do
+    prodDir <- liftIO $ P.productRepositoryDir prodID
+    result  <- liftIO $ runExceptT (F.getFeature (prodDir ++ path))
+    case result of
+      Left msg -> error msg
+      Right feature -> return feature
 
   featureDirectoryExample :: DirectoryTree
   featureDirectoryExample = rootNode
