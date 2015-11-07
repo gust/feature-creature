@@ -6,10 +6,16 @@ module CLI.FeaturesForm where
   import Safe (readMay)
 
   showFeatures :: [String] -> IO ()
-  showFeatures [prodId]    = case readMay prodId of
-                               (Just productId) -> listAllProductFeatures productId
-                               Nothing   -> showFeaturesCommandUsage
-  showFeatures _           = showFeaturesCommandUsage
+  showFeatures [prodID]      = case readMay prodID of
+                                 (Just productId) -> listAllProductFeatures productId
+                                 Nothing          -> showFeaturesCommandUsage
+  showFeatures _             = showFeaturesCommandUsage
+
+  showFeature :: [String] -> IO ()
+  showFeature (prodID:path:[]) = case readMay prodID of
+                                 (Just productId) -> getProductFeature productId path
+                                 Nothing          -> showFeaturesCommandUsage
+  showFeature _                = showFeaturesCommandUsage
 
   listAllProductFeatures :: P.ProductID -> IO ()
   listAllProductFeatures prodID = do
@@ -17,6 +23,12 @@ module CLI.FeaturesForm where
     result <- runExceptT (F.getFeatures prodDir)
     either putStrLn (putStrLn . drawTree) result
 
+  getProductFeature :: P.ProductID -> FilePath -> IO ()
+  getProductFeature prodID path = do
+    prodDir <- P.productRepositoryDir prodID
+    result <- runExceptT (F.getFeature (prodDir ++ path))
+    either putStrLn putStrLn result
+
   showFeaturesCommandUsage :: IO ()
-  showFeaturesCommandUsage = undefined
+  showFeaturesCommandUsage = putStrLn "*** no documentation provided. sorry.***"
 

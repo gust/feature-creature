@@ -3,7 +3,7 @@
 
 module Main where
   import Documentation as Docs
-  import ProductsAPI (ProductsAPI , productsServer)
+  import ProductsAPI (ProductsAPI, productsServer)
   import Network.Wai
   import Network.Wai.Handler.Warp
   import Network.Wai.Middleware.AddHeaders

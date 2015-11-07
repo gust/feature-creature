@@ -7,6 +7,7 @@ module Features.Feature where
   import Data.Maybe (mapMaybe)
   import Control.Monad.Except (throwError)
   import Control.Monad.IO.Class (liftIO)
+  import System.Directory (doesFileExist)
   import System.Exit (ExitCode(ExitFailure, ExitSuccess))
   import System.Process (readProcessWithExitCode)
 
@@ -15,6 +16,15 @@ module Features.Feature where
 
   getFeatures :: FilePath -> WithErr DirectoryTree
   getFeatures path = buildDirectoryTree <$> findFeatureFiles path
+
+  getFeature :: FeatureFile -> WithErr Feature
+  getFeature path = do
+    fileExists <- liftIO $ doesFileExist path
+    case fileExists of
+      False -> throwError $ "Feature file does not exist at path: " ++ path
+      True  -> do
+        fileContents <- liftIO (readFile path)
+        return fileContents
 
   buildDirectoryTree :: [FeatureFile] -> DirectoryTree
   buildDirectoryTree = foldr (\featureFile dirTree -> addToDirectoryTree dirTree featureFile) rootNode

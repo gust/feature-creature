@@ -9,6 +9,7 @@ module CLI.ProductForm where
   execProductCommand :: [String] -> IO ()
   execProductCommand (cmd:args)
     | cmd == "features" = FF.showFeatures args
+    | cmd == "feature"  = FF.showFeature args
     | cmd == "list"     = listAllProducts
     | cmd == "add"      = showCreateProductForm
     | otherwise         = showProductCommandUsage
