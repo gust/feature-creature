@@ -22,19 +22,22 @@ module Data.DirectoryTree
   createNode file = Node file []
 
   addToDirectoryTree :: DirectoryTree -> FilePath -> DirectoryTree
-  addToDirectoryTree featureTree filePath = addToDirectoryTree' featureTree (splitFileName $ T.pack filePath)
-    where
-      splitFileName :: T.Text -> [T.Text]
-      splitFileName = (T.splitOn "/") . throwOutLeadingSlash 
+  addToDirectoryTree featureTree filePath =
+    addToDirectoryTree' featureTree filePathParts
+      where
+        filePathParts :: [T.Text]
+        filePathParts = (splitFileName $ T.pack filePath)
 
-      throwOutLeadingSlash :: T.Text -> T.Text
-      throwOutLeadingSlash txt
-        | (T.head txt) == '/' = T.tail txt
-        | otherwise           = txt
+        splitFileName :: T.Text -> [T.Text]
+        splitFileName = (T.splitOn "/") . throwOutLeadingSlash
+
+        throwOutLeadingSlash :: T.Text -> T.Text
+        throwOutLeadingSlash txt
+          | (T.head txt) == '/' = T.tail txt
+          | otherwise           = txt
 
   addToDirectoryTree' :: DirectoryTree -> [T.Text] -> DirectoryTree
   addToDirectoryTree' featureTree []                       = featureTree
-  addToDirectoryTree' (Node label forest) [file]           = Node label $ forest ++ [(createNode $ T.unpack file)]
   addToDirectoryTree' (Node label forest) (directory:rest) =
     let (matches, nonMatches) = partition (matchesLabel directory) forest in
         case matches of
