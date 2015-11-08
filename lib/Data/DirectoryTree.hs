@@ -4,6 +4,7 @@
 
 module Data.DirectoryTree
   ( DirectoryTree
+  , FileDescription (..)
   , addToDirectoryTree
   , createNode
   ) where
@@ -13,17 +14,32 @@ module Data.DirectoryTree
   import qualified Data.Text as T
   import Data.Tree (Tree(Node))
 
-  type DirectoryTree = Tree FilePath
+  data FileDescription =
+    FileDescription { fileName :: String
+                    , filePath :: FilePath
+                    } deriving (Show)
+  type DirectoryTree = Tree FileDescription
+
+  type Cursor = FilePath
 
   instance ToJSON DirectoryTree where
-    toJSON (Node label forest) = object ["label" .= label, "forest" .= forest]
+    toJSON (Node fileDescription forest) =
+      object [ "fileDescription" .= fileDescription
+             , "forest"          .= forest
+             ]
 
-  createNode :: FilePath -> DirectoryTree
-  createNode file = Node file []
+  instance ToJSON FileDescription where
+    toJSON (FileDescription fileName filePath) =
+      object [ "fileName" .= fileName
+             , "filePath" .= filePath
+             ]
+
+  createNode :: FileDescription -> DirectoryTree
+  createNode fd = Node fd []
 
   addToDirectoryTree :: DirectoryTree -> FilePath -> DirectoryTree
   addToDirectoryTree featureTree filePath =
-    addToDirectoryTree' featureTree filePathParts
+    addToDirectoryTree' featureTree filePathParts initialCursor
       where
         filePathParts :: [T.Text]
         filePathParts = (splitFileName $ T.pack filePath)
@@ -36,18 +52,26 @@ module Data.DirectoryTree
           | (T.head txt) == '/' = T.tail txt
           | otherwise           = txt
 
-  addToDirectoryTree' :: DirectoryTree -> [T.Text] -> DirectoryTree
-  addToDirectoryTree' featureTree []                       = featureTree
-  addToDirectoryTree' (Node label forest) (directory:rest) =
+        initialCursor :: Cursor
+        initialCursor = ""
+
+  addToDirectoryTree' :: DirectoryTree -> [T.Text] -> Cursor -> DirectoryTree
+  addToDirectoryTree' featureTree [] _                                 = featureTree
+  addToDirectoryTree' (Node label forest) (directory:rest) path =
     let (matches, nonMatches) = partition (matchesLabel directory) forest in
         case matches of
           [] -> do
-            let newNode = createNode $ T.unpack directory
-            Node label $ (addToDirectoryTree' newNode rest):forest
+            let newPath           = path ++ "/" ++ (T.unpack directory)
+            let newCursor         = newPath
+            let newFileDescripton = FileDescription { fileName = T.unpack directory, filePath = newPath }
+            let newNode           = createNode newFileDescripton
+            Node label $ (addToDirectoryTree' newNode rest newCursor):forest
           [node] -> do
-            Node label $ (addToDirectoryTree' node rest):nonMatches -- effectively replace the matching node
+            let newPath = path ++ "/" ++ (T.unpack directory)
+            let newCursor = newPath
+            Node label $ (addToDirectoryTree' node rest newCursor):nonMatches -- effectively replace the matching node
           (_:_) -> error "There should be a maximum of 1 match in the forest"
 
   matchesLabel :: T.Text -> DirectoryTree -> Bool
-  matchesLabel file (Node label _) = (T.unpack file) == label
+  matchesLabel file (Node fileDescription _) = (T.unpack file) == (fileName fileDescription)
 
