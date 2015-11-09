@@ -1,6 +1,7 @@
 module CLI.FeaturesForm where
   import Control.Monad.Except (runExceptT)
-  import Data.Tree (drawTree)
+  import Data.DirectoryTree
+  import Data.Tree hiding (drawTree)
   import qualified Products.Product as P
   import qualified Features.Feature as F
   import Safe (readMay)
@@ -32,3 +33,16 @@ module CLI.FeaturesForm where
   showFeaturesCommandUsage :: IO ()
   showFeaturesCommandUsage = putStrLn "*** no documentation provided. sorry.***"
 
+  drawTree :: DirectoryTree -> String
+  drawTree  = unlines . draw
+
+  draw :: DirectoryTree -> [String]
+  draw (Node x ts0) = (show x) : drawSubTrees ts0
+    where
+      drawSubTrees [] = []
+      drawSubTrees [t] =
+          "|" : shift "`- " "   " (draw t)
+      drawSubTrees (t:ts) =
+          "|" : shift "+- " "|  " (draw t) ++ drawSubTrees ts
+
+      shift first other = zipWith (++) (first : repeat other)

@@ -27,7 +27,7 @@ module ProductsAPI
 
   data APIProduct = APIProduct { productID :: P.ProductID
                                , name      :: T.Text
-                               , repoUrl   :: T.Text 
+                               , repoUrl   :: T.Text
                                } deriving (Show)
 
   data APIFeature = APIFeature { featureID :: F.FeatureFile
@@ -55,9 +55,9 @@ module ProductsAPI
              ]
 
   instance ToJSON APIFeature where
-    toJSON (APIFeature featureID description) =
-      object [ "featureID"     .= featureID
-             , "description" .= description
+    toJSON (APIFeature featID desc) =
+      object [ "featureID"   .= featID
+             , "description" .= desc
              ]
 
   instance SD.ToSample [APIProduct] [APIProduct] where
@@ -115,7 +115,7 @@ module ProductsAPI
       Right tree -> return tree
 
   productsFeature :: P.ProductID -> Maybe F.FeatureFile -> Handler APIFeature
-  productsFeature prodID Nothing = do
+  productsFeature _ Nothing = do
     error "Missing required query param 'path'"
   productsFeature prodID (Just path) = do
     prodDir <- liftIO $ P.productRepositoryDir prodID
@@ -129,15 +129,15 @@ module ProductsAPI
   featureDirectoryExample :: DirectoryTree
   featureDirectoryExample = rootNode
     where
-      rootNode = Node "features" [creatures]
-      creatures = Node "creatures" [swampThing, wolfman]
-      swampThing = Node "swamp-thing" [
-        Node "vegetable-mind-control.feature" [],
-        Node "limb-regeneration.feature" []
+      rootNode = Node (FileDescription "features" "features") [creatures]
+      creatures = Node (FileDescription "creatures" "features/creatures") [swampThing, wolfman]
+      swampThing = Node (FileDescription "swamp-thing" "features/creatures/swamp-thing") [
+        Node (FileDescription "vegetable-mind-control.feature" "features/creatures/swamp-thing/vegetable-mind-control.feature") [],
+        Node (FileDescription "limb-regeneration.feature" "features/creatures/swamp-thing/limb-regeneration.feature") []
         ]
-      wolfman = Node "wolfman" [
-        Node "shape-shifting.feature" [],
-        Node "animal-instincts.feature" []
+      wolfman = Node (FileDescription "wolfman" "features/creatures/wolfman") [
+        Node (FileDescription "shape-shifting.feature" "features/creatures/wolfman/shape-shifting.feature") [],
+        Node (FileDescription "animal-instincts.feature" "features/creatures/wolfman/animal-instincts.feature") []
         ]
 
   featureFileSample :: F.Feature

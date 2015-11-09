@@ -2,7 +2,7 @@
 
 module Features.Feature where
   import CommonCreatures (WithErr)
-  import Data.DirectoryTree (DirectoryTree, createNode, addToDirectoryTree)
+  import Data.DirectoryTree (DirectoryTree, FileDescription (..), createNode, addToDirectoryTree)
   import Data.List (stripPrefix)
   import Data.Maybe (mapMaybe)
   import Control.Monad.Except (throwError)
@@ -30,7 +30,7 @@ module Features.Feature where
   buildDirectoryTree = foldr (\featureFile dirTree -> addToDirectoryTree dirTree featureFile) rootNode
     where
       rootNode :: DirectoryTree
-      rootNode = createNode "featuresRoot"
+      rootNode = createNode $ FileDescription "featuresRoot" "featuresRoot"
 
   findFeatureFiles :: FilePath -> WithErr [FeatureFile]
   findFeatureFiles path = do
