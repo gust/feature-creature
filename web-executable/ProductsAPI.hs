@@ -27,7 +27,7 @@ module ProductsAPI
 
   data APIProduct = APIProduct { productID :: P.ProductID
                                , name      :: T.Text
-                               , repoUrl   :: T.Text 
+                               , repoUrl   :: T.Text
                                } deriving (Show)
 
   data APIFeature = APIFeature { featureID :: F.FeatureFile
@@ -55,9 +55,9 @@ module ProductsAPI
              ]
 
   instance ToJSON APIFeature where
-    toJSON (APIFeature featureID description) =
-      object [ "featureID"     .= featureID
-             , "description" .= description
+    toJSON (APIFeature featID desc) =
+      object [ "featureID"   .= featID
+             , "description" .= desc
              ]
 
   instance SD.ToSample [APIProduct] [APIProduct] where
@@ -115,7 +115,7 @@ module ProductsAPI
       Right tree -> return tree
 
   productsFeature :: P.ProductID -> Maybe F.FeatureFile -> Handler APIFeature
-  productsFeature prodID Nothing = do
+  productsFeature _ Nothing = do
     error "Missing required query param 'path'"
   productsFeature prodID (Just path) = do
     prodDir <- liftIO $ P.productRepositoryDir prodID
