@@ -15,6 +15,7 @@ module Products.ProductsAPI
   import Data.Aeson
   import qualified Data.Text        as T
   import Models
+  import qualified Products.DomainTermsAPI as DT
   import Products.FeaturesAPI
   import qualified Products.Product as P
   import Servant
@@ -26,16 +27,16 @@ module Products.ProductsAPI
                                , repoUrl   :: T.Text
                                } deriving (Show)
 
-  type ProductsAPI = "products" :> ( ProductsEndpoints
-                                :<|> FeaturesEndpoints
+  type ProductsAPI = "products" :> ProductsEndpoints
+                :<|> "products" :> (
+                                  ProductIDCapture :> FeaturesAPI
+                             :<|> ProductIDCapture :> FeatureAPI
+                             :<|> ProductIDCapture :> DT.DomainTermsAPI
                                    )
 
   type ProductIDCapture = Capture "id" P.ProductID
 
   type ProductsEndpoints = Get '[JSON] [APIProduct]
-
-  type FeaturesEndpoints = ProductIDCapture :> FeaturesAPI
-                      :<|> ProductIDCapture :> FeatureAPI
 
   instance ToJSON APIProduct where
     toJSON (APIProduct prodID prodName prodRepoUrl) =
@@ -57,6 +58,7 @@ module Products.ProductsAPI
   productsServer = products
               :<|> productsFeatures
               :<|> productsFeature
+              :<|> DT.productsDomainTerms
 
   productsAPI :: Proxy ProductsAPI
   productsAPI = Proxy

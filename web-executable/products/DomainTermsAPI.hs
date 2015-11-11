@@ -23,16 +23,8 @@ module Products.DomainTermsAPI where
                                      , description  :: T.Text
                                      } deriving (Show)
 
-  type DomainTermsAPI = "products"
-                    :> Capture "id" P.ProductID
-                    :> "domain-terms"
-                    :> Get '[JSON] [APIDomainTerm]
-
-  domainTermsServer :: Server DomainTermsAPI
-  domainTermsServer = productsDomainTerms
-
-  domainTermsAPI :: Proxy DomainTermsAPI
-  domainTermsAPI = Proxy
+  type DomainTermsAPI = "domain-terms"
+                        :> Get '[JSON] [APIDomainTerm]
 
   instance ToJSON APIDomainTerm where
     toJSON (APIDomainTerm termID prodID termTitle termDescription) =
