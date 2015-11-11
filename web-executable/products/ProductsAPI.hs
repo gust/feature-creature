@@ -26,15 +26,20 @@ module Products.ProductsAPI
                                , repoUrl   :: T.Text
                                } deriving (Show)
 
-  type ProductsAPI = "products" :> ( Get '[JSON] [APIProduct]
-                                :<|> Capture "id" P.ProductID :> FeaturesAPI
-                                :<|> Capture "id" P.ProductID :> FeatureAPI
+  type ProductsAPI = "products" :> ( ProductsEndpoints
+                                :<|> FeaturesEndpoints
                                    )
 
+  type ProductIDCapture = Capture "id" P.ProductID
+
+  type ProductsEndpoints = Get '[JSON] [APIProduct]
+
+  type FeaturesEndpoints = ProductIDCapture :> FeaturesAPI
+                      :<|> ProductIDCapture :> FeatureAPI
 
   instance ToJSON APIProduct where
     toJSON (APIProduct prodID prodName prodRepoUrl) =
-      object [ "id" .= prodID
+      object [ "id"      .= prodID
              , "name"    .= prodName
              , "repoUrl" .= prodRepoUrl
              ]
