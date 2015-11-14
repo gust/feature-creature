@@ -6,6 +6,7 @@
 {-# LANGUAGE TypeOperators #-}
 
 module Products.DomainTermsAPI where
+  import Control.Monad (mzero)
   import Control.Monad.IO.Class (liftIO)
   import Data.Aeson
   import Data.Int (Int64)
@@ -17,23 +18,35 @@ module Products.DomainTermsAPI where
   import qualified Servant.Docs     as SD
   import ServantUtilities (Handler)
 
+  type DomainTermsAPI       = "domain-terms" :> Get '[JSON] [APIDomainTerm]
+  type CreateDomainTermsAPI = "domain-terms" :> ReqBody '[JSON] APIDomainTerm :> Post '[JSON] APIDomainTerm
+
   data APIDomainTerm = APIDomainTerm { domainTermID :: Int64
                                      , productID    :: ProductId
                                      , title        :: T.Text
                                      , description  :: T.Text
                                      } deriving (Show)
 
-  type DomainTermsAPI       = "domain-terms" :> Get '[JSON] [APIDomainTerm]
-  type CreateDomainTermsAPI = "domain-terms" :> ReqBody '[JSON] DomainTerm :> Post '[JSON] APIDomainTerm
+  instance ToJSON APIDomainTerm where
+    toJSON (APIDomainTerm termID prodID termTitle termDescription) =
+      object [ "id"          .= termID
+             , "productID"   .= prodID
+             , "title"       .= termTitle
+             , "description" .= termDescription
+             ]
 
-  createDomainTerm :: P.ProductID -> DomainTerm -> Handler APIDomainTerm
-  createDomainTerm _ term = do
-    termID <- liftIO $ DT.createDomainTerm term
-    return $ APIDomainTerm { domainTermID = termID
-                           , productID    = domainTermProductId term
-                           , title        = domainTermTitle term
-                           , description  = domainTermDescription term
-                           }
+  instance FromJSON APIDomainTerm where
+    parseJSON (Object v) = APIDomainTerm <$>
+                          v .: "id" <*>
+                          v .: "productID" <*>
+                          v .: "title" <*>
+                          v .: "description"
+    parseJSON _          = mzero
+
+  createDomainTerm :: P.ProductID -> APIDomainTerm -> Handler APIDomainTerm
+  createDomainTerm _ apiDomainTerm@(APIDomainTerm _ pID t d) = do
+    _ <- liftIO $ DT.createDomainTerm (DT.DomainTerm pID t d)
+    return $ apiDomainTerm
 
   productsDomainTerms :: P.ProductID -> Handler [APIDomainTerm]
   productsDomainTerms prodID = do
@@ -49,13 +62,7 @@ module Products.DomainTermsAPI where
                         , description  = domainTermDescription dbTerm
                         }
 
-  instance ToJSON APIDomainTerm where
-    toJSON (APIDomainTerm termID prodID termTitle termDescription) =
-      object [ "id"          .= termID
-             , "productID"   .= prodID
-             , "title"       .= termTitle
-             , "description" .= termDescription
-             ]
+  -- API Documentation Instance Definitions --
 
   instance SD.ToSample [APIDomainTerm] [APIDomainTerm] where
     toSample _ = Just $
@@ -64,7 +71,7 @@ module Products.DomainTermsAPI where
       ]
 
   instance SD.ToSample APIDomainTerm APIDomainTerm where
-    toSample _ = Just $ APIDomainTerm 1 (toKey (10::Integer)) "mutation" "The genetic alteration granting monster powers"
+    toSample _ = Just $ sampleAPIDomainTerm
 
-  instance SD.ToSample Models.DomainTerm Models.DomainTerm where
-    toSample _ = Just $ Models.DomainTerm (toKey (10::Integer)) "mutation" "The genetic alteration granting monster powers"
+  sampleAPIDomainTerm :: APIDomainTerm
+  sampleAPIDomainTerm = APIDomainTerm 1 (toKey (10::Integer)) "mutation" "The genetic alteration granting monster powers"

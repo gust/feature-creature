@@ -18,14 +18,31 @@ module Products.UserRolesAPI where
   import ServantUtilities (Handler)
   import qualified UserRoles.UserRole as UR
 
+
+  type UserRolesAPI       = "user-roles" :> Get '[JSON] [APIUserRole]
+  type CreateUserRolesAPI = "user-roles" :> ReqBody '[JSON] APIUserRole :> Post '[JSON] APIUserRole
+
   data APIUserRole = APIUserRole { userRoleID   :: Int64
                                  , productID    :: ProductId
                                  , title        :: T.Text
                                  , description  :: T.Text
                                  } deriving (Show)
 
-  type UserRolesAPI       = "user-roles" :> Get '[JSON] [APIUserRole]
-  type CreateUserRolesAPI = "user-roles" :> ReqBody '[JSON] APIUserRole :> Post '[JSON] APIUserRole
+  instance ToJSON APIUserRole where
+    toJSON (APIUserRole termID prodID termTitle termDescription) =
+      object [ "id"          .= termID
+             , "productID"   .= prodID
+             , "title"       .= termTitle
+             , "description" .= termDescription
+             ]
+
+  instance FromJSON APIUserRole where
+    parseJSON (Object v) = APIUserRole <$>
+                          v .: "id" <*>
+                          v .: "productID" <*>
+                          v .: "title" <*>
+                          v .: "description"
+    parseJSON _          = mzero
 
   createUserRole :: P.ProductID -> APIUserRole -> Handler APIUserRole
   createUserRole _ apiUserRole@(APIUserRole _ pID t d) = do
@@ -46,21 +63,7 @@ module Products.UserRolesAPI where
                       , description  = userRoleDescription dbTerm
                       }
 
-  instance ToJSON APIUserRole where
-    toJSON (APIUserRole termID prodID termTitle termDescription) =
-      object [ "id"          .= termID
-             , "productID"   .= prodID
-             , "title"       .= termTitle
-             , "description" .= termDescription
-             ]
-
-  instance FromJSON APIUserRole where
-    parseJSON (Object v) = APIUserRole <$>
-                          v .: "id" <*>
-                          v .: "productID" <*>
-                          v .: "title" <*>
-                          v .: "description"
-    parseJSON _          = mzero
+  -- API Documentation Instance Definitions --
 
   instance SD.ToSample [APIUserRole] [APIUserRole] where
     toSample _ = Just $ [ sampleMonsterMaker, sampleMonsterHunter ]
