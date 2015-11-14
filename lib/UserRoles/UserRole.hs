@@ -1,4 +1,11 @@
-module UserRoles.UserRole(findByProductId, createUserRole, findUserRoles, UserRole(..)) where
+module UserRoles.UserRole
+  ( findByProductId
+  , createUserRole
+  , findUserRoles
+  , toUserRoleID
+  , toUserRole
+  , UserRole(..)
+  ) where
   import Database (runDB)
   import Data.Int (Int64)
   import qualified Database.Persist.Postgresql as DB
@@ -12,3 +19,9 @@ module UserRoles.UserRole(findByProductId, createUserRole, findUserRoles, UserRo
 
   findByProductId :: ProductId -> IO [DB.Entity UserRole]
   findByProductId productId = runDB $ DB.selectList [UserRoleProductId DB.==. productId] []
+
+  toUserRoleID :: DB.Entity UserRole -> Int64
+  toUserRoleID dbEntity = DB.fromSqlKey . DB.entityKey $ dbEntity
+
+  toUserRole :: DB.Entity UserRole -> UserRole
+  toUserRole dbEntity = DB.entityVal dbEntity

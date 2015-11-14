@@ -1,0 +1,83 @@
+{-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeOperators         #-}
+
+module Products.UserRolesAPI where
+  import Control.Monad (mzero)
+  import Control.Monad.IO.Class (liftIO)
+  import Data.Aeson
+  import Data.Int (Int64)
+  import qualified Data.Text          as T
+  import Models
+  import qualified Products.Product   as P
+  import Servant
+  import qualified Servant.Docs       as SD
+  import ServantUtilities (Handler)
+  import qualified UserRoles.UserRole as UR
+
+  data APIUserRole = APIUserRole { userRoleID   :: Int64
+                                 , productID    :: ProductId
+                                 , title        :: T.Text
+                                 , description  :: T.Text
+                                 } deriving (Show)
+
+  type UserRolesAPI       = "user-roles" :> Get '[JSON] [APIUserRole]
+  type CreateUserRolesAPI = "user-roles" :> ReqBody '[JSON] APIUserRole :> Post '[JSON] APIUserRole
+
+  createUserRole :: P.ProductID -> APIUserRole -> Handler APIUserRole
+  createUserRole _ apiUserRole@(APIUserRole _ pID t d) = do
+    _ <- liftIO $ UR.createUserRole (UserRole pID t d)
+    return $ apiUserRole
+
+  productsUserRoles :: P.ProductID -> Handler [APIUserRole]
+  productsUserRoles prodID = do
+    userRoles <- liftIO $ UR.findByProductId $ toKey prodID
+    return $ map toUserRole userRoles
+      where
+        toUserRole dbUserRole = do
+          let dbTerm   = UR.toUserRole dbUserRole
+          let dbTermID = UR.toUserRoleID dbUserRole
+          APIUserRole { userRoleID   = dbTermID
+                      , productID    = userRoleProductId dbTerm
+                      , title        = userRoleTitle dbTerm
+                      , description  = userRoleDescription dbTerm
+                      }
+
+  instance ToJSON APIUserRole where
+    toJSON (APIUserRole termID prodID termTitle termDescription) =
+      object [ "id"          .= termID
+             , "productID"   .= prodID
+             , "title"       .= termTitle
+             , "description" .= termDescription
+             ]
+
+  instance FromJSON APIUserRole where
+    parseJSON (Object v) = APIUserRole <$>
+                          v .: "id" <*>
+                          v .: "productID" <*>
+                          v .: "title" <*>
+                          v .: "description"
+    parseJSON _          = mzero
+
+  instance SD.ToSample [APIUserRole] [APIUserRole] where
+    toSample _ = Just $ [ sampleMonsterMaker, sampleMonsterHunter ]
+
+  instance SD.ToSample APIUserRole APIUserRole where
+    toSample _ = Just $ sampleMonsterHunter
+
+  sampleMonsterMaker :: APIUserRole
+  sampleMonsterMaker = APIUserRole { userRoleID  = 1
+                                   , productID   = (toKey (10::Integer))
+                                   , title       = "monster maker"
+                                   , description = "A scientist responsible for creating abominable life forms."
+                                   }
+
+  sampleMonsterHunter :: APIUserRole
+  sampleMonsterHunter = APIUserRole { userRoleID  = 2
+                                    , productID   = (toKey (10::Integer))
+                                    , title       = "monster hunter"
+                                    , description = "A hunter specializing in the elimination of monsters."
+                                    }

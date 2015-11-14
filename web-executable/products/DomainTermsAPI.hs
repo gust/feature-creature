@@ -27,12 +27,12 @@ module Products.DomainTermsAPI where
   type CreateDomainTermsAPI = "domain-terms" :> ReqBody '[JSON] DomainTerm :> Post '[JSON] APIDomainTerm
 
   createDomainTerm :: P.ProductID -> DomainTerm -> Handler APIDomainTerm
-  createDomainTerm prodID term = do
+  createDomainTerm _ term = do
     termID <- liftIO $ DT.createDomainTerm term
     return $ APIDomainTerm { domainTermID = termID
-                           , productID = (toKey prodID)
-                           , title = domainTermTitle term
-                           , description = domainTermDescription term
+                           , productID    = domainTermProductId term
+                           , title        = domainTermTitle term
+                           , description  = domainTermDescription term
                            }
 
   productsDomainTerms :: P.ProductID -> Handler [APIDomainTerm]
@@ -59,12 +59,12 @@ module Products.DomainTermsAPI where
 
   instance SD.ToSample [APIDomainTerm] [APIDomainTerm] where
     toSample _ = Just $
-      [ APIDomainTerm 1 (toKey 10) "mutation" "The genetic alteration granting monster powers"
-      , APIDomainTerm 2 (toKey 10) "vampirism" "The disease affecting Vampires"
+      [ APIDomainTerm 1 (toKey (10::Integer)) "mutation" "The genetic alteration granting monster powers"
+      , APIDomainTerm 2 (toKey (10::Integer)) "vampirism" "The disease affecting Vampires"
       ]
 
   instance SD.ToSample APIDomainTerm APIDomainTerm where
-    toSample _ = Just $ APIDomainTerm 1 (toKey 10) "mutation" "The genetic alteration granting monster powers"
+    toSample _ = Just $ APIDomainTerm 1 (toKey (10::Integer)) "mutation" "The genetic alteration granting monster powers"
 
   instance SD.ToSample Models.DomainTerm Models.DomainTerm where
-    toSample _ = Just $ Models.DomainTerm (toKey 10) "mutation" "The genetic alteration granting monster powers"
+    toSample _ = Just $ Models.DomainTerm (toKey (10::Integer)) "mutation" "The genetic alteration granting monster powers"
