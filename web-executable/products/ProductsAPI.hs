@@ -23,11 +23,6 @@ module Products.ProductsAPI
   import ServantUtilities (Handler)
   import qualified Products.UserRolesAPI   as UR
 
-  data APIProduct = APIProduct { productID :: P.ProductID
-                               , name      :: T.Text
-                               , repoUrl   :: T.Text
-                               } deriving (Show)
-
   type ProductsAPI = "products" :> ProductsEndpoints
                 :<|> "products" :> (
                                      ProductIDCapture :> FeaturesAPI
@@ -40,6 +35,18 @@ module Products.ProductsAPI
 
   type ProductsEndpoints = Get '[JSON] [APIProduct]
   type ProductIDCapture = Capture "id" P.ProductID
+
+  data APIProduct = APIProduct { productID :: P.ProductID
+                               , name      :: T.Text
+                               , repoUrl   :: T.Text
+                               } deriving (Show)
+
+  instance ToJSON APIProduct where
+    toJSON (APIProduct prodID prodName prodRepoUrl) =
+      object [ "id"      .= prodID
+             , "name"    .= prodName
+             , "repoUrl" .= prodRepoUrl
+             ]
 
   productsServer :: Server ProductsAPI
   productsServer = products
@@ -65,12 +72,7 @@ module Products.ProductsAPI
                      , name      = productName dbProd
                      , repoUrl   = productRepoUrl dbProd }
 
-  instance ToJSON APIProduct where
-    toJSON (APIProduct prodID prodName prodRepoUrl) =
-      object [ "id"      .= prodID
-             , "name"    .= prodName
-             , "repoUrl" .= prodRepoUrl
-             ]
+  -- API Documentation Instance Definitions --
 
   instance SD.ToSample [APIProduct] [APIProduct] where
     toSample _ = Just $ [ sampleMonsterProduct, sampleCreatureProduct ]
