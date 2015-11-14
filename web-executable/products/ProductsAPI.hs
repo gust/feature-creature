@@ -28,30 +28,15 @@ module Products.ProductsAPI
                                } deriving (Show)
 
   type ProductsAPI = "products" :> ProductsEndpoints
-                :<|> "products" :> ProductIDCapture :> FeaturesAPI
-                              :<|> ProductIDCapture :> FeatureAPI
-                              :<|> ProductIDCapture :> DT.DomainTermsAPI
-                              :<|> ProductIDCapture :> DT.CreateDomainTermsAPI
-
-  type ProductIDCapture = Capture "id" P.ProductID
+                :<|> "products" :> (
+                                     ProductIDCapture :> FeaturesAPI
+                                :<|> ProductIDCapture :> FeatureAPI
+                                :<|> ProductIDCapture :> DT.DomainTermsAPI
+                                :<|> ProductIDCapture :> DT.CreateDomainTermsAPI
+                                   )
 
   type ProductsEndpoints = Get '[JSON] [APIProduct]
-
-  instance ToJSON APIProduct where
-    toJSON (APIProduct prodID prodName prodRepoUrl) =
-      object [ "id"      .= prodID
-             , "name"    .= prodName
-             , "repoUrl" .= prodRepoUrl
-             ]
-
-  instance SD.ToSample [APIProduct] [APIProduct] where
-    toSample _ = Just $
-      [ APIProduct 1 "monsters" "http://monsters.com/repo.git"
-      , APIProduct 2 "creatures" "ssh://creatures.com/repo.git"
-      ]
-
-  instance SD.ToCapture (Capture "id" P.ProductID) where
-    toCapture _ = SD.DocCapture "id" "Product id"
+  type ProductIDCapture = Capture "id" P.ProductID
 
   productsServer :: Server ProductsAPI
   productsServer = products
@@ -74,3 +59,19 @@ module Products.ProductsAPI
           APIProduct { productID = dbProdID
                      , name      = productName dbProd
                      , repoUrl   = productRepoUrl dbProd }
+
+  instance ToJSON APIProduct where
+    toJSON (APIProduct prodID prodName prodRepoUrl) =
+      object [ "id"      .= prodID
+             , "name"    .= prodName
+             , "repoUrl" .= prodRepoUrl
+             ]
+
+  instance SD.ToSample [APIProduct] [APIProduct] where
+    toSample _ = Just $
+      [ APIProduct 1 "monsters" "http://monsters.com/repo.git"
+      , APIProduct 2 "creatures" "ssh://creatures.com/repo.git"
+      ]
+
+  instance SD.ToCapture (Capture "id" P.ProductID) where
+    toCapture _ = SD.DocCapture "id" "Product id"

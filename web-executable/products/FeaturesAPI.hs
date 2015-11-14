@@ -29,32 +29,8 @@ module Products.FeaturesAPI
                                }
 
   type FeaturesAPI = "features" :> Get '[JSON] DirectoryTree
-
   type FeatureAPI  = "feature"  :> QueryParam "path" F.FeatureFile
                                 :> Get '[JSON] APIFeature
-
-  instance ToJSON APIFeature where
-    toJSON (APIFeature featID desc) =
-      object [ "featureID"   .= featID
-             , "description" .= desc
-             ]
-
-  instance SD.ToSample APIFeature APIFeature where
-    toSample _ = Just $ APIFeature { featureID = "/features/werewolves/hunting.feature"
-                                   , description = featureFileSample
-                                   }
-
-  instance SD.ToParam (QueryParam "path" F.FeatureFile) where
-    toParam _ = SD.DocQueryParam
-      "path"
-      [ "/features/werewolf/transformation.feature",
-        "/features/swampthing/regeneration.feature"
-      ]
-      "FeatureFile id (relative file path)"
-      SD.Normal
-
-  instance SD.ToSample DirectoryTree DirectoryTree where
-    toSample _ = Just featureDirectoryExample
 
   productsFeatures :: P.ProductID -> Handler DirectoryTree
   productsFeatures prodID = do
@@ -89,6 +65,29 @@ module Products.FeaturesAPI
         Node (FileDescription "shape-shifting.feature" "features/creatures/wolfman/shape-shifting.feature") [],
         Node (FileDescription "animal-instincts.feature" "features/creatures/wolfman/animal-instincts.feature") []
         ]
+
+  instance ToJSON APIFeature where
+    toJSON (APIFeature featID desc) =
+      object [ "featureID"   .= featID
+             , "description" .= desc
+             ]
+
+  instance SD.ToSample APIFeature APIFeature where
+    toSample _ = Just $ APIFeature { featureID = "/features/werewolves/hunting.feature"
+                                   , description = featureFileSample
+                                   }
+
+  instance SD.ToParam (QueryParam "path" F.FeatureFile) where
+    toParam _ = SD.DocQueryParam
+      "path"
+      [ "/features/werewolf/transformation.feature",
+        "/features/swampthing/regeneration.feature"
+      ]
+      "FeatureFile id (relative file path)"
+      SD.Normal
+
+  instance SD.ToSample DirectoryTree DirectoryTree where
+    toSample _ = Just featureDirectoryExample
 
   featureFileSample :: F.Feature
   featureFileSample = concat . (L.intersperse "\n") $ [ "@some-feature-tag"

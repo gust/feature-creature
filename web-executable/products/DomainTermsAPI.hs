@@ -26,26 +26,6 @@ module Products.DomainTermsAPI where
   type DomainTermsAPI       = "domain-terms" :> Get '[JSON] [APIDomainTerm]
   type CreateDomainTermsAPI = "domain-terms" :> ReqBody '[JSON] DomainTerm :> Post '[JSON] APIDomainTerm
 
-  instance ToJSON APIDomainTerm where
-    toJSON (APIDomainTerm termID prodID termTitle termDescription) =
-      object [ "id"          .= termID
-             , "productID"   .= prodID
-             , "title"       .= termTitle
-             , "description" .= termDescription
-             ]
-
-  instance SD.ToSample [APIDomainTerm] [APIDomainTerm] where
-    toSample _ = Just $
-      [ APIDomainTerm 1 (toKey 10) "mutation" "The genetic alteration granting monster powers"
-      , APIDomainTerm 2 (toKey 10) "vampirism" "The disease affecting Vampires"
-      ]
-
-  instance SD.ToSample APIDomainTerm APIDomainTerm where
-    toSample _ = Just $ APIDomainTerm 1 (toKey 10) "mutation" "The genetic alteration granting monster powers"
-
-  instance SD.ToSample Models.DomainTerm Models.DomainTerm where
-    toSample _ = Just $ Models.DomainTerm (toKey 10) "mutation" "The genetic alteration granting monster powers"
-
   createDomainTerm :: P.ProductID -> DomainTerm -> Handler APIDomainTerm
   createDomainTerm prodID term = do
     termID <- liftIO $ DT.createDomainTerm term
@@ -69,3 +49,22 @@ module Products.DomainTermsAPI where
                         , description  = domainTermDescription dbTerm
                         }
 
+  instance ToJSON APIDomainTerm where
+    toJSON (APIDomainTerm termID prodID termTitle termDescription) =
+      object [ "id"          .= termID
+             , "productID"   .= prodID
+             , "title"       .= termTitle
+             , "description" .= termDescription
+             ]
+
+  instance SD.ToSample [APIDomainTerm] [APIDomainTerm] where
+    toSample _ = Just $
+      [ APIDomainTerm 1 (toKey 10) "mutation" "The genetic alteration granting monster powers"
+      , APIDomainTerm 2 (toKey 10) "vampirism" "The disease affecting Vampires"
+      ]
+
+  instance SD.ToSample APIDomainTerm APIDomainTerm where
+    toSample _ = Just $ APIDomainTerm 1 (toKey 10) "mutation" "The genetic alteration granting monster powers"
+
+  instance SD.ToSample Models.DomainTerm Models.DomainTerm where
+    toSample _ = Just $ Models.DomainTerm (toKey 10) "mutation" "The genetic alteration granting monster powers"
