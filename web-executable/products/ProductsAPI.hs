@@ -28,11 +28,10 @@ module Products.ProductsAPI
                                } deriving (Show)
 
   type ProductsAPI = "products" :> ProductsEndpoints
-                :<|> "products" :> (
-                                  ProductIDCapture :> FeaturesAPI
-                             :<|> ProductIDCapture :> FeatureAPI
-                             :<|> ProductIDCapture :> DT.DomainTermsAPI
-                                   )
+                :<|> "products" :> ProductIDCapture :> FeaturesAPI
+                              :<|> ProductIDCapture :> FeatureAPI
+                              :<|> ProductIDCapture :> DT.DomainTermsAPI
+                              :<|> ProductIDCapture :> DT.CreateDomainTermsAPI
 
   type ProductIDCapture = Capture "id" P.ProductID
 
@@ -59,6 +58,7 @@ module Products.ProductsAPI
               :<|> productsFeatures
               :<|> productsFeature
               :<|> DT.productsDomainTerms
+              :<|> DT.createDomainTerm
 
   productsAPI :: Proxy ProductsAPI
   productsAPI = Proxy

@@ -23,8 +23,8 @@ module Products.DomainTermsAPI where
                                      , description  :: T.Text
                                      } deriving (Show)
 
-  type DomainTermsAPI = "domain-terms"
-                        :> Get '[JSON] [APIDomainTerm]
+  type DomainTermsAPI       = "domain-terms" :> Get '[JSON] [APIDomainTerm]
+  type CreateDomainTermsAPI = "domain-terms" :> ReqBody '[JSON] DomainTerm :> Post '[JSON] APIDomainTerm
 
   instance ToJSON APIDomainTerm where
     toJSON (APIDomainTerm termID prodID termTitle termDescription) =
@@ -39,6 +39,21 @@ module Products.DomainTermsAPI where
       [ APIDomainTerm 1 (toKey 10) "mutation" "The genetic alteration granting monster powers"
       , APIDomainTerm 2 (toKey 10) "vampirism" "The disease affecting Vampires"
       ]
+
+  instance SD.ToSample APIDomainTerm APIDomainTerm where
+    toSample _ = Just $ APIDomainTerm 1 (toKey 10) "mutation" "The genetic alteration granting monster powers"
+
+  instance SD.ToSample Models.DomainTerm Models.DomainTerm where
+    toSample _ = Just $ Models.DomainTerm (toKey 10) "mutation" "The genetic alteration granting monster powers"
+
+  createDomainTerm :: P.ProductID -> DomainTerm -> Handler APIDomainTerm
+  createDomainTerm prodID term = do
+    termID <- liftIO $ DT.createDomainTerm term
+    return $ APIDomainTerm { domainTermID = termID
+                           , productID = (toKey prodID)
+                           , title = domainTermTitle term
+                           , description = domainTermDescription term
+                           }
 
   productsDomainTerms :: P.ProductID -> Handler [APIDomainTerm]
   productsDomainTerms prodID = do
