@@ -1,4 +1,12 @@
-module DomainTerms.DomainTerm(findByProductId, createDomainTerm, findDomainTerms, DomainTerm(..)) where
+module DomainTerms.DomainTerm
+  ( findByProductId
+  , createDomainTerm
+  , findDomainTerms
+  , toDomainTermID
+  , toDomainTerm
+  , DomainTerm(..)
+  ) where
+
   import Database (runDB)
   import Data.Int (Int64)
   import qualified Database.Persist.Postgresql as DB
@@ -12,3 +20,9 @@ module DomainTerms.DomainTerm(findByProductId, createDomainTerm, findDomainTerms
 
   findByProductId :: ProductId -> IO [DB.Entity DomainTerm]
   findByProductId productId = runDB $ DB.selectList [DomainTermProductId DB.==. productId] []
+
+  toDomainTermID :: DB.Entity DomainTerm -> Int64
+  toDomainTermID dbEntity = DB.fromSqlKey . DB.entityKey $ dbEntity
+
+  toDomainTerm :: DB.Entity DomainTerm -> DomainTerm
+  toDomainTerm dbEntity = DB.entityVal dbEntity

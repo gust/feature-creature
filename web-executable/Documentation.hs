@@ -6,7 +6,7 @@ module Documentation where
   import Data.Text.Lazy.Encoding      (encodeUtf8)
   import Network.HTTP.Types           (ok200)
   import Network.Wai                  (responseLBS)
-  import ProductsAPI                  (productsAPI)
+  import Products.ProductsAPI         (productsAPI)
   import qualified Servant.Docs as SD
 
   -- not sure of the type here. snippet taken from: http://haskell-servant.github.io/tutorial/docs.html
