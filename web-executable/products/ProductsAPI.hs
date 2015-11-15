@@ -13,19 +13,15 @@ module Products.ProductsAPI
 
   import Control.Monad.IO.Class (liftIO)
   import Data.Aeson
-  import qualified Data.Text        as T
+  import qualified Data.Text               as T
   import Models
   import qualified Products.DomainTermsAPI as DT
   import Products.FeaturesAPI
-  import qualified Products.Product as P
+  import qualified Products.Product        as P
   import Servant
-  import qualified Servant.Docs     as SD
+  import qualified Servant.Docs            as SD
   import ServantUtilities (Handler)
-
-  data APIProduct = APIProduct { productID :: P.ProductID
-                               , name      :: T.Text
-                               , repoUrl   :: T.Text
-                               } deriving (Show)
+  import qualified Products.UserRolesAPI   as UR
 
   type ProductsAPI = "products" :> ProductsEndpoints
                 :<|> "products" :> (
@@ -33,10 +29,24 @@ module Products.ProductsAPI
                                 :<|> ProductIDCapture :> FeatureAPI
                                 :<|> ProductIDCapture :> DT.DomainTermsAPI
                                 :<|> ProductIDCapture :> DT.CreateDomainTermsAPI
+                                :<|> ProductIDCapture :> UR.UserRolesAPI
+                                :<|> ProductIDCapture :> UR.CreateUserRolesAPI
                                    )
 
   type ProductsEndpoints = Get '[JSON] [APIProduct]
   type ProductIDCapture = Capture "id" P.ProductID
+
+  data APIProduct = APIProduct { productID :: P.ProductID
+                               , name      :: T.Text
+                               , repoUrl   :: T.Text
+                               } deriving (Show)
+
+  instance ToJSON APIProduct where
+    toJSON (APIProduct prodID prodName prodRepoUrl) =
+      object [ "id"      .= prodID
+             , "name"    .= prodName
+             , "repoUrl" .= prodRepoUrl
+             ]
 
   productsServer :: Server ProductsAPI
   productsServer = products
@@ -44,6 +54,8 @@ module Products.ProductsAPI
               :<|> productsFeature
               :<|> DT.productsDomainTerms
               :<|> DT.createDomainTerm
+              :<|> UR.productsUserRoles
+              :<|> UR.createUserRole
 
   productsAPI :: Proxy ProductsAPI
   productsAPI = Proxy
@@ -60,18 +72,22 @@ module Products.ProductsAPI
                      , name      = productName dbProd
                      , repoUrl   = productRepoUrl dbProd }
 
-  instance ToJSON APIProduct where
-    toJSON (APIProduct prodID prodName prodRepoUrl) =
-      object [ "id"      .= prodID
-             , "name"    .= prodName
-             , "repoUrl" .= prodRepoUrl
-             ]
+  -- API Documentation Instance Definitions --
 
   instance SD.ToSample [APIProduct] [APIProduct] where
-    toSample _ = Just $
-      [ APIProduct 1 "monsters" "http://monsters.com/repo.git"
-      , APIProduct 2 "creatures" "ssh://creatures.com/repo.git"
-      ]
+    toSample _ = Just $ [ sampleMonsterProduct, sampleCreatureProduct ]
 
   instance SD.ToCapture (Capture "id" P.ProductID) where
     toCapture _ = SD.DocCapture "id" "Product id"
+
+  sampleMonsterProduct :: APIProduct
+  sampleMonsterProduct = APIProduct { productID = 1
+                                    , name      = "monsters"
+                                    , repoUrl   = "http://monsters.com/repo.git"
+                                    }
+
+  sampleCreatureProduct :: APIProduct
+  sampleCreatureProduct = APIProduct { productID = 2
+                                     , name      = "creatures"
+                                     , repoUrl   = "ssh://creatures.com/repo.git"
+                                     }
