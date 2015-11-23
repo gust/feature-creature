@@ -22,7 +22,7 @@ module Products.DomainTermsAPI where
   type CreateDomainTermsAPI = "domain-terms" :> ReqBody '[JSON] APIDomainTerm :> Post '[JSON] APIDomainTerm
 
   data APIDomainTerm = APIDomainTerm { domainTermID :: Maybe Int64
-                                     , productID    :: ProductId
+                                     , productID    :: Maybe ProductId
                                      , title        :: T.Text
                                      , description  :: T.Text
                                      } deriving (Show)
@@ -38,16 +38,16 @@ module Products.DomainTermsAPI where
   instance FromJSON APIDomainTerm where
     parseJSON (Object v) = APIDomainTerm <$>
                           v .:? "id" <*>
-                          v .: "productID" <*>
+                          v .:? "productID" <*>
                           v .: "title" <*>
                           v .: "description"
     parseJSON _          = mzero
 
   createDomainTerm :: P.ProductID -> APIDomainTerm -> Handler APIDomainTerm
-  createDomainTerm _ (APIDomainTerm _ pID t d) = do
-    termID <- liftIO $ DT.createDomainTerm (DT.DomainTerm pID t d)
+  createDomainTerm pID (APIDomainTerm _ _ t d) = do
+    termID <- liftIO $ DT.createDomainTerm (DT.DomainTerm (toKey pID) t d)
     return $ APIDomainTerm { domainTermID = Just termID
-                           , productID    = pID
+                           , productID    = Just (toKey pID)
                            , title        = t
                            , description  = d
                            }
@@ -61,7 +61,7 @@ module Products.DomainTermsAPI where
           let dbTerm   = DT.toDomainTerm dbDomainTerm
           let dbTermID = DT.toDomainTermID dbDomainTerm
           APIDomainTerm { domainTermID = Just dbTermID
-                        , productID    = domainTermProductId dbTerm
+                        , productID    = Just $ domainTermProductId dbTerm
                         , title        = domainTermTitle dbTerm
                         , description  = domainTermDescription dbTerm
                         }
@@ -75,10 +75,10 @@ module Products.DomainTermsAPI where
     toSample _ = Just $ samplePostBody
 
   sampleAPIDomainTerm :: APIDomainTerm
-  sampleAPIDomainTerm = APIDomainTerm (Just 1) (toKey (10::Integer)) "mutation" "The genetic alteration granting monster powers"
+  sampleAPIDomainTerm = APIDomainTerm (Just 1) (Just (toKey (10::Integer))) "mutation" "The genetic alteration granting monster powers"
 
   sampleAPIDomainTerm2 :: APIDomainTerm
-  sampleAPIDomainTerm2 = APIDomainTerm (Just 2) (toKey (10::Integer)) "vampirism" "The disease affecting Vampires"
+  sampleAPIDomainTerm2 = APIDomainTerm (Just 2) (Just (toKey (10::Integer))) "vampirism" "The disease affecting Vampires"
 
   samplePostBody :: APIDomainTerm
-  samplePostBody = APIDomainTerm (Just 2) (toKey (10::Integer)) "monsterism" "The quality of being a monster"
+  samplePostBody = APIDomainTerm (Just 2) (Just (toKey (10::Integer))) "monsterism" "The quality of being a monster"

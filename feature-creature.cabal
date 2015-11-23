@@ -59,6 +59,7 @@ executable feature-creature-web
                     , http-client
                     , http-types
                     , mtl
+                    , persistent-postgresql
                     , servant
                     , servant-client
                     , servant-docs

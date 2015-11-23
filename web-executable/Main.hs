@@ -22,7 +22,11 @@ module Main where
   api = Proxy
 
   addResponseHeaders :: Middleware
-  addResponseHeaders = addHeaders [("Access-Control-Allow-Origin", "*")]
+  addResponseHeaders = addHeaders [ ("Access-Control-Allow-Origin", "*")
+                                  , ("Access-Control-Request-Method", "*")
+                                  , ("Access-Control-Allow-Headers", "Content-Type")
+                                  , ("Origin", "*")
+                                  ]
 
   app :: Application
   app = addResponseHeaders $ serve api server
