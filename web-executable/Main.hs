@@ -9,7 +9,8 @@ module Main where
   import Network.Wai.Middleware.AddHeaders
   import Servant
 
-  type FeatureCreatureAPI = ProductsAPI :<|> Raw
+  type FeatureCreatureAPI = ProductsAPI
+                       :<|> Docs.DocumentationAPI
 
   main :: IO ()
   main = run 8081 app

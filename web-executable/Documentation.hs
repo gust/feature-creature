@@ -1,4 +1,6 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Documentation where
   import Data.ByteString.Lazy         (ByteString)
@@ -7,7 +9,10 @@ module Documentation where
   import Network.HTTP.Types           (ok200)
   import Network.Wai                  (responseLBS)
   import Products.ProductsAPI         (productsAPI)
+  import Servant
   import qualified Servant.Docs as SD
+
+  type DocumentationAPI = "docs" :> Raw
 
   -- not sure of the type here. snippet taken from: http://haskell-servant.github.io/tutorial/docs.html
   documentationServer _ respond = respond $ responseLBS ok200 [plain] docsBS
