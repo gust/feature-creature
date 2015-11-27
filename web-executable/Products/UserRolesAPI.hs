@@ -23,7 +23,7 @@ module Products.UserRolesAPI where
   type CreateUserRolesAPI = "user-roles" :> ReqBody '[JSON] APIUserRole :> Post '[JSON] APIUserRole
 
   data APIUserRole = APIUserRole { userRoleID   :: Maybe Int64
-                                 , productID    :: ProductId
+                                 , productID    :: Maybe ProductId
                                  , title        :: T.Text
                                  , description  :: T.Text
                                  } deriving (Show)
@@ -39,16 +39,16 @@ module Products.UserRolesAPI where
   instance FromJSON APIUserRole where
     parseJSON (Object v) = APIUserRole <$>
                           v .:? "id" <*>
-                          v .: "productID" <*>
+                          v .:? "productID" <*>
                           v .: "title" <*>
                           v .: "description"
     parseJSON _          = mzero
 
   createUserRole :: P.ProductID -> APIUserRole -> Handler APIUserRole
-  createUserRole _ (APIUserRole _ pID t d) = do
-    roleID <- liftIO $ UR.createUserRole (UserRole pID t d)
+  createUserRole pID (APIUserRole _ _ t d) = do
+    roleID <- liftIO $ UR.createUserRole (UserRole (toKey pID) t d)
     return $ APIUserRole { userRoleID  = Just roleID
-                         , productID   = pID
+                         , productID   = Just (toKey pID)
                          , title       = t
                          , description = d
                          }
@@ -62,7 +62,7 @@ module Products.UserRolesAPI where
           let dbTerm   = UR.toUserRole dbUserRole
           let dbTermID = UR.toUserRoleID dbUserRole
           APIUserRole { userRoleID   = Just dbTermID
-                      , productID    = userRoleProductId dbTerm
+                      , productID    = Just $ userRoleProductId dbTerm
                       , title        = userRoleTitle dbTerm
                       , description  = userRoleDescription dbTerm
                       }
@@ -77,21 +77,21 @@ module Products.UserRolesAPI where
 
   sampleMonsterMaker :: APIUserRole
   sampleMonsterMaker = APIUserRole { userRoleID  = Just 1
-                                   , productID   = (toKey (10::Integer))
+                                   , productID   = Just (toKey (10::Integer))
                                    , title       = "monster maker"
                                    , description = "A scientist responsible for creating abominable life forms."
                                    }
 
   sampleMonsterHunter :: APIUserRole
   sampleMonsterHunter = APIUserRole { userRoleID  = Just 2
-                                    , productID   = (toKey (10::Integer))
+                                    , productID   = Just (toKey (10::Integer))
                                     , title       = "monster hunter"
                                     , description = "A hunter specializing in the elimination of monsters."
                                     }
 
   samplePostBody :: APIUserRole
   samplePostBody = APIUserRole { userRoleID  = Nothing
-                               , productID   = (toKey (10::Integer))
+                               , productID   = Just (toKey (10::Integer))
                                , title       = "monster magnet"
                                , description = "A person or object which attracts monsters"
                                }
