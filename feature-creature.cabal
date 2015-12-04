@@ -28,6 +28,7 @@ library
   build-depends:     aeson
                      , base >= 4.8.1.0 && < 4.8.3.0
                      , bytestring
+                     , bloodhound
                      , containers
                      , directory
                      , process
