@@ -19,6 +19,7 @@ library
                      , Data.DirectoryTree
                      , Database
                      , Features.Feature
+                     , Features.SearchableFeature
                      , Models
                      , Products.Product
                      , UserRoles.UserRole
@@ -31,6 +32,7 @@ library
                      , bloodhound
                      , containers
                      , directory
+                     , http-client
                      , process
                      , monad-logger
                      , mtl
