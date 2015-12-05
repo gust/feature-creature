@@ -71,6 +71,14 @@ __API__
 - Start the web server `dist/build/feature-creature-web/feature-creature-web`
 - View available endpoints `curl http://localhost:8081/docs` or visit the [API wiki page](https://github.com/gust/feature-creature/wiki/API-Documentation)
 
+__Quick Startup__
+Executing the following command starts all application services
+in background processes
+```
+source ./script/development/start-all-servers.sh
+```
+Once started, `http://localhost:8000/main.html` should now be available
+
 ---
 
 ## Contributing
