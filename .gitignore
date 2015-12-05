@@ -1,3 +1,4 @@
+.app-data
 dist
 cabal-dev
 *.o

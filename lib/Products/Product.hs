@@ -23,7 +23,7 @@ module Products.Product
   type ProductID = Int64
 
   productDir :: ProductID -> IO FilePath
-  productDir prodID = (++ productDirectory) <$> Cfg.gitRepositoryStorePath
+  productDir prodID = (++ "/" ++ productDirectory) <$> Cfg.gitRepositoryStorePath
     where
       productDirectory = "products/" ++ (show prodID)
 
