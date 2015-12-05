@@ -73,14 +73,13 @@ module Products.ProductsAPI
   createProduct :: APIProduct -> Handler APIProduct
   createProduct (APIProduct _ prodName prodRepoUrl) = do
     let newProduct = P.Product prodName prodRepoUrl
-    prodID <- liftIO $ P.createProduct newProduct
-    result <- liftIO $ runExceptT (P.updateRepo newProduct prodID)
+    result <- liftIO $ runExceptT $ P.createProduct newProduct
     case result of
       Left err ->
         -- In the case where the repo cannot be retrieved,
         -- It's probably a good idea to rollback the Product creation here.
         left $ err503 { errBody = BS.pack err }
-      Right _ ->
+      Right prodID ->
         return $ APIProduct { productID = Just prodID
                             , name      = prodName
                             , repoUrl   = prodRepoUrl

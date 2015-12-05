@@ -1,4 +1,4 @@
-module Products.Product 
+module Products.Product
   ( Product(Product)
   , ProductID
   , createProduct
@@ -22,21 +22,25 @@ module Products.Product
 
   type ProductID = Int64
 
-  productDir :: ProductID -> IO FilePath
-  productDir prodID = (++ "/" ++ productDirectory) <$> Cfg.gitRepositoryStorePath
-    where
-      productDirectory = "products/" ++ (show prodID)
+  createProduct :: Product -> WithErr ProductID
+  createProduct p = do
+    prodID <- (liftIO $ createProduct' p)
+    updateRepo p prodID >> (return prodID)
 
-  productRepositoryDir :: ProductID -> IO FilePath
-  productRepositoryDir prodID = (++ "/repo") <$> (productDir prodID)
+  createProduct' :: Product -> IO ProductID
+  createProduct' p = do
+    newProduct <- runDB $ DB.insert p
+    return $ DB.fromSqlKey newProduct
+
+  findProducts :: IO [DB.Entity Product]
+  findProducts = do
+    allProducts <- runDB $ DB.selectList ([] :: [DB.Filter Product]) []
+    return $ allProducts
 
   updateRepo :: Product -> ProductID -> WithErr String
   updateRepo prod prodID = do
     prodRepoPath <- liftIO $ productRepositoryDir prodID
     (liftIO $ createRequiredDirectories prodID) >> updateGitRepo prodRepoPath (productRepoUrl prod)
-
-  createRequiredDirectories :: ProductID -> IO ()
-  createRequiredDirectories prodID = productDir prodID >>= createDirectoryIfMissing True
 
   updateGitRepo :: FilePath -> T.Text -> WithErr String
   updateGitRepo repoPath gitUrl = do
@@ -45,18 +49,24 @@ module Products.Product
       True  -> Git.pull repoPath
       False -> Git.clone repoPath gitUrl
 
-  findProducts :: IO [DB.Entity Product]
-  findProducts = do
-    allProducts <- runDB $ DB.selectList ([] :: [DB.Filter Product]) []
-    return $ allProducts
+  productDir :: ProductID -> IO FilePath
+  productDir prodID =
+    (++ productDirectory) <$> Cfg.gitRepositoryStorePath
+    where
+      productDirectory = "/products/" ++ (show prodID)
+
+  productRepositoryDir :: ProductID -> IO FilePath
+  productRepositoryDir prodID =
+    (++ "/repo") <$> (productDir prodID)
+
+  createRequiredDirectories :: ProductID -> IO ()
+  createRequiredDirectories prodID =
+    productDir prodID >>= createDirectoryIfMissing True
 
   toProductID :: DB.Entity Product -> ProductID
-  toProductID dbEntity = DB.fromSqlKey . DB.entityKey $ dbEntity
+  toProductID dbEntity =
+    DB.fromSqlKey . DB.entityKey $ dbEntity
 
   toProduct :: DB.Entity Product -> Product
-  toProduct dbEntity = DB.entityVal dbEntity
-
-  createProduct :: Product -> IO ProductID
-  createProduct p = do
-    newProduct <- runDB $ DB.insert p
-    return $ DB.fromSqlKey newProduct
+  toProduct dbEntity =
+    DB.entityVal dbEntity
