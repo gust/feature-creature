@@ -6,6 +6,7 @@ module Features.SearchableFeature where
   import Database.Bloodhound.Types as BHTypes
   import Data.Aeson
   import Data.Text (Text)
+  import qualified Data.Vector as V
   import GHC.Generics (Generic)
   import Network.HTTP.Client
 
@@ -23,11 +24,23 @@ module Features.SearchableFeature where
                       , featureText = "Given blah When blah Then more blah"
                       }
 
+  indexFeatures :: [SearchableFeature] -> IO BHTypes.Reply
+  indexFeatures searchableFeatures =
+    let indicies = map createBulkIndex searchableFeatures
+        stream = V.fromList indicies :: V.Vector BulkOperation
+    in
+      withBH' $ bulk stream
+    where
+      createBulkIndex f =
+        BulkIndex
+          testIndex
+          testMapping
+          (DocId (featurePath f))
+          (toJSON f)
+
   indexFeature :: SearchableFeature -> IO BHTypes.Reply
   indexFeature searchableFeature =
-    withBH' $ indexDocument testIndex testMapping defaultIndexDocumentSettings searchableFeature (DocId "1")
-    where
-      testMapping = MappingName "feature"
+    withBH' $ indexDocument testIndex testMapping defaultIndexDocumentSettings searchableFeature (DocId (featurePath searchableFeature))
 
   searchFeatures :: Text -> IO BHTypes.Reply
   searchFeatures queryStr =
@@ -40,6 +53,9 @@ module Features.SearchableFeature where
       query = QueryMatchQuery $ mkMatchQuery (FieldName "featureText") (QueryString queryStr)
 
   withBH' = withBH defaultManagerSettings testServer
+
+  testMapping :: MappingName
+  testMapping = MappingName "feature"
 
   testIndex :: IndexName
   testIndex = IndexName "feature-creature"

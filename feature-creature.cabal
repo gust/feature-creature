@@ -43,6 +43,7 @@ library
                    , text
                    , time
                    , transformers
+                   , vector
 
   ghc-options:       -Wall
                      -fwarn-unused-matches

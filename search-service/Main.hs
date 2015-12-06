@@ -13,6 +13,7 @@ import System.Environment (getEnv)
 main :: IO ()
 main = do
   esUrl              <- getEnv "FC_ELASTIC_SEARCH_URL"
+  projectsBaseDir    <- getEnv "FC_SERVER_PROJECT_ROOT"
   featureFiles       <- runExceptT $ F.findFeatureFiles "/Users/toddmohney/workspace/feature-creature/.app-data/products/39/repo"
 
   let config = Config esUrl
@@ -20,23 +21,19 @@ main = do
     Left errorStr ->
       putStrLn errorStr
     Right features -> do
-      searchableFeatures <- sequence $ buildSearchableFeatures features
-      replies <- sequence $ map indexFeature searchableFeatures
+      searchableFeatures <- sequence $ buildSearchableFeatures projectsBaseDir features
+      replies <- SF.indexFeatures searchableFeatures
       putStrLn $ foldr (\x acc -> acc ++ "\n" ++ (show x)) "" replies
 
-indexFeatures :: FilePath -> IO ()
-indexFeatures rootPath = undefined
-  {- featureFiles <- findAllFeatureFiles rootPath -}
-
-buildSearchableFeatures :: [FilePath] -> [IO SearchableFeature]
-buildSearchableFeatures filePaths =
-  let fileDetails = map getFileConetnts filePaths
+buildSearchableFeatures :: FilePath -> [FilePath] -> [IO SearchableFeature]
+buildSearchableFeatures basePath filePaths =
+  let fileDetails = map (getFileConetnts basePath) filePaths
   in
     map (fmap buildSearchableFeature) fileDetails
 
-getFileConetnts :: FilePath -> IO (FilePath, String)
-getFileConetnts filePath = do
-  let fullFilePath = "/Users/toddmohney/workspace/feature-creature/.app-data/products/39/repo" ++ filePath
+getFileConetnts :: FilePath -> FilePath -> IO (FilePath, String)
+getFileConetnts basePath filePath = do
+  let fullFilePath = basePath ++ "/.app-data/products/39/repo" ++ filePath
   fileContents <- readFile fullFilePath
   return (filePath, fileContents)
 
