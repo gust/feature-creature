@@ -3,6 +3,7 @@
 
 module Features.SearchableFeature where
   import Database.Bloodhound
+  import Database.Bloodhound.Types as BHTypes
   import Data.Aeson
   import Data.Text (Text)
   import GHC.Generics (Generic)
@@ -10,7 +11,7 @@ module Features.SearchableFeature where
 
   data SearchableFeature =
     SearchableFeature { featurePath :: Text
-                      , featureText :: Maybe Text
+                      , featureText :: Text
                       } deriving (Show, Generic)
 
   instance ToJSON   SearchableFeature
@@ -19,14 +20,16 @@ module Features.SearchableFeature where
   sampleSearchableFeature :: SearchableFeature
   sampleSearchableFeature =
     SearchableFeature { featurePath = "/some/cool/path"
-                      , featureText = Just "Given blah When blah Then more blah"
+                      , featureText = "Given blah When blah Then more blah"
                       }
 
+  indexFeature :: SearchableFeature -> IO BHTypes.Reply
   indexFeature searchableFeature =
     withBH' $ indexDocument testIndex testMapping defaultIndexDocumentSettings searchableFeature (DocId "1")
     where
       testMapping = MappingName "feature"
 
+  searchFeatures :: Text -> IO BHTypes.Reply
   searchFeatures queryStr =
     withBH' $ searchByIndex testIndex search
     where
@@ -38,6 +41,8 @@ module Features.SearchableFeature where
 
   withBH' = withBH defaultManagerSettings testServer
 
+  testIndex :: IndexName
   testIndex = IndexName "feature-creature"
 
+  testServer :: Server
   testServer = Server "http://localhost:9200"

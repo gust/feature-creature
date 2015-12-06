@@ -6,7 +6,6 @@ module Products.Product
   , productRepositoryDir
   , toProduct
   , toProductID
-  , updateRepo
   ) where
 
   import CommonCreatures (WithErr)
