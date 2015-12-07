@@ -12,11 +12,16 @@ data AppConfig =
             , featureFilePath  :: String
             }
 
+type ConfigReader a = AppConfig -> a
+
 main :: IO ()
 main = do
   esUrl         <- getEnv "FC_ELASTIC_SEARCH_URL"
   dataFilesPath <- getEnv "FC_DATA_FILES_PATH"
-  indexFeatures (AppConfig esUrl (dataFilesPath ++ "/products/39/repo"))
+  indexFeaturesTS (AppConfig esUrl (dataFilesPath ++ "/products/39/repo"))
+
+indexFeaturesTS :: ConfigReader (IO ())
+indexFeaturesTS = indexFeatures
 
 indexFeatures :: AppConfig -> IO ()
 indexFeatures appConfig = do
@@ -24,19 +29,20 @@ indexFeatures appConfig = do
   case featureFiles of
     Left errorStr ->
       putStrLn errorStr
+
     Right features -> do
-      searchableFeatures <- sequence $ buildSearchableFeatures appConfig features
-      replies <- SF.indexFeatures searchableFeatures
+      searchableFeatures <- sequence $ buildSearchableFeatures features appConfig
+      replies            <- SF.indexFeatures searchableFeatures
       putStrLn $ foldr (\x acc -> acc ++ "\n" ++ (show x)) "" replies
 
-buildSearchableFeatures :: AppConfig -> [FilePath] -> [IO SF.SearchableFeature]
-buildSearchableFeatures appConfig filePaths =
-  let fileDetails = map (getFileConetnts appConfig) filePaths
+buildSearchableFeatures :: [FilePath] -> AppConfig -> [IO SF.SearchableFeature]
+buildSearchableFeatures filePaths appConfig =
+  let fileDetails = map ((flip getFileConetnts) appConfig) filePaths
   in
     map (fmap buildSearchableFeature) fileDetails
 
-getFileConetnts :: AppConfig -> FilePath -> IO (FilePath, String)
-getFileConetnts appConfig filePath = do
+getFileConetnts :: FilePath -> AppConfig -> IO (FilePath, String)
+getFileConetnts filePath appConfig = do
   let fullFilePath = (featureFilePath appConfig) ++ filePath
   fileContents <- readFile fullFilePath
   return (filePath, fileContents)
