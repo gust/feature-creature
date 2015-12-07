@@ -12,16 +12,17 @@ data AppConfig =
             , featureFilePath  :: String
             }
 
-type ConfigReader a = AppConfig -> a
+newtype CReader a = CReader { runConfigReader :: AppConfig -> a }
 
 main :: IO ()
 main = do
   esUrl         <- getEnv "FC_ELASTIC_SEARCH_URL"
   dataFilesPath <- getEnv "FC_DATA_FILES_PATH"
-  indexFeaturesTS (AppConfig esUrl (dataFilesPath ++ "/products/39/repo"))
+  let appConfig = (AppConfig esUrl (dataFilesPath ++ "/products/39/repo"))
+  runConfigReader indexFeaturesCR appConfig
 
-indexFeaturesTS :: ConfigReader (IO ())
-indexFeaturesTS = indexFeatures
+indexFeaturesCR :: CReader (IO ())
+indexFeaturesCR = CReader $ (\c -> indexFeatures c)
 
 indexFeatures :: AppConfig -> IO ()
 indexFeatures appConfig = do
