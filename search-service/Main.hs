@@ -14,6 +14,21 @@ data AppConfig =
 
 newtype CReader a = CReader { runConfigReader :: AppConfig -> a }
 
+instance Functor CReader where
+  fmap f cr = CReader $ \c -> f (runConfigReader cr c)
+
+instance Applicative CReader where
+  pure = return
+  (CReader f) <*> (CReader a) = CReader $ \c -> (f c) (a c)
+
+instance Monad CReader where
+  return  = CReader . const
+  a >>= f = CReader $ \c -> let a' = runConfigReader a c
+                                f' = f a'
+                            in runConfigReader f' c
+  {- this is equivalent, but harder to read -}
+  {- a >>= f = CReader $ \c -> runConfigReader (f ((runConfigReader a) c)) c -}
+
 main :: IO ()
 main = do
   esUrl         <- getEnv "FC_ELASTIC_SEARCH_URL"
@@ -21,8 +36,11 @@ main = do
   let appConfig = (AppConfig esUrl (dataFilesPath ++ "/products/39/repo"))
   runConfigReader indexFeaturesCR appConfig
 
+askConfig :: CReader AppConfig
+askConfig = CReader id
+
 indexFeaturesCR :: CReader (IO ())
-indexFeaturesCR = CReader $ (\c -> indexFeatures c)
+indexFeaturesCR = fmap indexFeatures askConfig
 
 indexFeatures :: AppConfig -> IO ()
 indexFeatures appConfig = do
