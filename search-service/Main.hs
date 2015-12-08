@@ -31,10 +31,16 @@ instance Monad CReader where
 
 main :: IO ()
 main = do
+  appConfig <- readConfig
+  runConfigReader indexFeaturesCR appConfig
+
+readConfig :: IO AppConfig
+readConfig = do
   esUrl         <- getEnv "FC_ELASTIC_SEARCH_URL"
   dataFilesPath <- getEnv "FC_DATA_FILES_PATH"
-  let appConfig = (AppConfig esUrl (dataFilesPath ++ "/products/39/repo"))
-  runConfigReader indexFeaturesCR appConfig
+  let baseFilePath = dataFilesPath ++ "/products/39/repo"
+  return $ AppConfig esUrl baseFilePath
+
 
 askConfig :: CReader AppConfig
 askConfig = CReader id
