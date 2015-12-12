@@ -1,6 +1,9 @@
 module Main where
 
 import Control.Monad.Except (runExceptT)
+import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Reader
+import Control.Monad.Trans.Reader (Reader)
 import Data.Text (pack)
 import Data.Traversable (sequence)
 import Features.Feature as F
@@ -11,6 +14,30 @@ data AppConfig =
   AppConfig { elasticSearchUrl :: String
             , featureFilePath  :: String
             }
+
+main :: IO ()
+main = do
+  appConfig <- readConfig
+  runReaderT indexFeaturesRT appConfig
+
+indexFeaturesRT :: ReaderT AppConfig IO ()
+indexFeaturesRT = do
+  basePath     <- reader featureFilePath
+  featureFiles <- liftIO $ runExceptT $ F.findFeatureFiles basePath
+  case featureFiles of
+    Left errorStr ->
+      liftIO $ putStrLn errorStr
+
+    Right features -> do
+      searchableFeatures <- buildSearchableFeaturesRT features
+      replies            <- lift $ SF.indexFeatures searchableFeatures
+      lift $ putStrLn $ foldr (\x acc -> acc ++ "\n" ++ (show x)) "" replies
+
+buildSearchableFeaturesRT :: [FilePath] -> ReaderT AppConfig IO [SF.SearchableFeature]
+buildSearchableFeaturesRT filePaths = do
+  basePath <- reader featureFilePath
+  let fileDetails = map ((flip getFileConetnts) basePath) filePaths
+  lift $ sequence $ map (fmap buildSearchableFeature) fileDetails
 
 newtype CReader a = CReader { runConfigReader :: AppConfig -> a }
 
@@ -29,8 +56,8 @@ instance Monad CReader where
   {- this is equivalent, but harder to read -}
   {- a >>= f = CReader $ \c -> runConfigReader (f ((runConfigReader a) c)) c -}
 
-main :: IO ()
-main = do
+main' :: IO ()
+main' = do
   appConfig <- readConfig
   runConfigReader indexFeaturesCR appConfig
 
@@ -62,13 +89,13 @@ indexFeatures appConfig = do
 
 buildSearchableFeatures :: [FilePath] -> AppConfig -> [IO SF.SearchableFeature]
 buildSearchableFeatures filePaths appConfig =
-  let fileDetails = map ((flip getFileConetnts) appConfig) filePaths
+  let fileDetails = map ((flip getFileConetnts) (featureFilePath appConfig)) filePaths
   in
     map (fmap buildSearchableFeature) fileDetails
 
-getFileConetnts :: FilePath -> AppConfig -> IO (FilePath, String)
-getFileConetnts filePath appConfig = do
-  let fullFilePath = (featureFilePath appConfig) ++ filePath
+getFileConetnts :: FilePath -> FilePath -> IO (FilePath, String)
+getFileConetnts filePath basePath = do
+  let fullFilePath = basePath ++ filePath
   fileContents <- readFile fullFilePath
   return (filePath, fileContents)
 
