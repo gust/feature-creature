@@ -1,5 +1,6 @@
 module Main where
 
+import Control.Concurrent (threadDelay)
 import Control.Monad.Except (runExceptT)
 import Control.Monad.Reader
 import Data.Text (pack)
@@ -12,6 +13,8 @@ data AppConfig =
             , featureFilePath  :: String
             }
 
+type App a = ReaderT AppConfig IO a
+
 main :: IO ()
 main = do
   appConfig <- readConfig
@@ -21,33 +24,45 @@ readConfig :: IO AppConfig
 readConfig = do
   esUrl         <- getEnv "FC_ELASTIC_SEARCH_URL"
   dataFilesPath <- getEnv "FC_DATA_FILES_PATH"
-  let baseFilePath = dataFilesPath ++ "/products/39/repo"
-  return $ AppConfig esUrl baseFilePath
+  return $ AppConfig esUrl dataFilesPath
 
-indexFeatures :: ReaderT AppConfig IO ()
+indexFeatures :: App ()
 indexFeatures = do
-  basePath     <- reader featureFilePath
-  featureFiles <- liftIO $ runExceptT $ F.findFeatureFiles basePath
-  case featureFiles of
-    Left errorStr ->
-      liftIO $ putStrLn errorStr
+  forever $ do
+    basePath <- reader featureFilePath
+    repoPath <- liftIO promptForFeaturePath
 
-    Right features -> do
-      searchableFeatures <- buildSearchableFeatures features
-      replies            <- lift $ SF.indexFeatures searchableFeatures
-      lift $ putStrLn $ foldr (\x acc -> acc ++ "\n" ++ (show x)) "" replies
+    let featureFileBasePath = basePath ++ repoPath
+    -- this could become useful as log output
+    liftIO $ putStrLn $ "Finding feature files at: " ++ featureFileBasePath
+    featureFiles <- liftIO $ runExceptT $ F.findFeatureFiles featureFileBasePath
+    case featureFiles of
+      Left errorStr ->
+        liftIO $ putStrLn errorStr
+      Right features ->
+        liftIO $ indexFeatures' $ map (\featurePath -> featureFileBasePath ++ featurePath) features
+    lift $ liftIO $ threadDelay 1000
 
-buildSearchableFeatures :: [FilePath] -> ReaderT AppConfig IO [SF.SearchableFeature]
+indexFeatures' :: [FilePath] -> IO ()
+indexFeatures' features = do
+  searchableFeatures <- buildSearchableFeatures features
+  replies            <- SF.indexFeatures searchableFeatures
+  -- this could become useful as log output
+  putStrLn $ foldr (\x acc -> acc ++ "\n" ++ (show x)) "" replies
+
+buildSearchableFeatures :: [FilePath] -> IO [SF.SearchableFeature]
 buildSearchableFeatures filePaths = do
-  basePath <- reader featureFilePath
-  let fileDetails = map ((flip getFileConetnts) basePath) filePaths
-  lift $ sequence $ map (fmap buildSearchableFeature) fileDetails
+  -- this could be parallelized
+  sequence $ map ((fmap buildSearchableFeature) . getFileContents) filePaths
 
-getFileConetnts :: FilePath -> FilePath -> IO (FilePath, String)
-getFileConetnts filePath basePath = do
-  let fullFilePath = basePath ++ filePath
-  fileContents <- readFile fullFilePath
+getFileContents :: FilePath -> IO (FilePath, String)
+getFileContents filePath = do
+  fileContents <- readFile filePath
   return (filePath, fileContents)
+
+promptForFeaturePath :: IO String
+promptForFeaturePath = do
+  liftIO $ putStrLn "Enter features path: " >> getLine
 
 buildSearchableFeature :: (FilePath, String) -> SF.SearchableFeature
 buildSearchableFeature (filePath, fileContents) =
