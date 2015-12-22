@@ -29,10 +29,10 @@ getSQSMessages awsConfig queueName = do
 
   runResourceT . runAWST env $ do
     ms  <- send (receiveMessage url & rmWaitTimeSeconds ?~ 20)
-    let repos  = mapMaybe (view mBody) (ms ^. rmrsMessages)
+    let repoBodies  = mapMaybe (view mBody) (ms ^. rmrsMessages)
 
-    liftIO $ putStrLn $ concat $ map Text.unpack repos
-    return $ mapMaybe (decode . TLE.encodeUtf8 . DTL.fromStrict) repos
+    liftIO $ putStrLn $ "Repo Bodies: " ++ (concat $ map Text.unpack repoBodies)
+    return $ mapMaybe (decode . TLE.encodeUtf8 . DTL.fromStrict) repoBodies
 
 sendSQSMessage :: AWSConfig -> Text -> IndexableRepo -> IO ()
 sendSQSMessage awsConfig queueName msg = do
@@ -43,6 +43,7 @@ sendSQSMessage awsConfig queueName msg = do
   runResourceT . runAWST env $ do
     let sqsMessage = (Enc.decodeUtf8 . BSL.toStrict $ Aeson.encode msg)
     void $ send (sendMessage url sqsMessage)
+
 
 awsKeys :: AWSConfig -> Credentials
 awsKeys awsConfig =
