@@ -6,7 +6,7 @@ module Products.Product
   , CodeRepository(..)
   , createProduct
   , findProducts
-  , productRepositoryDir
+  , codeRepositoryDir
   , toProduct
   , toProductID
   ) where
@@ -26,13 +26,6 @@ module Products.Product
 
   type ProductID = Int64
 
-  data CodeRepository =
-    CodeRepository { repoPath :: T.Text
-                   } deriving (Show, Generic)
-
-  instance ToJSON CodeRepository
-  instance FromJSON CodeRepository
-
   createProduct :: Product -> WithErr ProductID
   createProduct p = do
     prodID <- (liftIO $ createProduct' p)
@@ -48,27 +41,11 @@ module Products.Product
     allProducts <- runDB $ DB.selectList ([] :: [DB.Filter Product]) []
     return $ allProducts
 
-  updateRepo :: Product -> ProductID -> WithErr String
-  updateRepo prod prodID = do
-    prodRepoPath <- liftIO $ productRepositoryDir prodID
-    (liftIO $ createRequiredDirectories prodID) >> updateGitRepo prodRepoPath (productRepoUrl prod)
-
-  updateGitRepo :: FilePath -> T.Text -> WithErr String
-  updateGitRepo repositoryPath gitUrl = do
-    doesRepoExist <- liftIO $ doesDirectoryExist repositoryPath
-    case doesRepoExist of
-      True  -> Git.pull repositoryPath
-      False -> Git.clone repositoryPath gitUrl
-
   productDir :: ProductID -> IO FilePath
   productDir prodID =
     (++ productDirectory) <$> Cfg.gitRepositoryStorePath
     where
       productDirectory = "/products/" ++ (show prodID)
-
-  productRepositoryDir :: ProductID -> IO FilePath
-  productRepositoryDir prodID =
-    (++ "/repo") <$> (productDir prodID)
 
   createRequiredDirectories :: ProductID -> IO ()
   createRequiredDirectories prodID =
@@ -81,3 +58,27 @@ module Products.Product
   toProduct :: DB.Entity Product -> Product
   toProduct dbEntity =
     DB.entityVal dbEntity
+
+
+  data CodeRepository =
+    CodeRepository { repoPath :: T.Text
+                   } deriving (Show, Generic)
+
+  instance ToJSON CodeRepository
+  instance FromJSON CodeRepository
+
+  codeRepositoryDir :: ProductID -> IO FilePath
+  codeRepositoryDir prodID =
+    (++ "/repo") <$> (productDir prodID)
+
+  updateRepo :: Product -> ProductID -> WithErr String
+  updateRepo prod prodID = do
+    prodRepoPath <- liftIO $ codeRepositoryDir prodID
+    (liftIO $ createRequiredDirectories prodID) >> updateGitRepo prodRepoPath (productRepoUrl prod)
+
+  updateGitRepo :: FilePath -> T.Text -> WithErr String
+  updateGitRepo repositoryPath gitUrl = do
+    doesRepoExist <- liftIO $ doesDirectoryExist repositoryPath
+    case doesRepoExist of
+      True  -> Git.pull repositoryPath
+      False -> Git.clone repositoryPath gitUrl

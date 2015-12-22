@@ -34,7 +34,7 @@ module Products.FeaturesAPI
 
   productsFeatures :: P.ProductID -> Handler DirectoryTree
   productsFeatures prodID = do
-    prodDir <- liftIO $ P.productRepositoryDir prodID
+    prodDir <- liftIO $ P.codeRepositoryDir prodID
     result  <- liftIO $ runExceptT (F.getFeatures prodDir)
     case result of
       Left msg -> error msg
@@ -44,7 +44,7 @@ module Products.FeaturesAPI
   productsFeature _ Nothing = do
     error "Missing required query param 'path'"
   productsFeature prodID (Just path) = do
-    prodDir <- liftIO $ P.productRepositoryDir prodID
+    prodDir <- liftIO $ P.codeRepositoryDir prodID
     result  <- liftIO $ runExceptT (F.getFeature (prodDir ++ path))
     case result of
       Left msg -> error msg

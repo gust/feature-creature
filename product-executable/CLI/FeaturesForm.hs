@@ -20,13 +20,13 @@ module CLI.FeaturesForm where
 
   listAllProductFeatures :: P.ProductID -> IO ()
   listAllProductFeatures prodID = do
-    prodDir <- P.productRepositoryDir prodID
+    prodDir <- P.codeRepositoryDir prodID
     result <- runExceptT (F.getFeatures prodDir)
     either putStrLn (putStrLn . drawTree) result
 
   getProductFeature :: P.ProductID -> FilePath -> IO ()
   getProductFeature prodID path = do
-    prodDir <- P.productRepositoryDir prodID
+    prodDir <- P.codeRepositoryDir prodID
     result <- runExceptT (F.getFeature (prodDir ++ path))
     either putStrLn putStrLn result
 
