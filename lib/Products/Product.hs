@@ -1,6 +1,9 @@
+{-# LANGUAGE DeriveGeneric #-}
+
 module Products.Product
   ( Product(Product)
   , ProductID
+  , IndexableRepo
   , createProduct
   , findProducts
   , productRepositoryDir
@@ -8,18 +11,26 @@ module Products.Product
   , toProductID
   ) where
 
+  import Data.Aeson as Aeson
   import CommonCreatures (WithErr)
-  import qualified Config                       as Cfg
+  import qualified Config as Cfg
   import Control.Monad.IO.Class (liftIO)
-  import qualified Data.Text                    as T
+  import qualified Data.Text as T
   import Database (runDB)
-  import qualified Database.Persist.Postgresql  as DB
+  import qualified Database.Persist.Postgresql as DB
   import GHC.Int (Int64)
+  import GHC.Generics (Generic)
   import qualified Git
   import Models
   import System.Directory (doesDirectoryExist, createDirectoryIfMissing)
 
   type ProductID = Int64
+
+  data IndexableRepo =
+    IndexableRepo { repoPath :: T.Text } deriving (Show, Generic)
+
+  instance ToJSON IndexableRepo
+  instance FromJSON IndexableRepo
 
   createProduct :: Product -> WithErr ProductID
   createProduct p = do
