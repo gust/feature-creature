@@ -3,7 +3,7 @@
 module Products.Product
   ( Product(..)
   , ProductID
-  , IndexableRepo(..)
+  , CodeRepository(..)
   , createProduct
   , findProducts
   , productRepositoryDir
@@ -26,11 +26,12 @@ module Products.Product
 
   type ProductID = Int64
 
-  data IndexableRepo =
-    IndexableRepo { repoPath :: T.Text } deriving (Show, Generic)
+  data CodeRepository =
+    CodeRepository { repoPath :: T.Text
+                   } deriving (Show, Generic)
 
-  instance ToJSON IndexableRepo
-  instance FromJSON IndexableRepo
+  instance ToJSON CodeRepository
+  instance FromJSON CodeRepository
 
   createProduct :: Product -> WithErr ProductID
   createProduct p = do
@@ -53,11 +54,11 @@ module Products.Product
     (liftIO $ createRequiredDirectories prodID) >> updateGitRepo prodRepoPath (productRepoUrl prod)
 
   updateGitRepo :: FilePath -> T.Text -> WithErr String
-  updateGitRepo repoPath gitUrl = do
-    doesRepoExist <- liftIO $ doesDirectoryExist repoPath
+  updateGitRepo repositoryPath gitUrl = do
+    doesRepoExist <- liftIO $ doesDirectoryExist repositoryPath
     case doesRepoExist of
-      True  -> Git.pull repoPath
-      False -> Git.clone repoPath gitUrl
+      True  -> Git.pull repositoryPath
+      False -> Git.clone repositoryPath gitUrl
 
   productDir :: ProductID -> IO FilePath
   productDir prodID =

@@ -16,12 +16,12 @@ import qualified Data.Text               as Text
 import qualified Data.Text.Lazy.Encoding as TLE
 import qualified Data.Text.Lazy          as DTL
 import           Network.AWS.SQS
-import           Products.Product (IndexableRepo)
+import           Products.Product (CodeRepository)
 import           System.IO
 
 import qualified Data.ByteString.Char8 as Char8
 
-getSQSMessages :: AWSConfig -> Text -> IO [IndexableRepo]
+getSQSMessages :: AWSConfig -> Text -> IO [CodeRepository]
 getSQSMessages awsConfig queueName = do
   env <- awsEnv awsConfig
 
@@ -34,7 +34,7 @@ getSQSMessages awsConfig queueName = do
     liftIO $ putStrLn $ "Repo Bodies: " ++ (concat $ map Text.unpack repoBodies)
     return $ mapMaybe (decode . TLE.encodeUtf8 . DTL.fromStrict) repoBodies
 
-sendSQSMessage :: AWSConfig -> Text -> IndexableRepo -> IO ()
+sendSQSMessage :: AWSConfig -> Text -> CodeRepository -> IO ()
 sendSQSMessage awsConfig queueName msg = do
   env <- awsEnv awsConfig
 

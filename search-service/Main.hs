@@ -10,7 +10,7 @@ import           Control.Monad.Reader
 import qualified Data.Text as Text
 import           Features.Feature as F
 import qualified Indexer
-import           Products.Product (IndexableRepo(..))
+import           Products.Product (repoPath)
 import           SQS
 
 
