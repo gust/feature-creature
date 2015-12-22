@@ -25,6 +25,7 @@ library
                    , UserRoles.UserRole
                    , DomainTerms.DomainTerm
                    , Git
+                   , SQS
 
   build-depends:     aeson
                    , base >= 4.8.1.0 && < 4.8.3.0
@@ -44,6 +45,10 @@ library
                    , time
                    , transformers
                    , vector
+                   , amazonka
+                   , amazonka-core
+                   , amazonka-sqs
+                   , lens
 
   ghc-options:       -Wall
                      -fwarn-unused-matches
@@ -87,10 +92,15 @@ executable feature-creature-web
   main-is:           Main.hs
 
 executable search-service
-  build-depends:     base
+  build-depends:   aeson
+                   , amazonka
+                   , amazonka-sqs
+                   , base
+                   , bytestring
                    , feature-creature
-                   , text
+                   , lens
                    , mtl
+                   , text
                    , transformers
 
   ghc-options:       -Wall

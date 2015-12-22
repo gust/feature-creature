@@ -1,11 +1,19 @@
-module Config 
-  ( dbConnectionString
+module Config
+  ( AWSConfig (..)
+  , dbConnectionString
   , gitRepositoryStorePath
   ) where
 
   import Data.ByteString.Char8 (ByteString, pack)
   import Data.List (intersperse)
   import System.Environment (getEnv, lookupEnv)
+
+  data AWSConfig =
+    AWSConfig { accessKey        :: String
+              , secretKey        :: String
+              , sqsUrl           :: String
+              , elasticSearchUrl :: String
+              }
 
   data DbConnectionString = DbConnectionString {
       dbname   :: String,

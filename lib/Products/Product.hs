@@ -1,9 +1,9 @@
 {-# LANGUAGE DeriveGeneric #-}
 
 module Products.Product
-  ( Product(Product)
+  ( Product(..)
   , ProductID
-  , IndexableRepo
+  , IndexableRepo(..)
   , createProduct
   , findProducts
   , productRepositoryDir

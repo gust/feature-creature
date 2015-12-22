@@ -4,7 +4,7 @@
 # source ./script/development/search-service-env.sh
 
 FC_AWS_ELASTIC_SEARCH_URL="http://localhost:9200"
-FC_AWS_SQS_URL="https://sqs.us-east-1.amazonaws.com/675495447720/feature-creature"
+FC_AWS_SQS_URL="https://sqs.us-east-1.amazonaws.com/675495447720/"
 FC_SEARCH_SERVICE_ROOT="$HOME/workspace/search-service"
 
 
