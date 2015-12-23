@@ -11,9 +11,8 @@ import           Control.Monad.Reader
 import qualified Data.Text as Text
 import           Features.Feature as F
 import qualified Indexer
-import           Products.Product (CodeRepository(..), repoPath)
+import           Products.Product (CodeRepository(..))
 import           SQS
-
 
 main :: IO ()
 main = do
@@ -28,7 +27,7 @@ processJobs = do
   liftIO $ forever $ do
     let say = putStrLn
 
-    jobs <- getSQSMessages' awsCfg
+    jobs <- getSQSMessages awsCfg
     say $ "Got enqueued jobs: " ++ (show jobs)
 
     forM_ jobs $ \job -> do
@@ -52,39 +51,3 @@ processJobs = do
               say $ "Unprocessable job type: " ++ (Text.unpack $ jobType j)
 
     threadDelay 10000
-
-
-
-
-
-
-
-
-
-
-
-indexFeatures :: App ()
-indexFeatures = do
-  forever $ do
-    let say = liftIO . putStrLn
-
-    awsCfg         <- reader awsConfig
-    basePath       <- reader featureFilePath
-    codeRepositorys <- liftIO $ getSQSMessages awsCfg
-
-    say $ "Got repo path from enqueued message: " ++ (show codeRepositorys)
-
-    forM_ codeRepositorys $ \codeRepository -> do
-      let featureFileBasePath = basePath ++ (Text.unpack $ repoPath codeRepository)
-      -- this could become useful as log output
-      say $ "Finding feature files at: " ++ featureFileBasePath
-
-      featureFiles <- liftIO $ runExceptT $ F.findFeatureFiles featureFileBasePath
-      case featureFiles of
-        Left errorStr ->
-          say errorStr
-        Right features ->
-          liftIO $ Indexer.indexFeatures $ map (\featurePath -> featureFileBasePath ++ featurePath) features
-
-    lift $ liftIO $ threadDelay 10000
-
