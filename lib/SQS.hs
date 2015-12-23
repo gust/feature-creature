@@ -46,7 +46,7 @@ sendSQSMessage awsConfig msg = do
     void $ send (sendMessage url sqsMessage)
 
 
-getSQSMessages' :: FromJSON a => AWSConfig -> IO [Job a]
+getSQSMessages' :: FromJSON a => AWSConfig -> IO [Either String (Job a)]
 getSQSMessages' awsConfig = do
   let url = awsSQSUrl awsConfig
   env <- awsEnv awsConfig
@@ -54,7 +54,7 @@ getSQSMessages' awsConfig = do
     ms  <- send (receiveMessage url & rmWaitTimeSeconds ?~ 20)
     let jobBodies  = mapMaybe (view mBody) (ms ^. rmrsMessages)
     liftIO $ putStrLn $ "Jobs" ++ (concat $ map Text.unpack jobBodies)
-    return $ mapMaybe decodeJob jobBodies
+    return $ map decodeJob jobBodies
 
 sendSQSMessage' :: ToJSON a => AWSConfig -> Job a -> IO ()
 sendSQSMessage' awsConfig job = do

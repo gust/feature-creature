@@ -25,5 +25,5 @@ instance FromJSON a => FromJSON (Job a)
 encodeJob :: ToJSON a => Job a -> Text
 encodeJob = decodeUtf8 . toStrict . Aeson.encode
 
-decodeJob :: FromJSON a => Text -> Maybe (Job a)
-decodeJob = Aeson.decode . TLE.encodeUtf8 . fromStrict
+decodeJob :: FromJSON a => Text -> Either String (Job a)
+decodeJob = Aeson.eitherDecode . TLE.encodeUtf8 . fromStrict

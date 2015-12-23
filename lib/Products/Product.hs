@@ -1,16 +1,19 @@
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Products.Product
   ( Product(..)
   , ProductID
   , CodeRepository(..)
   , createProduct
-  , findProducts
   , codeRepositoryDir
+  , findProducts
+  , indexFeaturesJob
   , toProduct
   , toProductID
   ) where
 
+  import Async.Job (Job(..))
   import Data.Aeson as Aeson
   import CommonCreatures (WithErr)
   import qualified Config as Cfg
@@ -66,6 +69,12 @@ module Products.Product
 
   instance ToJSON CodeRepository
   instance FromJSON CodeRepository
+
+  indexFeaturesJob :: CodeRepository -> Job CodeRepository
+  indexFeaturesJob codeRepo =
+    Job { jobType = "IndexFeatures"
+        , payload = codeRepo
+        }
 
   codeRepositoryDir :: ProductID -> IO FilePath
   codeRepositoryDir prodID =
