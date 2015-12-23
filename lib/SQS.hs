@@ -22,11 +22,11 @@ import           System.IO
 
 import qualified Data.ByteString.Char8 as Char8
 
-getSQSMessages :: AWSConfig -> Text -> IO [CodeRepository]
-getSQSMessages awsConfig queueName = do
+getSQSMessages :: AWSConfig -> IO [CodeRepository]
+getSQSMessages awsConfig = do
   env <- awsEnv awsConfig
 
-  let url = awsSQSUrl awsConfig queueName
+  let url = awsSQSUrl awsConfig
 
   runResourceT . runAWST env $ do
     ms  <- send (receiveMessage url & rmWaitTimeSeconds ?~ 20)
@@ -35,21 +35,20 @@ getSQSMessages awsConfig queueName = do
     liftIO $ putStrLn $ "Repo Bodies: " ++ (concat $ map Text.unpack repoBodies)
     return $ mapMaybe (decode . TLE.encodeUtf8 . DTL.fromStrict) repoBodies
 
-sendSQSMessage :: AWSConfig -> Text -> CodeRepository -> IO ()
-sendSQSMessage awsConfig queueName msg = do
+sendSQSMessage :: AWSConfig -> CodeRepository -> IO ()
+sendSQSMessage awsConfig msg = do
   env <- awsEnv awsConfig
 
-  let url = awsSQSUrl awsConfig queueName
+  let url = awsSQSUrl awsConfig
 
   runResourceT . runAWST env $ do
     let sqsMessage = (Enc.decodeUtf8 . BSL.toStrict $ Aeson.encode msg)
     void $ send (sendMessage url sqsMessage)
 
 
-
-getSQSMessages' :: FromJSON a => AWSConfig -> Text -> IO [Job a]
-getSQSMessages' awsConfig queueName = do
-  let url = awsSQSUrl awsConfig queueName
+getSQSMessages' :: FromJSON a => AWSConfig -> IO [Job a]
+getSQSMessages' awsConfig = do
+  let url = awsSQSUrl awsConfig
   env <- awsEnv awsConfig
   runResourceT . runAWST env $ do
     ms  <- send (receiveMessage url & rmWaitTimeSeconds ?~ 20)
@@ -57,9 +56,9 @@ getSQSMessages' awsConfig queueName = do
     liftIO $ putStrLn $ "Jobs" ++ (concat $ map Text.unpack jobBodies)
     return $ mapMaybe decodeJob jobBodies
 
-sendSQSMessage' :: ToJSON a => AWSConfig -> Text -> Job a -> IO ()
-sendSQSMessage' awsConfig queueName job = do
-  let url = awsSQSUrl awsConfig queueName
+sendSQSMessage' :: ToJSON a => AWSConfig -> Job a -> IO ()
+sendSQSMessage' awsConfig job = do
+  let url = awsSQSUrl awsConfig
   env <- awsEnv awsConfig
   runResourceT . runAWST env $ do
     let msg = sendMessage url (encodeJob job)
@@ -79,9 +78,9 @@ awsEnv awsConfig = do
   lgr <- logger
   newEnv NorthVirginia (awsKeys awsConfig) <&> envLogger .~ lgr
 
-awsSQSUrl :: AWSConfig -> Text -> Text
-awsSQSUrl awsConfig queueName =
-  Text.pack $ (sqsUrl awsConfig) ++ (Text.unpack queueName)
+awsSQSUrl :: AWSConfig -> Text
+awsSQSUrl awsConfig =
+  Text.pack (sqsUrl awsConfig)
 
 logger :: IO Logger
 logger = newLogger Debug stdout
