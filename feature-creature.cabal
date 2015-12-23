@@ -14,7 +14,8 @@ data-files:          data/cli/*.txt
 cabal-version:       >=1.10
 
 library
-  exposed-modules:   Config
+  exposed-modules: Async.Job
+                   , Config
                    , CommonCreatures
                    , Data.DirectoryTree
                    , Database

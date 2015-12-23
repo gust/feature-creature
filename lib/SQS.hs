@@ -2,6 +2,7 @@
 
 module SQS where
 
+import           Async.Job as Job
 import           Config
 import           Control.Lens
 import           Control.Monad
@@ -43,6 +44,28 @@ sendSQSMessage awsConfig queueName msg = do
   runResourceT . runAWST env $ do
     let sqsMessage = (Enc.decodeUtf8 . BSL.toStrict $ Aeson.encode msg)
     void $ send (sendMessage url sqsMessage)
+
+
+
+getSQSMessages' :: FromJSON a => AWSConfig -> Text -> IO [Job a]
+getSQSMessages' awsConfig queueName = do
+  let url = awsSQSUrl awsConfig queueName
+  env <- awsEnv awsConfig
+  runResourceT . runAWST env $ do
+    ms  <- send (receiveMessage url & rmWaitTimeSeconds ?~ 20)
+    let jobBodies  = mapMaybe (view mBody) (ms ^. rmrsMessages)
+    liftIO $ putStrLn $ "Jobs" ++ (concat $ map Text.unpack jobBodies)
+    return $ mapMaybe decodeJob jobBodies
+
+sendSQSMessage' :: ToJSON a => AWSConfig -> Text -> Job a -> IO ()
+sendSQSMessage' awsConfig queueName job = do
+  let url = awsSQSUrl awsConfig queueName
+  env <- awsEnv awsConfig
+  runResourceT . runAWST env $ do
+    let msg = sendMessage url (encodeJob job)
+    void $ send msg
+
+
 
 
 awsKeys :: AWSConfig -> Credentials
