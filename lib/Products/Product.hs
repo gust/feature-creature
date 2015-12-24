@@ -44,15 +44,15 @@ module Products.Product
     allProducts <- runDB $ DB.selectList ([] :: [DB.Filter Product]) []
     return $ allProducts
 
-  productDir :: ProductID -> IO FilePath
+  productDir :: ProductID -> FilePath
   productDir prodID =
-    (++ productDirectory) <$> Cfg.gitRepositoryStorePath
-    where
-      productDirectory = "/products/" ++ (show prodID)
+    "/products/" ++ (show prodID)
 
   createRequiredDirectories :: ProductID -> IO ()
   createRequiredDirectories prodID =
-    productDir prodID >>= createDirectoryIfMissing True
+    (++ productDir prodID)
+    <$> Cfg.gitRepositoryStorePath
+    >>= createDirectoryIfMissing True
 
   toProductID :: DB.Entity Product -> ProductID
   toProductID dbEntity =
@@ -76,13 +76,14 @@ module Products.Product
         , payload = codeRepo
         }
 
-  codeRepositoryDir :: ProductID -> IO FilePath
+  codeRepositoryDir :: ProductID -> FilePath
   codeRepositoryDir prodID =
-    (++ "/repo") <$> (productDir prodID)
+    productDir prodID ++ "/repo"
 
   updateRepo :: Product -> ProductID -> WithErr String
   updateRepo prod prodID = do
-    prodRepoPath <- liftIO $ codeRepositoryDir prodID
+    basePath <- liftIO $ Cfg.gitRepositoryStorePath
+    let prodRepoPath = basePath ++ codeRepositoryDir prodID
     (liftIO $ createRequiredDirectories prodID) >> updateGitRepo prodRepoPath (productRepoUrl prod)
 
   updateGitRepo :: FilePath -> T.Text -> WithErr String
