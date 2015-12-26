@@ -15,6 +15,7 @@ module Products.ProductsAPI
   import Control.Monad (mzero)
   import Control.Monad.Except (runExceptT)
   import Control.Monad.IO.Class (liftIO)
+  import Control.Monad.Reader (lift)
   import Control.Monad.Trans.Either (left)
   import Data.Aeson
   import qualified Data.Text               as T
@@ -29,7 +30,7 @@ module Products.ProductsAPI
   import qualified Products.UserRolesAPI   as UR
 
   type ProductsAPI = "products" :> Get '[JSON] [APIProduct]
-                {- :<|> "products" :> ReqBody '[JSON] APIProduct :> Post '[JSON] APIProduct -}
+                :<|> "products" :> ReqBody '[JSON] APIProduct :> Post '[JSON] APIProduct
                 {- :<|> "products" :> ProductIDCapture :> FeaturesAPI -}
                 {- :<|> "products" :> ProductIDCapture :> FeatureAPI -}
                 {- :<|> "products" :> ProductIDCapture :> DT.DomainTermsAPI -}
@@ -60,7 +61,7 @@ module Products.ProductsAPI
 
   productsServer :: ServerT ProductsAPI App
   productsServer = products
-              {- :<|> createProduct -}
+              :<|> createProduct
               {- :<|> productsFeatures -}
               {- :<|> productsFeature -}
               {- :<|> DT.productsDomainTerms -}
@@ -71,20 +72,20 @@ module Products.ProductsAPI
   productsAPI :: Proxy ProductsAPI
   productsAPI = Proxy
 
-  {- createProduct :: APIProduct -> Handler APIProduct -}
-  {- createProduct (APIProduct _ prodName prodRepoUrl) = do -}
-    {- let newProduct = P.Product prodName prodRepoUrl -}
-    {- result <- liftIO $ runExceptT $ P.createProduct newProduct -}
-    {- case result of -}
-      {- Left err -> -}
-        {- -- In the case where the repo cannot be retrieved, -}
-        {- -- It's probably a good idea to rollback the Product creation here. -}
-        {- left $ err503 { errBody = BS.pack err } -}
-      {- Right prodID -> -}
-        {- return $ APIProduct { productID = Just prodID -}
-                            {- , name      = prodName -}
-                            {- , repoUrl   = prodRepoUrl -}
-                            {- } -}
+  createProduct :: APIProduct -> App APIProduct
+  createProduct (APIProduct _ prodName prodRepoUrl) = do
+    let newProduct = P.Product prodName prodRepoUrl
+    result <- liftIO $ runExceptT $ P.createProduct newProduct
+    case result of
+      Left err ->
+        -- In the case where the repo cannot be retrieved,
+        -- It's probably a good idea to rollback the Product creation here.
+        lift $ left $ err503 { errBody = BS.pack err }
+      Right prodID ->
+        return $ APIProduct { productID = Just prodID
+                            , name      = prodName
+                            , repoUrl   = prodRepoUrl
+                            }
 
   products :: App [APIProduct]
   products = do
@@ -103,11 +104,11 @@ module Products.ProductsAPI
   instance SD.ToSample [APIProduct] [APIProduct] where
     toSample _ = Just $ [ sampleMonsterProduct, sampleCreatureProduct ]
 
-  {- instance SD.ToSample APIProduct APIProduct where -}
-    {- toSample _ = Just sampleCreatureProduct -}
+  instance SD.ToSample APIProduct APIProduct where
+    toSample _ = Just sampleCreatureProduct
 
-  {- instance SD.ToCapture (Capture "id" P.ProductID) where -}
-    {- toCapture _ = SD.DocCapture "id" "Product id" -}
+  instance SD.ToCapture (Capture "id" P.ProductID) where
+    toCapture _ = SD.DocCapture "id" "Product id"
 
   sampleMonsterProduct :: APIProduct
   sampleMonsterProduct = APIProduct { productID = Just 1

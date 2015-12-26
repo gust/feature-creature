@@ -23,27 +23,33 @@ main = do
   run 8081 (app appConfig)
 
 readerToEither :: AppConfig -> App :~> EitherT ServantErr IO
-readerToEither cfg = Nat $ \x -> runReaderT x cfg
+readerToEither cfg =
+  Nat $ \x -> runReaderT x cfg
 
 readerServer :: AppConfig -> Server FeatureCreatureAPI
-readerServer cfg = enter (readerToEither cfg) server
+readerServer cfg =
+  enter (readerToEither cfg) server
 
 server :: ServerT FeatureCreatureAPI App
-server = productsServer
-    {- :<|> Docs.documentationServer -}
+server =
+  productsServer
+  {- :<|> Docs.documentationServer -}
 
 api :: Proxy FeatureCreatureAPI
 api = Proxy
 
 addResponseHeaders :: Middleware
-addResponseHeaders = addHeaders [ ("Access-Control-Allow-Origin", "*")
-                                , ("Access-Control-Request-Method", "*")
-                                , ("Access-Control-Allow-Headers", "Content-Type")
-                                , ("Origin", "*")
-                                ]
+addResponseHeaders =
+  addHeaders [ ("Access-Control-Allow-Origin", "*")
+             , ("Access-Control-Request-Method", "*")
+             , ("Access-Control-Allow-Headers", "Content-Type")
+             , ("Origin", "*")
+             ]
 
 {- app :: Application -}
 {- app = addResponseHeaders $ serve api server -}
 
 app :: AppConfig -> Application
-app cfg = addResponseHeaders $ serve api (readerServer cfg)
+app cfg =
+  addResponseHeaders
+  $ serve api (readerServer cfg)
