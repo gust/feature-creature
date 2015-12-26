@@ -13,9 +13,10 @@ module Products.FeaturesAPI
 ) where
 
 import App
-import Config as Cfg
+import AppConfig (gitConfig)
+import Config.Git
 import Control.Monad.Except (runExceptT)
-import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Reader
 import Data.Aeson
 import Data.DirectoryTree
 import qualified Data.List        as L
@@ -35,7 +36,7 @@ type FeatureAPI  = "feature"  :> QueryParam "path" F.FeatureFile
 
 productsFeatures :: P.ProductID -> App DirectoryTree
 productsFeatures prodID = do
-  basePath <- liftIO $ Cfg.gitRepositoryStorePath
+  basePath <- repoBasePath <$> reader gitConfig
 
   let featuresPath = basePath ++ P.codeRepositoryDir prodID
   result  <- liftIO $ runExceptT (F.getFeatures featuresPath)
@@ -44,10 +45,10 @@ productsFeatures prodID = do
     Right tree -> return tree
 
 productsFeature :: P.ProductID -> Maybe F.FeatureFile -> App APIFeature
-productsFeature _ Nothing = do
+productsFeature _ Nothing =
   error "Missing required query param 'path'"
 productsFeature prodID (Just path) = do
-  basePath <- liftIO $ Cfg.gitRepositoryStorePath
+  basePath <- repoBasePath <$> reader gitConfig
 
   let featurePath = basePath ++ P.codeRepositoryDir prodID ++ path
   result  <- liftIO $ runExceptT (F.getFeature featurePath)
@@ -80,12 +81,14 @@ instance ToJSON APIFeature where
            ]
 
 instance SD.ToSample APIFeature APIFeature where
-  toSample _ = Just $ APIFeature { featureID = "/features/werewolves/hunting.feature"
-                                 , description = featureFileSample
-                                 }
+  toSample _ =
+    Just $ APIFeature { featureID = "/features/werewolves/hunting.feature"
+                      , description = featureFileSample
+                      }
 
 instance SD.ToParam (QueryParam "path" F.FeatureFile) where
-  toParam _ = SD.DocQueryParam
+  toParam _ =
+    SD.DocQueryParam
     "path"
     [ "/features/werewolf/transformation.feature",
       "/features/swampthing/regeneration.feature"
@@ -97,20 +100,22 @@ instance SD.ToSample DirectoryTree DirectoryTree where
   toSample _ = Just featureDirectoryExample
 
 featureFileSample :: F.Feature
-featureFileSample = concat . (L.intersperse "\n") $ [ "@some-feature-tag"
-                                                    , "Feature: Slaying a Werewolf"
-                                                    , "  As a Werewolf Hunter"
-                                                    , "  So that I can collect my Reward"
-                                                    , "  I want to slay a Werewolf"
-                                                    , ""
-                                                    , "  Scenario: Slaying a Werewolf in human form"
-                                                    , "    Given I am a Werewolf Hunter"
-                                                    , "    When I slay a Werewolf in human form"
-                                                    , "    Then I collect a Reward from the Townspeople"
-                                                    , ""
-                                                    , "  Scenario: Slaying a Werewolf in wolf form"
-                                                    , "    Given I am a Werewolf Hunter"
-                                                    , "    When I attempt to slay a Werewolf in wolf form"
-                                                    , "    Then I am brutally ripped limb from limb"
-                                                    , "    And no Reward is collected"
-                                                    ]
+featureFileSample =
+  concat . (L.intersperse "\n")
+  $ [ "@some-feature-tag"
+    , "Feature: Slaying a Werewolf"
+    , "  As a Werewolf Hunter"
+    , "  So that I can collect my Reward"
+    , "  I want to slay a Werewolf"
+    , ""
+    , "  Scenario: Slaying a Werewolf in human form"
+    , "    Given I am a Werewolf Hunter"
+    , "    When I slay a Werewolf in human form"
+    , "    Then I collect a Reward from the Townspeople"
+    , ""
+    , "  Scenario: Slaying a Werewolf in wolf form"
+    , "    Given I am a Werewolf Hunter"
+    , "    When I attempt to slay a Werewolf in wolf form"
+    , "    Then I am brutally ripped limb from limb"
+    , "    And no Reward is collected"
+    ]

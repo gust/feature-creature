@@ -1,20 +1,46 @@
 module AppConfig
 ( AppConfig (..)
+, Environment (..)
+, getAppConfig
 ) where
 
+import qualified Config.AWS as AWS          (AWSConfig, getAWSConfig)
+import Config.Database                      (makePool)
+import Config.Environment                   (Environment (..))
+import Config.Git                           (GitConfig (..), getGitConfig)
+import Database.Persist.Postgresql          (ConnectionPool)
+import Network.Wai.Middleware.RequestLogger (logStdoutDev, logStdout)
+import Network.Wai                          (Middleware)
+import System.Environment                   (lookupEnv)
+
 data AppConfig =
-  AppConfig { awsConfig :: String }
+  AppConfig { getAWSConfig     :: AWS.AWSConfig
+            , getEnv           :: Environment
+            , getPool          :: ConnectionPool
+            , getRequestLogger :: Middleware
+            , gitConfig        :: GitConfig
+            }
 
-{- readConfig :: IO AppConfig -}
-{- readConfig = -}
-  {- AppConfig -}
-    {- <$> awsConfiguration -}
-    {- <*> getEnv "FC_DATA_FILES_PATH" -}
+getAppConfig :: IO AppConfig
+getAppConfig = do
+  env       <- lookupSetting "ENV" Development
+  awsConfig <- AWS.getAWSConfig
+  dbPool    <- makePool env
+  gitCfg    <- getGitConfig
+  return $ AppConfig { getAWSConfig     = awsConfig
+                     , getEnv           = env
+                     , getRequestLogger = requestLogger env
+                     , getPool          = dbPool
+                     , gitConfig        = gitCfg
+                     }
 
-{- awsConfiguration :: IO AWSConfig -}
-{- awsConfiguration = -}
-  {- AWSConfig -}
-    {- <$> getEnv "FC_AWS_ACCESS_KEY" -}
-    {- <*> getEnv "FC_AWS_SECRET_KEY" -}
-    {- <*> getEnv "FC_AWS_SQS_URL" -}
-    {- <*> getEnv "FC_AWS_ELASTIC_SEARCH_URL" -}
+requestLogger :: Environment -> Middleware
+requestLogger Test        = id
+requestLogger Development = logStdoutDev
+requestLogger Production  = logStdout
+
+lookupSetting :: Read a => String -> a -> IO a
+lookupSetting env def = do
+    p <- lookupEnv env
+    return $ case p of Nothing -> def
+                       Just a  -> read a

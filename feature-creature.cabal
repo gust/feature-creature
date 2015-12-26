@@ -68,6 +68,7 @@ executable feature-creature-web
                    , feature-creature
                    , http-client
                    , http-types
+                   , monad-logger
                    , mtl
                    , persistent-postgresql
                    , servant

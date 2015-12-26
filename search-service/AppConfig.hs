@@ -20,4 +20,3 @@ awsConfiguration =
     <$> getEnv "FC_AWS_ACCESS_KEY"
     <*> getEnv "FC_AWS_SECRET_KEY"
     <*> getEnv "FC_AWS_SQS_URL"
-    <*> getEnv "FC_AWS_ELASTIC_SEARCH_URL"

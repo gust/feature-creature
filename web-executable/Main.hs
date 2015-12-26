@@ -4,7 +4,7 @@
 module Main where
 
 import App
-import AppConfig (AppConfig(..))
+import AppConfig (AppConfig, getAppConfig)
 import Control.Monad.Reader       (runReaderT)
 import Control.Monad.Trans.Either (EitherT)
 import Documentation as Docs
@@ -19,7 +19,7 @@ type FeatureCreatureAPI = ProductsAPI
 
 main :: IO ()
 main = do
-  let appConfig = AppConfig "I'm an AWS thing"
+  appConfig <- getAppConfig
   run 8081 (app appConfig)
 
 readerToEither :: AppConfig -> App :~> EitherT ServantErr IO
