@@ -5,7 +5,12 @@
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
 
-module Products.UserRolesAPI where
+module Products.UserRolesAPI
+( UserRolesAPI
+, CreateUserRolesAPI
+, createUserRole
+, productsUserRoles
+) where
 
 import App (App(..))
 import Control.Monad (mzero)
