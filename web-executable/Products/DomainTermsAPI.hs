@@ -5,8 +5,14 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Products.DomainTermsAPI where
-import App (App (..))
+module Products.DomainTermsAPI
+( DomainTermsAPI
+, CreateDomainTermsAPI
+, createDomainTerm
+, productsDomainTerms
+) where
+
+import App
 import Control.Monad (mzero)
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson

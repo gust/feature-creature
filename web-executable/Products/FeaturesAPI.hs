@@ -12,7 +12,7 @@ module Products.FeaturesAPI
 , productsFeature
 ) where
 
-import App (App (..))
+import App
 import Config as Cfg
 import Control.Monad.Except (runExceptT)
 import Control.Monad.IO.Class (liftIO)

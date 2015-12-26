@@ -3,7 +3,7 @@
 
 module Main where
 
-import App (App (..))
+import App
 import AppConfig (AppConfig(..))
 import Control.Monad.Reader       (runReaderT)
 import Control.Monad.Trans.Either (EitherT)

@@ -12,7 +12,7 @@ module Products.UserRolesAPI
 , productsUserRoles
 ) where
 
-import App (App(..))
+import App
 import Control.Monad (mzero)
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson
