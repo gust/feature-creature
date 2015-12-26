@@ -11,6 +11,7 @@ module Products.ProductsAPI
   , productsServer
   ) where
 
+  import App (App (..))
   import Control.Monad (mzero)
   import Control.Monad.Except (runExceptT)
   import Control.Monad.IO.Class (liftIO)
@@ -28,13 +29,13 @@ module Products.ProductsAPI
   import qualified Products.UserRolesAPI   as UR
 
   type ProductsAPI = "products" :> Get '[JSON] [APIProduct]
-                :<|> "products" :> ReqBody '[JSON] APIProduct :> Post '[JSON] APIProduct
-                :<|> "products" :> ProductIDCapture :> FeaturesAPI
-                :<|> "products" :> ProductIDCapture :> FeatureAPI
-                :<|> "products" :> ProductIDCapture :> DT.DomainTermsAPI
-                :<|> "products" :> ProductIDCapture :> DT.CreateDomainTermsAPI
-                :<|> "products" :> ProductIDCapture :> UR.UserRolesAPI
-                :<|> "products" :> ProductIDCapture :> UR.CreateUserRolesAPI
+                {- :<|> "products" :> ReqBody '[JSON] APIProduct :> Post '[JSON] APIProduct -}
+                {- :<|> "products" :> ProductIDCapture :> FeaturesAPI -}
+                {- :<|> "products" :> ProductIDCapture :> FeatureAPI -}
+                {- :<|> "products" :> ProductIDCapture :> DT.DomainTermsAPI -}
+                {- :<|> "products" :> ProductIDCapture :> DT.CreateDomainTermsAPI -}
+                {- :<|> "products" :> ProductIDCapture :> UR.UserRolesAPI -}
+                {- :<|> "products" :> ProductIDCapture :> UR.CreateUserRolesAPI -}
 
   type ProductIDCapture = Capture "id" P.ProductID
 
@@ -57,35 +58,35 @@ module Products.ProductsAPI
                           v .: "repoUrl"
     parseJSON _          = mzero
 
-  productsServer :: Server ProductsAPI
+  productsServer :: ServerT ProductsAPI App
   productsServer = products
-              :<|> createProduct
-              :<|> productsFeatures
-              :<|> productsFeature
-              :<|> DT.productsDomainTerms
-              :<|> DT.createDomainTerm
-              :<|> UR.productsUserRoles
-              :<|> UR.createUserRole
+              {- :<|> createProduct -}
+              {- :<|> productsFeatures -}
+              {- :<|> productsFeature -}
+              {- :<|> DT.productsDomainTerms -}
+              {- :<|> DT.createDomainTerm -}
+              {- :<|> UR.productsUserRoles -}
+              {- :<|> UR.createUserRole -}
 
   productsAPI :: Proxy ProductsAPI
   productsAPI = Proxy
 
-  createProduct :: APIProduct -> Handler APIProduct
-  createProduct (APIProduct _ prodName prodRepoUrl) = do
-    let newProduct = P.Product prodName prodRepoUrl
-    result <- liftIO $ runExceptT $ P.createProduct newProduct
-    case result of
-      Left err ->
-        -- In the case where the repo cannot be retrieved,
-        -- It's probably a good idea to rollback the Product creation here.
-        left $ err503 { errBody = BS.pack err }
-      Right prodID ->
-        return $ APIProduct { productID = Just prodID
-                            , name      = prodName
-                            , repoUrl   = prodRepoUrl
-                            }
+  {- createProduct :: APIProduct -> Handler APIProduct -}
+  {- createProduct (APIProduct _ prodName prodRepoUrl) = do -}
+    {- let newProduct = P.Product prodName prodRepoUrl -}
+    {- result <- liftIO $ runExceptT $ P.createProduct newProduct -}
+    {- case result of -}
+      {- Left err -> -}
+        {- -- In the case where the repo cannot be retrieved, -}
+        {- -- It's probably a good idea to rollback the Product creation here. -}
+        {- left $ err503 { errBody = BS.pack err } -}
+      {- Right prodID -> -}
+        {- return $ APIProduct { productID = Just prodID -}
+                            {- , name      = prodName -}
+                            {- , repoUrl   = prodRepoUrl -}
+                            {- } -}
 
-  products :: Handler [APIProduct]
+  products :: App [APIProduct]
   products = do
     prods <- liftIO P.findProducts
     return $ map toProduct prods
@@ -102,11 +103,11 @@ module Products.ProductsAPI
   instance SD.ToSample [APIProduct] [APIProduct] where
     toSample _ = Just $ [ sampleMonsterProduct, sampleCreatureProduct ]
 
-  instance SD.ToSample APIProduct APIProduct where
-    toSample _ = Just sampleCreatureProduct
+  {- instance SD.ToSample APIProduct APIProduct where -}
+    {- toSample _ = Just sampleCreatureProduct -}
 
-  instance SD.ToCapture (Capture "id" P.ProductID) where
-    toCapture _ = SD.DocCapture "id" "Product id"
+  {- instance SD.ToCapture (Capture "id" P.ProductID) where -}
+    {- toCapture _ = SD.DocCapture "id" "Product id" -}
 
   sampleMonsterProduct :: APIProduct
   sampleMonsterProduct = APIProduct { productID = Just 1

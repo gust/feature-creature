@@ -2,31 +2,48 @@
 {-# LANGUAGE TypeOperators #-}
 
 module Main where
-  import Documentation as Docs
-  import Products.ProductsAPI (ProductsAPI, productsServer)
-  import Network.Wai
-  import Network.Wai.Handler.Warp
-  import Network.Wai.Middleware.AddHeaders
-  import Servant
 
-  type FeatureCreatureAPI = ProductsAPI :<|> Raw
+import App (App (..))
+import AppConfig (AppConfig(..))
+import Control.Monad.Reader       (runReaderT)
+import Control.Monad.Trans.Either (EitherT)
+import Documentation as Docs
+import Products.ProductsAPI (ProductsAPI, productsServer)
+import Network.Wai
+import Network.Wai.Handler.Warp
+import Network.Wai.Middleware.AddHeaders
+import Servant
 
-  main :: IO ()
-  main = run 8081 app
+{- type FeatureCreatureAPI = ProductsAPI :<|> Raw -}
+type FeatureCreatureAPI = ProductsAPI
 
-  server :: Server FeatureCreatureAPI
-  server = productsServer
-      :<|> Docs.documentationServer
+main :: IO ()
+main = do
+  let appConfig = AppConfig "I'm an AWS thing"
+  run 8081 (app appConfig)
 
-  api :: Proxy FeatureCreatureAPI
-  api = Proxy
+readerToEither :: AppConfig -> App :~> EitherT ServantErr IO
+readerToEither cfg = Nat $ \x -> runReaderT x cfg
 
-  addResponseHeaders :: Middleware
-  addResponseHeaders = addHeaders [ ("Access-Control-Allow-Origin", "*")
-                                  , ("Access-Control-Request-Method", "*")
-                                  , ("Access-Control-Allow-Headers", "Content-Type")
-                                  , ("Origin", "*")
-                                  ]
+readerServer :: AppConfig -> Server FeatureCreatureAPI
+readerServer cfg = enter (readerToEither cfg) server
 
-  app :: Application
-  app = addResponseHeaders $ serve api server
+server :: ServerT FeatureCreatureAPI App
+server = productsServer
+    {- :<|> Docs.documentationServer -}
+
+api :: Proxy FeatureCreatureAPI
+api = Proxy
+
+addResponseHeaders :: Middleware
+addResponseHeaders = addHeaders [ ("Access-Control-Allow-Origin", "*")
+                                , ("Access-Control-Request-Method", "*")
+                                , ("Access-Control-Allow-Headers", "Content-Type")
+                                , ("Origin", "*")
+                                ]
+
+{- app :: Application -}
+{- app = addResponseHeaders $ serve api server -}
+
+app :: AppConfig -> Application
+app cfg = addResponseHeaders $ serve api (readerServer cfg)
