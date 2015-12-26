@@ -22,7 +22,7 @@ module Products.ProductsAPI
   import qualified Data.ByteString.Lazy.Char8 as BS
   import Models
   import qualified Products.DomainTermsAPI as DT
-  import Products.FeaturesAPI
+  import qualified Products.FeaturesAPI    as F
   import qualified Products.Product        as P
   import Servant
   import qualified Servant.Docs            as SD
@@ -31,8 +31,8 @@ module Products.ProductsAPI
 
   type ProductsAPI = "products" :> Get '[JSON] [APIProduct]
                 :<|> "products" :> ReqBody '[JSON] APIProduct :> Post '[JSON] APIProduct
-                {- :<|> "products" :> ProductIDCapture :> FeaturesAPI -}
-                {- :<|> "products" :> ProductIDCapture :> FeatureAPI -}
+                :<|> "products" :> ProductIDCapture :> F.FeaturesAPI
+                :<|> "products" :> ProductIDCapture :> F.FeatureAPI
                 {- :<|> "products" :> ProductIDCapture :> DT.DomainTermsAPI -}
                 {- :<|> "products" :> ProductIDCapture :> DT.CreateDomainTermsAPI -}
                 {- :<|> "products" :> ProductIDCapture :> UR.UserRolesAPI -}
@@ -62,8 +62,8 @@ module Products.ProductsAPI
   productsServer :: ServerT ProductsAPI App
   productsServer = products
               :<|> createProduct
-              {- :<|> productsFeatures -}
-              {- :<|> productsFeature -}
+              :<|> F.productsFeatures
+              :<|> F.productsFeature
               {- :<|> DT.productsDomainTerms -}
               {- :<|> DT.createDomainTerm -}
               {- :<|> UR.productsUserRoles -}
