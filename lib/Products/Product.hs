@@ -1,62 +1,94 @@
-module Products.Product 
-  ( Product(Product)
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
+
+module Products.Product
+  ( Product(..)
   , ProductID
+  , CodeRepository(..)
   , createProduct
+  , codeRepositoryDir
   , findProducts
-  , productRepositoryDir
+  , indexFeaturesJob
   , toProduct
   , toProductID
-  , updateRepo
   ) where
 
+  import Async.Job (Job(..))
+  import Data.Aeson as Aeson
   import CommonCreatures (WithErr)
-  import qualified Config                       as Cfg
+  import qualified Config as Cfg
   import Control.Monad.IO.Class (liftIO)
-  import qualified Data.Text                    as T
+  import qualified Data.Text as T
   import Database (runDB)
-  import qualified Database.Persist.Postgresql  as DB
+  import qualified Database.Persist.Postgresql as DB
   import GHC.Int (Int64)
+  import GHC.Generics (Generic)
   import qualified Git
   import Models
   import System.Directory (doesDirectoryExist, createDirectoryIfMissing)
 
   type ProductID = Int64
 
-  productDir :: ProductID -> IO FilePath
-  productDir prodID = (++ "/" ++ productDirectory) <$> Cfg.gitRepositoryStorePath
-    where
-      productDirectory = "products/" ++ (show prodID)
+  createProduct :: Product -> WithErr ProductID
+  createProduct p = do
+    prodID <- (liftIO $ createProduct' p)
+    updateRepo p prodID >> (return prodID)
 
-  productRepositoryDir :: ProductID -> IO FilePath
-  productRepositoryDir prodID = (++ "/repo") <$> (productDir prodID)
-
-  updateRepo :: Product -> ProductID -> WithErr String
-  updateRepo prod prodID = do
-    prodRepoPath <- liftIO $ productRepositoryDir prodID
-    (liftIO $ createRequiredDirectories prodID) >> updateGitRepo prodRepoPath (productRepoUrl prod)
-
-  createRequiredDirectories :: ProductID -> IO ()
-  createRequiredDirectories prodID = productDir prodID >>= createDirectoryIfMissing True
-
-  updateGitRepo :: FilePath -> T.Text -> WithErr String
-  updateGitRepo repoPath gitUrl = do
-    doesRepoExist <- liftIO $ doesDirectoryExist repoPath
-    case doesRepoExist of
-      True  -> Git.pull repoPath
-      False -> Git.clone repoPath gitUrl
+  createProduct' :: Product -> IO ProductID
+  createProduct' p = do
+    newProduct <- runDB $ DB.insert p
+    return $ DB.fromSqlKey newProduct
 
   findProducts :: IO [DB.Entity Product]
   findProducts = do
     allProducts <- runDB $ DB.selectList ([] :: [DB.Filter Product]) []
     return $ allProducts
 
+  productDir :: ProductID -> FilePath
+  productDir prodID =
+    "/products/" ++ (show prodID)
+
+  createRequiredDirectories :: ProductID -> IO ()
+  createRequiredDirectories prodID =
+    (++ productDir prodID)
+    <$> Cfg.gitRepositoryStorePath
+    >>= createDirectoryIfMissing True
+
   toProductID :: DB.Entity Product -> ProductID
-  toProductID dbEntity = DB.fromSqlKey . DB.entityKey $ dbEntity
+  toProductID dbEntity =
+    DB.fromSqlKey . DB.entityKey $ dbEntity
 
   toProduct :: DB.Entity Product -> Product
-  toProduct dbEntity = DB.entityVal dbEntity
+  toProduct dbEntity =
+    DB.entityVal dbEntity
 
-  createProduct :: Product -> IO ProductID
-  createProduct p = do
-    newProduct <- runDB $ DB.insert p
-    return $ DB.fromSqlKey newProduct
+
+  data CodeRepository =
+    CodeRepository { repoPath :: T.Text
+                   } deriving (Show, Generic)
+
+  instance ToJSON CodeRepository
+  instance FromJSON CodeRepository
+
+  indexFeaturesJob :: CodeRepository -> Job CodeRepository
+  indexFeaturesJob codeRepo =
+    Job { jobType = "IndexFeatures"
+        , payload = codeRepo
+        }
+
+  codeRepositoryDir :: ProductID -> FilePath
+  codeRepositoryDir prodID =
+    productDir prodID ++ "/repo"
+
+  updateRepo :: Product -> ProductID -> WithErr String
+  updateRepo prod prodID = do
+    basePath <- liftIO $ Cfg.gitRepositoryStorePath
+    let prodRepoPath = basePath ++ codeRepositoryDir prodID
+    (liftIO $ createRequiredDirectories prodID) >> updateGitRepo prodRepoPath (productRepoUrl prod)
+
+  updateGitRepo :: FilePath -> T.Text -> WithErr String
+  updateGitRepo repositoryPath gitUrl = do
+    doesRepoExist <- liftIO $ doesDirectoryExist repositoryPath
+    case doesRepoExist of
+      True  -> Git.pull repositoryPath
+      False -> Git.clone repositoryPath gitUrl

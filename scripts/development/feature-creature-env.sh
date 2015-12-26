@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # USAGE:
-# source ./script/development/bootstrap-env.sh
+# source ./script/development/feature-creature-env.sh
 
 FC_DB_NAME="feature_creature"
 FC_DB_HOST="localhost"

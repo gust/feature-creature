@@ -12,6 +12,7 @@ module Products.FeaturesAPI
   , productsFeature
   ) where
 
+  import Config as Cfg
   import Control.Monad.Except (runExceptT)
   import Control.Monad.IO.Class (liftIO)
   import Data.Aeson
@@ -34,8 +35,10 @@ module Products.FeaturesAPI
 
   productsFeatures :: P.ProductID -> Handler DirectoryTree
   productsFeatures prodID = do
-    prodDir <- liftIO $ P.productRepositoryDir prodID
-    result  <- liftIO $ runExceptT (F.getFeatures prodDir)
+    basePath <- liftIO $ Cfg.gitRepositoryStorePath
+
+    let featuresPath = basePath ++ P.codeRepositoryDir prodID
+    result  <- liftIO $ runExceptT (F.getFeatures featuresPath)
     case result of
       Left msg -> error msg
       Right tree -> return tree
@@ -44,13 +47,17 @@ module Products.FeaturesAPI
   productsFeature _ Nothing = do
     error "Missing required query param 'path'"
   productsFeature prodID (Just path) = do
-    prodDir <- liftIO $ P.productRepositoryDir prodID
-    result  <- liftIO $ runExceptT (F.getFeature (prodDir ++ path))
+    basePath <- liftIO $ Cfg.gitRepositoryStorePath
+
+    let featurePath = basePath ++ P.codeRepositoryDir prodID ++ path
+    result  <- liftIO $ runExceptT (F.getFeature featurePath)
     case result of
-      Left msg -> error msg
-      Right feature -> return $ APIFeature { featureID = path
-                                           , description = feature
-                                           }
+      Left msg ->
+        error msg
+      Right feature ->
+        return $ APIFeature { featureID = path
+                            , description = feature
+                            }
 
   featureDirectoryExample :: DirectoryTree
   featureDirectoryExample = rootNode

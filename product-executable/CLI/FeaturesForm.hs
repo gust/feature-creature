@@ -1,4 +1,5 @@
 module CLI.FeaturesForm where
+  import Config as Cfg
   import Control.Monad.Except (runExceptT)
   import Data.DirectoryTree
   import Data.Tree hiding (drawTree)
@@ -7,27 +8,33 @@ module CLI.FeaturesForm where
   import Safe (readMay)
 
   showFeatures :: [String] -> IO ()
-  showFeatures [prodID]      = case readMay prodID of
-                                 (Just productId) -> listAllProductFeatures productId
-                                 Nothing          -> showFeaturesCommandUsage
-  showFeatures _             = showFeaturesCommandUsage
+  showFeatures [prodID] =
+    case readMay prodID of
+      (Just productId) -> listAllProductFeatures productId
+      Nothing          -> showFeaturesCommandUsage
+  showFeatures _ =
+    showFeaturesCommandUsage
 
   showFeature :: [String] -> IO ()
-  showFeature (prodID:path:[]) = case readMay prodID of
-                                 (Just productId) -> getProductFeature productId path
-                                 Nothing          -> showFeaturesCommandUsage
-  showFeature _                = showFeaturesCommandUsage
+  showFeature (prodID:path:[]) =
+    case readMay prodID of
+      (Just productId) -> getProductFeature productId path
+      Nothing          -> showFeaturesCommandUsage
+  showFeature _ =
+    showFeaturesCommandUsage
 
   listAllProductFeatures :: P.ProductID -> IO ()
   listAllProductFeatures prodID = do
-    prodDir <- P.productRepositoryDir prodID
-    result <- runExceptT (F.getFeatures prodDir)
+    basePath <- Cfg.gitRepositoryStorePath
+    let featuresPath = basePath ++ P.codeRepositoryDir prodID
+    result   <- runExceptT (F.getFeatures featuresPath)
     either putStrLn (putStrLn . drawTree) result
 
   getProductFeature :: P.ProductID -> FilePath -> IO ()
   getProductFeature prodID path = do
-    prodDir <- P.productRepositoryDir prodID
-    result <- runExceptT (F.getFeature (prodDir ++ path))
+    basePath <- Cfg.gitRepositoryStorePath
+    let featurePath = basePath ++ P.codeRepositoryDir prodID ++ path
+    result <- runExceptT (F.getFeature featurePath)
     either putStrLn putStrLn result
 
   showFeaturesCommandUsage :: IO ()

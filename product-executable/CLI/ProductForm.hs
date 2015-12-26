@@ -19,16 +19,10 @@ module CLI.ProductForm where
   showCreateProductForm = do
     prodName    <- (putStrLn "Project Name: ") >> getLine
     prodRepoUrl <- (putStrLn "Git repository url: ") >> getLine
-    prodId      <- P.createProduct $ P.Product (pack prodName) (pack prodRepoUrl)
 
-    let message = "Product " ++ (show prodId) ++ " created!"
-    let prod = P.Product (pack prodName) (pack prodRepoUrl)
-    updateRepo prod prodId >> putStrLn message
-    where
-      updateRepo :: P.Product -> P.ProductID -> IO ()
-      updateRepo prod prodId = do
-        result <- runExceptT (P.updateRepo prod prodId)
-        either putStrLn putStrLn result
+    let newProduct = P.Product (pack prodName) (pack prodRepoUrl)
+    result      <- runExceptT $ P.createProduct newProduct
+    either (putStrLn . show) (putStrLn . show) result
 
   showProductCommandUsage :: IO ()
   showProductCommandUsage = Paths.showProductCommandUsageFile
