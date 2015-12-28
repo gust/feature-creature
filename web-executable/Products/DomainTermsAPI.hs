@@ -13,8 +13,8 @@ module Products.DomainTermsAPI
 ) where
 
 import App
-import Control.Monad (mzero)
-import Control.Monad.IO.Class (liftIO)
+import AppConfig (getDBConfig)
+import Control.Monad.Reader
 import Data.Aeson
 import Data.Int (Int64)
 import qualified Data.Text              as T
@@ -51,7 +51,8 @@ instance FromJSON APIDomainTerm where
 
 createDomainTerm :: P.ProductID -> APIDomainTerm -> App APIDomainTerm
 createDomainTerm pID (APIDomainTerm _ _ t d) = do
-  termID <- liftIO $ DT.createDomainTerm (DT.DomainTerm (toKey pID) t d)
+  dbConfig <- reader getDBConfig
+  termID <- liftIO $ DT.createDomainTerm dbConfig (DT.DomainTerm (toKey pID) t d)
   return $ APIDomainTerm { domainTermID = Just termID
                          , productID    = Just (toKey pID)
                          , title        = t
@@ -60,7 +61,8 @@ createDomainTerm pID (APIDomainTerm _ _ t d) = do
 
 productsDomainTerms :: P.ProductID -> App [APIDomainTerm]
 productsDomainTerms prodID = do
-  domainTerms <- liftIO $ DT.findByProductId $ toKey prodID
+  dbConfig <- reader getDBConfig
+  domainTerms <- liftIO $ DT.findByProductId dbConfig (toKey prodID)
   return $ map toDomainTerm domainTerms
     where
       toDomainTerm dbDomainTerm = do

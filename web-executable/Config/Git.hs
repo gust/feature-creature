@@ -3,11 +3,8 @@ module Config.Git
 , getGitConfig
 ) where
 
+import Config (GitConfig (..))
 import System.Environment (getEnv)
-
-data GitConfig =
-  GitConfig { repoBasePath :: String
-            } deriving (Show)
 
 getGitConfig :: IO GitConfig
 getGitConfig =

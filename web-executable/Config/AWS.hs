@@ -3,13 +3,8 @@ module Config.AWS
 , getAWSConfig
 ) where
 
+import Config (AWSConfig (..))
 import System.Environment (getEnv)
-
-data AWSConfig =
-  AWSConfig { accessKey        :: String
-            , secretKey        :: String
-            , sqsUrl           :: String
-            } deriving (Show)
 
 getAWSConfig :: IO AWSConfig
 getAWSConfig =

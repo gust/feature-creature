@@ -12,10 +12,9 @@ module Products.ProductsAPI
 ) where
 
 import App
-import Control.Monad (mzero)
+import AppConfig (getDBConfig, getGitConfig)
 import Control.Monad.Except (runExceptT)
-import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Reader (lift)
+import Control.Monad.Reader
 import Control.Monad.Trans.Either (left)
 import Data.Aeson
 import qualified Data.Text               as T
@@ -74,7 +73,9 @@ productsAPI = Proxy
 createProduct :: APIProduct -> App APIProduct
 createProduct (APIProduct _ prodName prodRepoUrl) = do
   let newProduct = P.Product prodName prodRepoUrl
-  result <- liftIO $ runExceptT $ P.createProduct newProduct
+  dbConfig <- reader getDBConfig
+  gitConfig <- reader getGitConfig
+  result <- liftIO $ runExceptT $ P.createProduct dbConfig gitConfig newProduct
   case result of
     Left err ->
       -- In the case where the repo cannot be retrieved,
@@ -88,7 +89,8 @@ createProduct (APIProduct _ prodName prodRepoUrl) = do
 
 products :: App [APIProduct]
 products = do
-  prods <- liftIO P.findProducts
+  dbConfig <- reader getDBConfig
+  prods <- liftIO $ P.findProducts dbConfig
   return $ map toProduct prods
     where
       toProduct dbProduct = do

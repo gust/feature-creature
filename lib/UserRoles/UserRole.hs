@@ -1,27 +1,43 @@
 module UserRoles.UserRole
-  ( findByProductId
-  , createUserRole
-  , findUserRoles
-  , toUserRoleID
-  , toUserRole
-  , UserRole(..)
-  ) where
-  import Database (runDB)
-  import Data.Int (Int64)
-  import qualified Database.Persist.Postgresql as DB
-  import Models
+( findByProductId
+, createUserRole
+, findUserRoles
+, toUserRoleID
+, toUserRole
+, UserRole(..)
+) where
 
-  createUserRole :: UserRole -> IO Int64
-  createUserRole userRole = (runDB $ DB.insert userRole) >>= return . DB.fromSqlKey
+import Config (DBConfig, getPool)
+import Data.Int (Int64)
+import qualified Database.Persist.Postgresql as DB
+import Models
 
-  findUserRoles :: IO [DB.Entity UserRole]
-  findUserRoles = runDB $ DB.selectList ([] :: [DB.Filter UserRole]) []
+-- rewrite this using a WithDBConn monad
+createUserRole :: DBConfig -> UserRole -> IO Int64
+createUserRole dbConfig userRole =
+  let query = DB.insert userRole
+      pool = getPool dbConfig
+  in
+    DB.runSqlPool query pool >>= return . DB.fromSqlKey
 
-  findByProductId :: ProductId -> IO [DB.Entity UserRole]
-  findByProductId productId = runDB $ DB.selectList [UserRoleProductId DB.==. productId] []
+-- rewrite this using a WithDBConn monad
+findUserRoles :: DBConfig -> IO [DB.Entity UserRole]
+findUserRoles dbConfig =
+  let query = DB.selectList ([] :: [DB.Filter UserRole]) []
+      pool = getPool dbConfig
+  in
+    DB.runSqlPool query pool
 
-  toUserRoleID :: DB.Entity UserRole -> Int64
-  toUserRoleID dbEntity = DB.fromSqlKey . DB.entityKey $ dbEntity
+-- rewrite this using a WithDBConn monad
+findByProductId :: DBConfig -> ProductId -> IO [DB.Entity UserRole]
+findByProductId dbConfig productId =
+  let query = DB.selectList [UserRoleProductId DB.==. productId] []
+      pool = getPool dbConfig
+  in
+    DB.runSqlPool query pool
 
-  toUserRole :: DB.Entity UserRole -> UserRole
-  toUserRole dbEntity = DB.entityVal dbEntity
+toUserRoleID :: DB.Entity UserRole -> Int64
+toUserRoleID dbEntity = DB.fromSqlKey . DB.entityKey $ dbEntity
+
+toUserRole :: DB.Entity UserRole -> UserRole
+toUserRole dbEntity = DB.entityVal dbEntity

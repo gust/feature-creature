@@ -13,8 +13,8 @@ module Products.FeaturesAPI
 ) where
 
 import App
-import AppConfig (gitConfig)
-import Config.Git
+import AppConfig (getGitConfig)
+import Config.Git (repoBasePath)
 import Control.Monad.Except (runExceptT)
 import Control.Monad.Reader
 import Data.Aeson
@@ -36,7 +36,7 @@ type FeatureAPI  = "feature"  :> QueryParam "path" F.FeatureFile
 
 productsFeatures :: P.ProductID -> App DirectoryTree
 productsFeatures prodID = do
-  basePath <- repoBasePath <$> reader gitConfig
+  basePath <- repoBasePath <$> reader getGitConfig
 
   let featuresPath = basePath ++ P.codeRepositoryDir prodID
   result  <- liftIO $ runExceptT (F.getFeatures featuresPath)
@@ -48,7 +48,7 @@ productsFeature :: P.ProductID -> Maybe F.FeatureFile -> App APIFeature
 productsFeature _ Nothing =
   error "Missing required query param 'path'"
 productsFeature prodID (Just path) = do
-  basePath <- repoBasePath <$> reader gitConfig
+  basePath <- repoBasePath <$> reader getGitConfig
 
   let featurePath = basePath ++ P.codeRepositoryDir prodID ++ path
   result  <- liftIO $ runExceptT (F.getFeature featurePath)

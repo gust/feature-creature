@@ -1,7 +1,9 @@
 module Config.Database
-( makePool
+( DBConfig (..)
+, makePool
 ) where
 
+import Config (DBConfig (..))
 import Config.Environment
 import Control.Monad.Logger        (runNoLoggingT, runStdoutLoggingT)
 import Data.ByteString.Char8       (pack)

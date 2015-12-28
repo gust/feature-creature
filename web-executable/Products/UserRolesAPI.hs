@@ -13,8 +13,8 @@ module Products.UserRolesAPI
 ) where
 
 import App
-import Control.Monad (mzero)
-import Control.Monad.IO.Class (liftIO)
+import AppConfig (getDBConfig)
+import Control.Monad.Reader
 import Data.Aeson
 import Data.Int (Int64)
 import qualified Data.Text          as T
@@ -52,7 +52,8 @@ instance FromJSON APIUserRole where
 
 createUserRole :: P.ProductID -> APIUserRole -> App APIUserRole
 createUserRole pID (APIUserRole _ _ t d) = do
-  roleID <- liftIO $ UR.createUserRole (UserRole (toKey pID) t d)
+  dbConfig <- reader getDBConfig
+  roleID <- liftIO $ UR.createUserRole dbConfig (UserRole (toKey pID) t d)
   return $ APIUserRole { userRoleID  = Just roleID
                        , productID   = Just (toKey pID)
                        , title       = t
@@ -61,7 +62,8 @@ createUserRole pID (APIUserRole _ _ t d) = do
 
 productsUserRoles :: P.ProductID -> App [APIUserRole]
 productsUserRoles prodID = do
-  userRoles <- liftIO $ UR.findByProductId $ toKey prodID
+  dbConfig <- reader getDBConfig
+  userRoles <- liftIO $ UR.findByProductId dbConfig (toKey prodID)
   return $ map toUserRole userRoles
     where
       toUserRole dbUserRole = do

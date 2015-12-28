@@ -5,10 +5,9 @@ module AppConfig
 ) where
 
 import qualified Config.AWS as AWS          (AWSConfig, getAWSConfig)
-import Config.Database                      (makePool)
+import Config.Database                      (DBConfig (..), makePool)
 import Config.Environment                   (Environment (..))
-import Config.Git                           (GitConfig (..), getGitConfig)
-import Database.Persist.Postgresql          (ConnectionPool)
+import qualified Config.Git as Git          (GitConfig (..), getGitConfig)
 import Network.Wai.Middleware.RequestLogger (logStdoutDev, logStdout)
 import Network.Wai                          (Middleware)
 import System.Environment                   (lookupEnv)
@@ -16,9 +15,9 @@ import System.Environment                   (lookupEnv)
 data AppConfig =
   AppConfig { getAWSConfig     :: AWS.AWSConfig
             , getEnv           :: Environment
-            , getPool          :: ConnectionPool
+            , getDBConfig      :: DBConfig
             , getRequestLogger :: Middleware
-            , gitConfig        :: GitConfig
+            , getGitConfig     :: Git.GitConfig
             }
 
 getAppConfig :: IO AppConfig
@@ -26,12 +25,12 @@ getAppConfig = do
   env       <- lookupSetting "ENV" Development
   awsConfig <- AWS.getAWSConfig
   dbPool    <- makePool env
-  gitCfg    <- getGitConfig
+  gitConfig <- Git.getGitConfig
   return $ AppConfig { getAWSConfig     = awsConfig
                      , getEnv           = env
                      , getRequestLogger = requestLogger env
-                     , getPool          = dbPool
-                     , gitConfig        = gitCfg
+                     , getDBConfig      = DBConfig dbPool
+                     , getGitConfig     = gitConfig
                      }
 
 requestLogger :: Environment -> Middleware
