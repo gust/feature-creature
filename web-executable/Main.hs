@@ -9,18 +9,21 @@ import Control.Monad.Reader       (runReaderT)
 import Control.Monad.Trans.Either (EitherT)
 import Documentation as Docs
 import Products.ProductsAPI (ProductsAPI, productsServer)
-import Network.Wai
-import Network.Wai.Handler.Warp
+import Network.Wai as Wai
+import Network.Wai.Handler.Warp as Warp
 import Network.Wai.Middleware.AddHeaders
+import Network.Wai.Middleware.Cors
 import Servant
 
+type FeatureCreatureAPI = ProductsAPI :<|> Docs.DocumentationAPI
+
 {- type FeatureCreatureAPI = ProductsAPI :<|> Raw -}
-type FeatureCreatureAPI = ProductsAPI
+{- type FeatureCreatureAPI = ProductsAPI -}
 
 main :: IO ()
 main = do
   appConfig <- getAppConfig
-  run 8081 (app appConfig)
+  Warp.run 8081 (app appConfig)
 
 readerToEither :: AppConfig -> App :~> EitherT ServantErr IO
 readerToEither cfg =
@@ -31,9 +34,8 @@ readerServer cfg =
   enter (readerToEither cfg) server
 
 server :: ServerT FeatureCreatureAPI App
-server =
-  productsServer
-  {- :<|> Docs.documentationServer -}
+server = productsServer
+    :<|> Docs.documentationServer
 
 api :: Proxy FeatureCreatureAPI
 api = Proxy
@@ -41,6 +43,7 @@ api = Proxy
 addResponseHeaders :: Middleware
 addResponseHeaders =
   addHeaders [ ("Access-Control-Allow-Origin", "*")
+             , ("Access-Control-Allow-Methods", "*")
              , ("Access-Control-Request-Method", "*")
              , ("Access-Control-Allow-Headers", "Content-Type")
              , ("Origin", "*")
@@ -49,7 +52,7 @@ addResponseHeaders =
 {- app :: Application -}
 {- app = addResponseHeaders $ serve api server -}
 
-app :: AppConfig -> Application
+app :: AppConfig -> Wai.Application
 app cfg =
-  addResponseHeaders
+  simpleCors
   $ serve api (readerServer cfg)

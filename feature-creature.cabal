@@ -67,6 +67,7 @@ executable feature-creature-web
                    , either
                    , feature-creature
                    , http-client
+                   , http-media
                    , http-types
                    , monad-logger
                    , mtl
@@ -80,6 +81,7 @@ executable feature-creature-web
                    , transformers
                    , transformers-compat
                    , wai
+                   , wai-cors
                    , wai-extra
                    , warp
 
