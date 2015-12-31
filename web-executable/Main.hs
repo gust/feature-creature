@@ -23,9 +23,13 @@ main = do
   appConfig <- getAppConfig
   Warp.run 8081 (app appConfig)
 
-readerToEither :: AppConfig -> App :~> EitherT ServantErr IO
-readerToEither cfg =
-  Nat $ \x -> runReaderT x cfg
+app :: AppConfig -> Wai.Application
+app cfg =
+  cors (const $ Just corsPolicy)
+  $ serve api (readerServer cfg)
+
+api :: Proxy FeatureCreatureAPI
+api = Proxy
 
 readerServer :: AppConfig -> Server FeatureCreatureAPI
 readerServer cfg =
@@ -35,16 +39,15 @@ server :: ServerT FeatureCreatureAPI App
 server = productsServer
     :<|> Docs.documentationServer
 
-api :: Proxy FeatureCreatureAPI
-api = Proxy
-
-app :: AppConfig -> Wai.Application
-app cfg =
-  cors (const $ Just corsPolicy)
-  $ serve api (readerServer cfg)
+readerToEither :: AppConfig -> App :~> EitherT ServantErr IO
+readerToEither cfg =
+  Nat $ \x -> runReaderT x cfg
 
 corsPolicy :: CorsResourcePolicy
 corsPolicy =
-  simpleCorsResourcePolicy { corsMethods = simpleMethods <> ["DELETE", "PUT", "OPTIONS"]
-                           , corsRequestHeaders = ["Content-Type"]
-                           }
+  let allowedMethods = simpleMethods <> ["DELETE", "PUT", "OPTIONS"]
+      allowedHeaders = ["Content-Type"]
+  in
+    simpleCorsResourcePolicy { corsMethods = allowedMethods
+                             , corsRequestHeaders = allowedHeaders
+                             }
