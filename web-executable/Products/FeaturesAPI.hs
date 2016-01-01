@@ -22,6 +22,7 @@ import Data.DirectoryTree
 import qualified Data.List        as L
 import Data.Tree (Tree(Node))
 import qualified Features.Feature as F
+import qualified Products.CodeRepository as CR
 import qualified Products.Product as P
 import Servant
 import qualified Servant.Docs     as SD
@@ -38,7 +39,7 @@ productsFeatures :: P.ProductID -> App DirectoryTree
 productsFeatures prodID = do
   basePath <- repoBasePath <$> reader getGitConfig
 
-  let featuresPath = basePath ++ P.codeRepositoryDir prodID
+  let featuresPath = basePath ++ CR.codeRepositoryDir prodID
   result  <- liftIO $ runExceptT (F.getFeatures featuresPath)
   case result of
     Left msg -> error msg
@@ -50,7 +51,7 @@ productsFeature _ Nothing =
 productsFeature prodID (Just path) = do
   basePath <- repoBasePath <$> reader getGitConfig
 
-  let featurePath = basePath ++ P.codeRepositoryDir prodID ++ path
+  let featurePath = basePath ++ CR.codeRepositoryDir prodID ++ path
   result  <- liftIO $ runExceptT (F.getFeature featurePath)
   case result of
     Left msg ->

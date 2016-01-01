@@ -13,6 +13,7 @@ module Products.ProductsAPI
 
 import App
 import AppConfig (getDBConfig, getGitConfig)
+import Config (repoBasePath)
 import Control.Monad.Except (runExceptT)
 import Control.Monad.Reader
 import Control.Monad.Trans.Either (left)
@@ -20,6 +21,7 @@ import Data.Aeson
 import qualified Data.Text               as T
 import qualified Data.ByteString.Lazy.Char8 as BS
 import Models
+import qualified Products.CodeRepository as CR
 import qualified Products.DomainTermsAPI as DT
 import qualified Products.FeaturesAPI    as F
 import qualified Products.Product        as P
@@ -75,13 +77,14 @@ createProduct (APIProduct _ prodName prodRepoUrl) = do
   let newProduct = P.Product prodName prodRepoUrl
   dbConfig <- reader getDBConfig
   gitConfig <- reader getGitConfig
-  result <- liftIO $ runExceptT $ P.createProduct dbConfig gitConfig newProduct
+  prodID <- liftIO $ P.createProduct dbConfig newProduct
+  result <- liftIO $ runExceptT $ CR.updateRepo newProduct prodID (repoBasePath gitConfig)
   case result of
     Left err ->
       -- In the case where the repo cannot be retrieved,
       -- It's probably a good idea to rollback the Product creation here.
       lift $ left $ err503 { errBody = BS.pack err }
-    Right prodID ->
+    Right _ ->
       return $ APIProduct { productID = Just prodID
                           , name      = prodName
                           , repoUrl   = prodRepoUrl

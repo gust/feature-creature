@@ -18,11 +18,11 @@ library
                    , Config
                    , CommonCreatures
                    , Data.DirectoryTree
-                   -- , Database
                    , Features.Feature
                    , Features.SearchableFeature
                    , Models
                    , Products.Product
+                   , Products.CodeRepository
                    , UserRoles.UserRole
                    , DomainTerms.DomainTerm
                    , Git
