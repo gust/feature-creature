@@ -4,14 +4,14 @@ module Main where
 
 import           App
 import           AppConfig (AppConfig(..), readConfig)
-import           Async.Job
+import           Async.Job as Job
 import           Control.Concurrent (threadDelay)
 import           Control.Monad.Except (runExceptT)
 import           Control.Monad.Reader
 import qualified Data.Text as Text
 import           Features.Feature as F
 import qualified Indexer
-import           Products.Product (CodeRepository(..))
+import           Products.CodeRepository (CodeRepository(..))
 import           SQS
 
 main :: IO ()
@@ -38,7 +38,7 @@ processJob :: Job CodeRepository -> App ()
 processJob job = do
   basePath <- reader featureFilePath
   let say = liftIO . putStrLn
-  case payload job of
+  case Job.payload job of
     CodeRepository repositoryPath -> do
       let featureFileBasePath = basePath ++ (Text.unpack repositoryPath)
       say $ "Finding feature files at: " ++ featureFileBasePath

@@ -14,7 +14,6 @@ module Products.FeaturesAPI
 
 import App
 import AppConfig (getGitConfig)
-import Config.Git (repoBasePath)
 import Control.Monad.Except (runExceptT)
 import Control.Monad.Reader
 import Data.Aeson
@@ -22,6 +21,7 @@ import Data.DirectoryTree
 import qualified Data.List        as L
 import Data.Tree (Tree(Node))
 import qualified Features.Feature as F
+import qualified Products.CodeRepository as CR
 import qualified Products.Product as P
 import Servant
 import qualified Servant.Docs     as SD
@@ -36,25 +36,20 @@ type FeatureAPI  = "feature"  :> QueryParam "path" F.FeatureFile
 
 productsFeatures :: P.ProductID -> App DirectoryTree
 productsFeatures prodID = do
-  basePath <- repoBasePath <$> reader getGitConfig
-
-  let featuresPath = basePath ++ P.codeRepositoryDir prodID
-  result  <- liftIO $ runExceptT (F.getFeatures featuresPath)
+  featuresPath <- CR.codeRepositoryDir prodID <$> reader getGitConfig
+  result       <- liftIO $ runExceptT (F.getFeatures featuresPath)
   case result of
-    Left msg -> error msg
+    Left msg   -> error msg
     Right tree -> return tree
 
 productsFeature :: P.ProductID -> Maybe F.FeatureFile -> App APIFeature
 productsFeature _ Nothing =
   error "Missing required query param 'path'"
 productsFeature prodID (Just path) = do
-  basePath <- repoBasePath <$> reader getGitConfig
-
-  let featurePath = basePath ++ P.codeRepositoryDir prodID ++ path
-  result  <- liftIO $ runExceptT (F.getFeature featurePath)
+  featuresPath <- CR.codeRepositoryDir prodID <$> reader getGitConfig
+  result       <- liftIO $ runExceptT (F.getFeature (featuresPath ++ path))
   case result of
-    Left msg ->
-      error msg
+    Left msg      -> error msg
     Right feature ->
       return $ APIFeature { featureID = path
                           , description = feature
