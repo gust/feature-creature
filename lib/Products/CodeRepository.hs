@@ -10,6 +10,7 @@ module Products.CodeRepository
 
 import Async.Job (Job(..))
 import CommonCreatures (WithErr)
+import Config (GitConfig (..))
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson as Aeson
 import qualified Data.Text as T
@@ -25,29 +26,34 @@ data CodeRepository =
 instance ToJSON CodeRepository
 instance FromJSON CodeRepository
 
-updateRepo :: Product -> ProductID -> FilePath -> WithErr String
-updateRepo prod prodID basePath = do
-  let prodRepoPath = basePath ++ codeRepositoryDir prodID
-  (liftIO $ createRequiredDirectories basePath prodID) >> updateGitRepo prodRepoPath (productRepoUrl prod)
+-- (ReaderT GitConfig (WithErr a)) could be a useful monad here
+updateRepo :: Product -> ProductID -> GitConfig -> WithErr String
+updateRepo prod prodID gitConfig =
+  (liftIO $ createRequiredDirectories prodID gitConfig) >> updateGitRepo (productRepoUrl prod) prodID gitConfig
 
-updateGitRepo :: FilePath -> T.Text -> WithErr String
-updateGitRepo repositoryPath gitUrl = do
+-- (ReaderT GitConfig (WithErr a)) could be a useful monad here
+updateGitRepo :: T.Text -> ProductID -> GitConfig -> WithErr String
+updateGitRepo gitUrl prodID gitConfig = do
+  let repositoryPath = codeRepositoryDir prodID gitConfig
   doesRepoExist <- liftIO $ doesDirectoryExist repositoryPath
   case doesRepoExist of
     True  -> Git.pull repositoryPath
     False -> Git.clone repositoryPath gitUrl
 
-productDir :: ProductID -> FilePath
-productDir prodID =
-  "/products/" ++ (show prodID)
+-- maybe the combination of a ProductID and GitConfig is a ProductRepository?
+productDir :: ProductID -> GitConfig -> FilePath
+productDir prodID gitConfig =
+  (repoBasePath gitConfig) ++ "/products/" ++ (show prodID)
 
-codeRepositoryDir :: ProductID -> FilePath
-codeRepositoryDir prodID =
-  productDir prodID ++ "/repo"
+-- maybe the combination of a ProductID and GitConfig is a ProductRepository?
+codeRepositoryDir :: ProductID -> GitConfig -> FilePath
+codeRepositoryDir prodID gitConfig =
+  productDir prodID gitConfig ++ "/repo"
 
-createRequiredDirectories :: FilePath -> ProductID -> IO ()
-createRequiredDirectories basePath prodID =
-  createDirectoryIfMissing True (basePath ++ productDir prodID)
+-- maybe the combination of a ProductID and GitConfig is a ProductRepository?
+createRequiredDirectories :: ProductID -> GitConfig -> IO ()
+createRequiredDirectories prodID gitConfig =
+  createDirectoryIfMissing True (productDir prodID gitConfig)
 
 indexFeaturesJob :: CodeRepository -> Job CodeRepository
 indexFeaturesJob codeRepo =

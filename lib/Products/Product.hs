@@ -15,8 +15,8 @@ import Models
 type ProductID = Int64
 
 -- rewrite this using a WithDBConn monad
-createProduct :: DBConfig -> Product -> IO ProductID
-createProduct dbConfig p =
+createProduct :: Product -> DBConfig -> IO ProductID
+createProduct p dbConfig =
   let query = DB.insert p
       pool = getPool dbConfig
   in

@@ -20,6 +20,7 @@ import           System.IO
 
 import qualified Data.ByteString.Char8 as Char8
 
+-- (ReaderT AWSConfig (IO a)) could be a useful monad here (WithAWSConn)
 getSQSMessages :: FromJSON a => AWSConfig -> IO [Either String (Job a)]
 getSQSMessages awsConfig = do
   let url = awsSQSUrl awsConfig
@@ -30,15 +31,14 @@ getSQSMessages awsConfig = do
     liftIO $ putStrLn $ "Jobs" ++ (concat $ map Text.unpack jobBodies)
     return $ map decodeJob jobBodies
 
-sendSQSMessage :: ToJSON a => AWSConfig -> Job a -> IO ()
-sendSQSMessage awsConfig job = do
+-- (ReaderT AWSConfig (IO a)) could be a useful monad here (WithAWSConn)
+sendSQSMessage :: ToJSON a => Job a -> AWSConfig -> IO ()
+sendSQSMessage job awsConfig = do
   let url = awsSQSUrl awsConfig
   env <- awsEnv awsConfig
   runResourceT . runAWST env $ do
     let msg = sendMessage url (encodeJob job)
     void $ send msg
-
-
 
 awsKeys :: AWSConfig -> Credentials
 awsKeys awsConfig =

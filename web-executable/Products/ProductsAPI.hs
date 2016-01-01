@@ -13,7 +13,6 @@ module Products.ProductsAPI
 
 import App
 import AppConfig (getDBConfig, getGitConfig)
-import Config (repoBasePath)
 import Control.Monad.Except (runExceptT)
 import Control.Monad.Reader
 import Control.Monad.Trans.Either (left)
@@ -75,16 +74,15 @@ productsAPI = Proxy
 createProduct :: APIProduct -> App APIProduct
 createProduct (APIProduct _ prodName prodRepoUrl) = do
   let newProduct = P.Product prodName prodRepoUrl
-  dbConfig <- reader getDBConfig
-  gitConfig <- reader getGitConfig
-  prodID <- liftIO $ P.createProduct dbConfig newProduct
-  result <- liftIO $ runExceptT $ CR.updateRepo newProduct prodID (repoBasePath gitConfig)
+  prodID <- reader getDBConfig >>= liftIO . (P.createProduct newProduct)
+  result <- reader getGitConfig >>= liftIO . runExceptT . (CR.updateRepo newProduct prodID)
   case result of
     Left err ->
       -- In the case where the repo cannot be retrieved,
       -- It's probably a good idea to rollback the Product creation here.
       lift $ left $ err503 { errBody = BS.pack err }
     Right _ ->
+      -- index for search
       return $ APIProduct { productID = Just prodID
                           , name      = prodName
                           , repoUrl   = prodRepoUrl
@@ -92,8 +90,7 @@ createProduct (APIProduct _ prodName prodRepoUrl) = do
 
 products :: App [APIProduct]
 products = do
-  dbConfig <- reader getDBConfig
-  prods <- liftIO $ P.findProducts dbConfig
+  prods <- reader getDBConfig >>= liftIO . P.findProducts
   return $ map toProduct prods
     where
       toProduct dbProduct = do
