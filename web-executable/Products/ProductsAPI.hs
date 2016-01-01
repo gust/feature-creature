@@ -12,21 +12,22 @@ module Products.ProductsAPI
 ) where
 
 import App
-import AppConfig (getDBConfig, getGitConfig)
+import AppConfig (getAWSConfig, getDBConfig, getGitConfig)
 import Control.Monad.Except (runExceptT)
 import Control.Monad.Reader
 import Control.Monad.Trans.Either (left)
 import Data.Aeson
-import qualified Data.Text               as T
+import qualified Data.Text                  as T
 import qualified Data.ByteString.Lazy.Char8 as BS
 import Models
-import qualified Products.CodeRepository as CR
-import qualified Products.DomainTermsAPI as DT
-import qualified Products.FeaturesAPI    as F
-import qualified Products.Product        as P
+import qualified Products.CodeRepository    as CR
+import qualified Products.DomainTermsAPI    as DT
+import qualified Products.FeaturesAPI       as F
+import qualified Products.Product           as P
+import qualified Products.UserRolesAPI      as UR
 import Servant
-import qualified Servant.Docs            as SD
-import qualified Products.UserRolesAPI   as UR
+import qualified Servant.Docs               as SD
+import SQS                                  as SQS
 
 type ProductsAPI = "products" :> Get '[JSON] [APIProduct]
               :<|> "products" :> ReqBody '[JSON] APIProduct :> Post '[JSON] APIProduct
@@ -81,12 +82,15 @@ createProduct (APIProduct _ prodName prodRepoUrl) = do
       -- In the case where the repo cannot be retrieved,
       -- It's probably a good idea to rollback the Product creation here.
       lift $ left $ err503 { errBody = BS.pack err }
-    Right _ ->
+    Right _ -> do
       -- index for search
-      return $ APIProduct { productID = Just prodID
-                          , name      = prodName
-                          , repoUrl   = prodRepoUrl
-                          }
+      gitConfig <- reader getGitConfig
+      awsConfig <- reader getAWSConfig
+      let repoPath = CR.codeRepositoryDir prodID gitConfig
+      let job = CR.indexFeaturesJob (CR.CodeRepository (T.pack repoPath))
+
+      (liftIO (SQS.sendSQSMessage job awsConfig))
+      >> (return $ APIProduct { productID = Just prodID, name = prodName, repoUrl = prodRepoUrl })
 
 products :: App [APIProduct]
 products = do
