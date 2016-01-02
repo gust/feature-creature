@@ -6,11 +6,9 @@ import           App
 import           AppConfig (AppConfig(..), readConfig)
 import           Async.Job as Job
 import           Control.Concurrent (threadDelay)
-import           Control.Monad.Except (runExceptT)
 import           Control.Monad.Reader
 import qualified Data.Text as Text
-import           Features.Feature as F
-import qualified Indexer
+import qualified Features
 import           Products.CodeRepository (CodeRepository(..))
 import           SQS
 
@@ -38,15 +36,7 @@ processJob :: Job CodeRepository -> App ()
 processJob job = do
   let say = liftIO . putStrLn
   case Job.payload job of
-    CodeRepository repositoryPath -> do
-      let featureFileBasePath = Text.unpack repositoryPath
-      say $ "Finding feature files at: " ++ featureFileBasePath
-
-      featureFiles <- liftIO $ runExceptT $ F.findFeatureFiles featureFileBasePath
-      case featureFiles of
-        Left errorStr ->
-          liftIO $ putStrLn errorStr
-        Right features ->
-          liftIO $ Indexer.indexFeatures $ map (\featurePath -> featureFileBasePath ++ featurePath) features
+    CodeRepository _ -> do
+      liftIO $ Features.indexFeatures (Job.payload job)
     _ ->
       say $ "Unprocessable job type: " ++ (Text.unpack $ jobType job)
