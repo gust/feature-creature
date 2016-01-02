@@ -10,7 +10,7 @@ import           Control.Monad.Reader
 import qualified Data.Text as Text
 import qualified Features
 import           Products.CodeRepository (CodeRepository(..))
-import           SQS
+import           SQS (getSQSMessages)
 
 main :: IO ()
 main = do
@@ -28,15 +28,16 @@ processJobs = do
       case enqueuedJob of
         Left err ->
           liftIO $ putStrLn err
-        Right job ->
+        Right enqJob -> do
+          let job = getJob enqJob
+          let deliveryReceipt = getDeliveryReceipt enqJob
           runReaderT (processJob job) cfg
     threadDelay 10000
 
 processJob :: Job CodeRepository -> App ()
 processJob job = do
-  let say = liftIO . putStrLn
-  case Job.payload job of
+  case Job.getPayload job of
     CodeRepository _ -> do
-      liftIO $ Features.indexFeatures (Job.payload job)
+      liftIO $ Features.indexFeatures (Job.getPayload job)
     _ ->
-      say $ "Unprocessable job type: " ++ (Text.unpack $ jobType job)
+      liftIO . putStrLn $ "Unprocessable job type: " ++ (Text.unpack $ Job.getJobType job)

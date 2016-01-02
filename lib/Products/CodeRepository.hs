@@ -56,8 +56,5 @@ createRequiredDirectories prodID gitConfig =
   createDirectoryIfMissing True (productDir prodID gitConfig)
 
 indexFeaturesJob :: CodeRepository -> Job CodeRepository
-indexFeaturesJob codeRepo =
-  Job { jobType = "IndexFeatures"
-      , payload = codeRepo
-      }
+indexFeaturesJob codeRepo = Job "IndexFeatures" codeRepo
 
