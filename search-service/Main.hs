@@ -36,11 +36,10 @@ processJobs = do
 
 processJob :: Job CodeRepository -> App ()
 processJob job = do
-  basePath <- reader featureFilePath
   let say = liftIO . putStrLn
   case Job.payload job of
     CodeRepository repositoryPath -> do
-      let featureFileBasePath = basePath ++ (Text.unpack repositoryPath)
+      let featureFileBasePath = Text.unpack repositoryPath
       say $ "Finding feature files at: " ++ featureFileBasePath
 
       featureFiles <- liftIO $ runExceptT $ F.findFeatureFiles featureFileBasePath
