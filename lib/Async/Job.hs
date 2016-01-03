@@ -2,6 +2,7 @@
 
 module Async.Job
 ( Job(..)
+, EnqueuedJob(..)
 , encodeJob
 , decodeJob
 ) where
@@ -15,8 +16,8 @@ import qualified Data.Text.Lazy.Encoding as TLE
 import GHC.Generics (Generic)
 
 data Job a =
-  Job { jobType :: Text
-      , payload :: a
+  Job { getJobType :: Text
+      , getPayload :: a
       } deriving (Show, Generic)
 
 instance ToJSON a   => ToJSON (Job a)
@@ -27,3 +28,8 @@ encodeJob = decodeUtf8 . toStrict . Aeson.encode
 
 decodeJob :: FromJSON a => Text -> Either String (Job a)
 decodeJob = Aeson.eitherDecode . TLE.encodeUtf8 . fromStrict
+
+data EnqueuedJob a =
+  EnqueuedJob { getJob :: Job a
+              , getDeliveryReceipt :: Text
+              } deriving (Show)

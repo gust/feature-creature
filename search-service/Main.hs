@@ -5,12 +5,14 @@ module Main where
 import           App
 import           AppConfig (AppConfig(..), readConfig)
 import           Async.Job as Job
+import           CommonCreatures (WithErr)
 import           Control.Concurrent (threadDelay)
+import           Control.Monad.Except (runExceptT, throwError)
 import           Control.Monad.Reader
 import qualified Data.Text as Text
 import qualified Features
 import           Products.CodeRepository (CodeRepository(..))
-import           SQS
+import           SQS (getSQSMessages, deleteSQSMessage)
 
 main :: IO ()
 main = do
@@ -28,15 +30,17 @@ processJobs = do
       case enqueuedJob of
         Left err ->
           liftIO $ putStrLn err
-        Right job ->
-          runReaderT (processJob job) cfg
+        Right (EnqueuedJob job deliveryReceipt) -> do
+          result <- runReaderT (processJob job) cfg >>= liftIO . runExceptT
+          case result of
+            Left errStr -> liftIO $ putStrLn errStr
+            Right _     -> deleteSQSMessage deliveryReceipt awsCfg >> return ()
     threadDelay 10000
 
-processJob :: Job CodeRepository -> App ()
+processJob :: Job CodeRepository -> App (WithErr ())
 processJob job = do
-  let say = liftIO . putStrLn
-  case Job.payload job of
+  case Job.getPayload job of
     CodeRepository _ -> do
-      liftIO $ Features.indexFeatures (Job.payload job)
+      return $ Features.indexFeatures (Job.getPayload job)
     _ ->
-      say $ "Unprocessable job type: " ++ (Text.unpack $ jobType job)
+      return $ throwError $ "Unprocessable job type: " ++ (Text.unpack $ Job.getJobType job)
