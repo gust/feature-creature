@@ -5,6 +5,7 @@ module Indexer
 import Data.Text (pack)
 import qualified Features.SearchableFeature as SF
 
+-- ignores failure
 indexFeatures :: [FilePath] -> IO ()
 indexFeatures features = do
   searchableFeatures <- buildSearchableFeatures features

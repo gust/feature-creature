@@ -5,7 +5,9 @@ module Main where
 import           App
 import           AppConfig (AppConfig(..), readConfig)
 import           Async.Job as Job
+import           CommonCreatures (WithErr)
 import           Control.Concurrent (threadDelay)
+import           Control.Monad.Except (runExceptT, throwError)
 import           Control.Monad.Reader
 import qualified Data.Text as Text
 import qualified Features
@@ -28,16 +30,17 @@ processJobs = do
       case enqueuedJob of
         Left err ->
           liftIO $ putStrLn err
-        Right enqJob -> do
-          let job = getJob enqJob
-          let deliveryReceipt = getDeliveryReceipt enqJob
-          runReaderT (processJob job) cfg
+        Right (EnqueuedJob job deliveryReceipt) -> do
+          result <- runReaderT (processJob job) cfg >>= liftIO . runExceptT
+          case result of
+            Left errStr -> liftIO $ putStrLn errStr
+            Right _     -> return ()
     threadDelay 10000
 
-processJob :: Job CodeRepository -> App ()
+processJob :: Job CodeRepository -> App (WithErr ())
 processJob job = do
   case Job.getPayload job of
     CodeRepository _ -> do
-      liftIO $ Features.indexFeatures (Job.getPayload job)
+      return $ Features.indexFeatures (Job.getPayload job)
     _ ->
-      liftIO . putStrLn $ "Unprocessable job type: " ++ (Text.unpack $ Job.getJobType job)
+      return $ throwError $ "Unprocessable job type: " ++ (Text.unpack $ Job.getJobType job)
