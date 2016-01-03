@@ -12,7 +12,7 @@ import           Control.Monad.Reader
 import qualified Data.Text as Text
 import qualified Features
 import           Products.CodeRepository (CodeRepository(..))
-import           SQS (getSQSMessages)
+import           SQS (getSQSMessages, deleteSQSMessage)
 
 main :: IO ()
 main = do
@@ -34,7 +34,7 @@ processJobs = do
           result <- runReaderT (processJob job) cfg >>= liftIO . runExceptT
           case result of
             Left errStr -> liftIO $ putStrLn errStr
-            Right _     -> return ()
+            Right _     -> deleteSQSMessage deliveryReceipt awsCfg >> return ()
     threadDelay 10000
 
 processJob :: Job CodeRepository -> App (WithErr ())
