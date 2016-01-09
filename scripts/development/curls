@@ -1,0 +1,2 @@
+# local Elastic Search query
+curl http://localhost:9200/feature-creature/_search?q=featureText=Publish
