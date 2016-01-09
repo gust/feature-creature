@@ -30,17 +30,18 @@ data APIFeature = APIFeature { featureID :: F.FeatureFile
                              , description :: F.Feature
                              }
 
-type FeaturesAPI = "features" :> Get '[JSON] DirectoryTree
+type FeaturesAPI = "features" :> QueryParam "search" String :> Get '[JSON] DirectoryTree
 type FeatureAPI  = "feature"  :> QueryParam "path" F.FeatureFile
                               :> Get '[JSON] APIFeature
 
-productsFeatures :: P.ProductID -> App DirectoryTree
-productsFeatures prodID = do
+productsFeatures :: P.ProductID -> Maybe String -> App DirectoryTree
+productsFeatures prodID Nothing = do
   featuresPath <- CR.codeRepositoryDir prodID <$> reader getGitConfig
   result       <- liftIO $ runExceptT (F.getFeatures featuresPath)
   case result of
     Left msg   -> error msg
     Right tree -> return tree
+productsFeatures _ (Just _) = undefined
 
 productsFeature :: P.ProductID -> Maybe F.FeatureFile -> App APIFeature
 productsFeature _ Nothing =
@@ -93,6 +94,12 @@ instance SD.ToParam (QueryParam "path" F.FeatureFile) where
 
 instance SD.ToSample DirectoryTree DirectoryTree where
   toSample _ = Just featureDirectoryExample
+
+instance SD.ToParam (QueryParam "search" String) where
+  toParam _ = SD.DocQueryParam "search"
+                            ["Wolfman", "Creature+From+The+Black+Lagoon", "Creature+Repelent"]
+                            "A search term"
+                            SD.Normal
 
 featureFileSample :: F.Feature
 featureFileSample =
