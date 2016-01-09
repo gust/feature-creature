@@ -19,8 +19,10 @@ import Control.Monad.Reader
 import Data.Aeson
 import Data.DirectoryTree
 import qualified Data.List        as L
+import Data.Text (Text, pack, unpack)
 import Data.Tree (Tree(Node))
 import qualified Features.Feature as F
+import qualified Features.SearchableFeature as SF
 import qualified Products.CodeRepository as CR
 import qualified Products.Product as P
 import Servant
@@ -30,17 +32,26 @@ data APIFeature = APIFeature { featureID :: F.FeatureFile
                              , description :: F.Feature
                              }
 
-type FeaturesAPI = "features" :> Get '[JSON] DirectoryTree
+type FeaturesAPI = "features" :> QueryParam "search" String :> Get '[JSON] DirectoryTree
 type FeatureAPI  = "feature"  :> QueryParam "path" F.FeatureFile
                               :> Get '[JSON] APIFeature
 
-productsFeatures :: P.ProductID -> App DirectoryTree
-productsFeatures prodID = do
+productsFeatures :: P.ProductID -> Maybe String -> App DirectoryTree
+productsFeatures prodID (Just searchTerm) =
+  liftIO $ searchFeatures prodID (pack searchTerm)
+productsFeatures prodID Nothing = do
   featuresPath <- CR.codeRepositoryDir prodID <$> reader getGitConfig
   result       <- liftIO $ runExceptT (F.getFeatures featuresPath)
   case result of
     Left msg   -> error msg
     Right tree -> return tree
+
+searchFeatures :: P.ProductID -> Text -> IO DirectoryTree
+searchFeatures _ searchTerm =
+  F.buildDirectoryTree <$> parseFeatureFiles <$> (SF.searchFeatures searchTerm)
+  where
+    parseFeatureFiles :: [SF.SearchableFeature] -> [F.FeatureFile]
+    parseFeatureFiles = map (unpack . SF.featurePath)
 
 productsFeature :: P.ProductID -> Maybe F.FeatureFile -> App APIFeature
 productsFeature _ Nothing =
@@ -58,8 +69,8 @@ productsFeature prodID (Just path) = do
 featureDirectoryExample :: DirectoryTree
 featureDirectoryExample = rootNode
   where
-    rootNode = Node (FileDescription "features" "features") [creatures]
-    creatures = Node (FileDescription "creatures" "features/creatures") [swampThing, wolfman]
+    rootNode   = Node (FileDescription "features" "features") [creatures]
+    creatures  = Node (FileDescription "creatures" "features/creatures") [swampThing, wolfman]
     swampThing = Node (FileDescription "swamp-thing" "features/creatures/swamp-thing") [
       Node (FileDescription "vegetable-mind-control.feature" "features/creatures/swamp-thing/vegetable-mind-control.feature") [],
       Node (FileDescription "limb-regeneration.feature" "features/creatures/swamp-thing/limb-regeneration.feature") []
@@ -93,6 +104,12 @@ instance SD.ToParam (QueryParam "path" F.FeatureFile) where
 
 instance SD.ToSample DirectoryTree DirectoryTree where
   toSample _ = Just featureDirectoryExample
+
+instance SD.ToParam (QueryParam "search" String) where
+  toParam _ = SD.DocQueryParam "search"
+                            ["Wolfman", "Creature+From+The+Black+Lagoon", "Creature+Repelent"]
+                            "A search term"
+                            SD.Normal
 
 featureFileSample :: F.Feature
 featureFileSample =

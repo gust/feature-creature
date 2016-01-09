@@ -7,11 +7,8 @@ import qualified Features.SearchableFeature as SF
 
 -- ignores failure
 indexFeatures :: [FilePath] -> IO ()
-indexFeatures features = do
-  searchableFeatures <- buildSearchableFeatures features
-  replies            <- SF.indexFeatures searchableFeatures
-  -- this could become useful as log output
-  putStrLn $ foldr (\x acc -> acc ++ "\n" ++ (show x)) "" replies
+indexFeatures features =
+  buildSearchableFeatures features >>= SF.indexFeatures
 
 buildSearchableFeatures :: [FilePath] -> IO [SF.SearchableFeature]
 buildSearchableFeatures filePaths = do
