@@ -4,9 +4,10 @@
 module Main where
 
 import App
-import AppConfig (AppConfig, getAppConfig)
+import AppConfig (AppConfig, getAppConfig, getDBConfig)
 import Control.Monad.Reader       (runReaderT)
 import Control.Monad.Trans.Either (EitherT)
+import Config (getPool)
 import Data.Monoid ((<>))
 import Documentation as Docs
 import Products.ProductsAPI (ProductsAPI, productsServer)
@@ -15,12 +16,18 @@ import Network.Wai.Handler.Warp as Warp
 import Network.Wai.Middleware.Cors
 import Servant
 
+import Database.Persist.Postgresql (runSqlPool, runMigration)
+import Models (migrateAll)
+
 type FeatureCreatureAPI = ProductsAPI
                      :<|> Docs.DocumentationAPI
 
 main :: IO ()
 main = do
   appConfig <- getAppConfig
+  let pool = getPool (getDBConfig appConfig)
+
+  runSqlPool (runMigration migrateAll) pool
   Warp.run 8081 (app appConfig)
 
 app :: AppConfig -> Wai.Application

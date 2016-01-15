@@ -36,4 +36,3 @@ module Models where
 
   toKey :: (Integral i, ToBackendKey SqlBackend record) => i -> Key record
   toKey = toSqlKey . fromIntegral
-
