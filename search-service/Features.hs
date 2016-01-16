@@ -3,18 +3,18 @@ module Features
 ) where
 
 import           CommonCreatures (WithErr)
+import           Config (GitConfig)
 import           Control.Monad.Except (runExceptT, throwError, liftIO)
-import qualified Data.Text as Text
 import           Features.Feature (findFeatureFiles)
 import qualified Indexer
-import           Products.CodeRepository (CodeRepository(..))
+import           Products.CodeRepository (CodeRepository(..), codeRepositoryDir)
 
-indexFeatures :: CodeRepository -> WithErr ()
-indexFeatures (CodeRepository repositoryPath) = do
-  let featureFileBasePath = Text.unpack repositoryPath
+indexFeatures :: CodeRepository -> GitConfig -> WithErr ()
+indexFeatures (CodeRepository productID) gitConfig = do
+  let featureFileBasePath = codeRepositoryDir productID gitConfig
   featureFiles <- liftIO $ runExceptT $ findFeatureFiles featureFileBasePath
   case featureFiles of
     Left errorStr ->
       throwError errorStr
     Right features -> do
-      (liftIO $ Indexer.indexFeatures $ map (featureFileBasePath ++) features) >> return ()
+      (liftIO $ Indexer.indexFeatures features productID gitConfig) >> return ()

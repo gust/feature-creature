@@ -84,10 +84,8 @@ createProduct (APIProduct _ prodName prodRepoUrl) = do
       lift $ left $ err503 { errBody = BS.pack err }
     Right _ -> do
       -- index for search
-      gitConfig <- reader getGitConfig
       awsConfig <- reader getAWSConfig
-      let repoPath = CR.codeRepositoryDir prodID gitConfig
-      let job = CR.indexFeaturesJob (CR.CodeRepository (T.pack repoPath))
+      let job = CR.indexProductFeaturesJob $ CR.CodeRepository prodID
 
       (liftIO (SQS.sendSQSMessage job awsConfig))
       >> (return $ APIProduct { productID = Just prodID, name = prodName, repoUrl = prodRepoUrl })

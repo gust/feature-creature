@@ -22,7 +22,7 @@ main = do
 processJobs :: App ()
 processJobs = do
   cfg    <- ask
-  awsCfg <- reader awsConfig
+  awsCfg <- reader getAWSConfig
 
   liftIO $ forever $ do
     enqueuedJobs <- getSQSMessages awsCfg
@@ -41,6 +41,7 @@ processJob :: Job CodeRepository -> App (WithErr ())
 processJob job = do
   case Job.getPayload job of
     CodeRepository _ -> do
-      return $ Features.indexFeatures (Job.getPayload job)
+      gitConfig <- reader getGitConfig
+      return $ Features.indexFeatures (Job.getPayload job) gitConfig
     _ ->
       return $ throwError $ "Unprocessable job type: " ++ (Text.unpack $ Job.getJobType job)
