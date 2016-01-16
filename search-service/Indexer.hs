@@ -23,7 +23,7 @@ indexFeature filePath prodID gitConfig =
     handle handleIOException $
       bracket (openFile fullFilePath ReadMode) hClose $ \h -> do
         fileContents <- hGetContents h
-        let searchableFeature = SF.SearchableFeature (pack filePath) (pack fileContents)
+        let searchableFeature = SF.SearchableFeature (pack filePath) (pack fileContents) prodID
         putStrLn $ "Indexing: " ++ (show searchableFeature)
         SF.indexFeatures [searchableFeature]
 
