@@ -30,7 +30,7 @@ indexFeatures searchableFeatures =
     -- we're outputting something unhelpful here to hide the
     -- internal BH types from the user. we get a Response back
     -- which we can log in the future
-    withBH' (bulk stream) >>= putStrLn . show
+    withBH' (bulk stream) >>= putStrLn . ("ElasticSearch Reply: " ++) . show
   where
     createBulkIndex f =
       BulkIndex

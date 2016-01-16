@@ -3,25 +3,22 @@ module Indexer
   ) where
 
 import Data.Text (pack)
+import Control.Exception (IOException, bracket, handle)
 import qualified Features.SearchableFeature as SF
+import System.IO ( IOMode (ReadMode), openFile, hClose, hGetContents)
 
--- ignores failure
 indexFeatures :: [FilePath] -> IO ()
-indexFeatures features =
-  buildSearchableFeatures features >>= SF.indexFeatures
+indexFeatures [] = putStrLn "Finished indexing!"
+indexFeatures (f:fs) =
+  indexFeature f >> indexFeatures fs
 
-buildSearchableFeatures :: [FilePath] -> IO [SF.SearchableFeature]
-buildSearchableFeatures filePaths = do
-  -- this could be parallelized
-  sequence $ map ((fmap buildSearchableFeature) . getFileContents) filePaths
+indexFeature :: FilePath -> IO ()
+indexFeature filePath = handle handleIOException $
+  bracket (openFile filePath ReadMode) hClose $ \h -> do
+    fileContents <- hGetContents h
+    let searchableFeature = SF.SearchableFeature (pack filePath) (pack fileContents)
+    putStrLn $ "Indexing: " ++ (show searchableFeature)
+    SF.indexFeatures [searchableFeature]
 
-getFileContents :: FilePath -> IO (FilePath, String)
-getFileContents filePath = do
-  fileContents <- readFile filePath
-  return (filePath, fileContents)
-
-buildSearchableFeature :: (FilePath, String) -> SF.SearchableFeature
-buildSearchableFeature (filePath, fileContents) =
-  SF.SearchableFeature { SF.featurePath = pack filePath
-                       , SF.featureText = pack fileContents
-                       }
+handleIOException :: IOException -> IO ()
+handleIOException ex = putStrLn $ "IOExcpetion: " ++ (show ex)
