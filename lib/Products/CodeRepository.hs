@@ -4,7 +4,7 @@
 module Products.CodeRepository
 ( CodeRepository(..)
 , codeRepositoryDir
-, indexFeaturesJob
+, indexProductFeaturesJob
 , updateRepo
 ) where
 
@@ -20,7 +20,7 @@ import Products.Product (Product (..), ProductID)
 import System.Directory (doesDirectoryExist, createDirectoryIfMissing)
 
 data CodeRepository =
-  CodeRepository { repoPath :: T.Text
+  CodeRepository { getProductID :: ProductID
                  } deriving (Show, Generic)
 
 instance ToJSON CodeRepository
@@ -55,6 +55,6 @@ createRequiredDirectories :: ProductID -> GitConfig -> IO ()
 createRequiredDirectories prodID gitConfig =
   createDirectoryIfMissing True (productDir prodID gitConfig)
 
-indexFeaturesJob :: CodeRepository -> Job CodeRepository
-indexFeaturesJob codeRepo = Job "IndexFeatures" codeRepo
+indexProductFeaturesJob :: CodeRepository -> Job CodeRepository
+indexProductFeaturesJob codeRepo = Job "IndexFeatures" codeRepo
 

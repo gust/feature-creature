@@ -47,11 +47,11 @@ productsFeatures prodID Nothing = do
     Right tree -> return tree
 
 searchFeatures :: P.ProductID -> Text -> IO DirectoryTree
-searchFeatures _ searchTerm =
-  F.buildDirectoryTree <$> parseFeatureFiles <$> (SF.searchFeatures searchTerm)
+searchFeatures prodID searchTerm =
+  F.buildDirectoryTree <$> parseFeatureFiles <$> (SF.searchFeatures prodID searchTerm)
   where
     parseFeatureFiles :: [SF.SearchableFeature] -> [F.FeatureFile]
-    parseFeatureFiles = map (unpack . SF.featurePath)
+    parseFeatureFiles = map (unpack . SF.getFeaturePath)
 
 productsFeature :: P.ProductID -> Maybe F.FeatureFile -> App APIFeature
 productsFeature _ Nothing =

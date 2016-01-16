@@ -3,25 +3,29 @@ module Indexer
   ) where
 
 import Data.Text (pack)
+import Config (GitConfig)
+import Control.Exception (IOException, bracket, handle)
 import qualified Features.SearchableFeature as SF
+import Products.CodeRepository (codeRepositoryDir)
+import Products.Product (ProductID)
+import System.IO ( IOMode (ReadMode), openFile, hClose, hGetContents)
 
--- ignores failure
-indexFeatures :: [FilePath] -> IO ()
-indexFeatures features =
-  buildSearchableFeatures features >>= SF.indexFeatures
+indexFeatures :: [FilePath] -> ProductID -> GitConfig -> IO ()
+indexFeatures [] _ _ = putStrLn "Finished indexing!"
+indexFeatures (f:fs) prodID gitConfig =
+  indexFeature f prodID gitConfig >> indexFeatures fs prodID gitConfig
 
-buildSearchableFeatures :: [FilePath] -> IO [SF.SearchableFeature]
-buildSearchableFeatures filePaths = do
-  -- this could be parallelized
-  sequence $ map ((fmap buildSearchableFeature) . getFileContents) filePaths
+indexFeature :: FilePath -> ProductID -> GitConfig -> IO ()
+indexFeature filePath prodID gitConfig =
+  let featureFileBasePath = codeRepositoryDir prodID gitConfig
+      fullFilePath        = featureFileBasePath ++ filePath
+  in
+    handle handleIOException $
+      bracket (openFile fullFilePath ReadMode) hClose $ \h -> do
+        fileContents <- hGetContents h
+        let searchableFeature = SF.SearchableFeature (pack filePath) (pack fileContents) prodID
+        putStrLn $ "Indexing: " ++ (show searchableFeature)
+        SF.indexFeatures [searchableFeature]
 
-getFileContents :: FilePath -> IO (FilePath, String)
-getFileContents filePath = do
-  fileContents <- readFile filePath
-  return (filePath, fileContents)
-
-buildSearchableFeature :: (FilePath, String) -> SF.SearchableFeature
-buildSearchableFeature (filePath, fileContents) =
-  SF.SearchableFeature { SF.featurePath = pack filePath
-                       , SF.featureText = pack fileContents
-                       }
+handleIOException :: IOException -> IO ()
+handleIOException ex = putStrLn $ "IOExcpetion: " ++ (show ex)
