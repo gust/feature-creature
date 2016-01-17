@@ -8,6 +8,7 @@ import qualified Config.AWS as AWS          (AWSConfig, getAWSConfig)
 import Config.Database                      (DBConfig (..), makePool)
 import Config.Environment                   (Environment (..))
 import qualified Config.Git as Git          (GitConfig (..), getGitConfig)
+import Config.Search as Search              (ElasticSearchConfig, getElasticSearchConfig)
 import Network.Wai.Middleware.RequestLogger (logStdoutDev, logStdout)
 import Network.Wai                          (Middleware)
 import System.Environment                   (lookupEnv)
@@ -17,6 +18,7 @@ data AppConfig =
             , getEnv           :: Environment
             , getDBConfig      :: DBConfig
             , getRequestLogger :: Middleware
+            , getSearchConfig  :: ElasticSearchConfig
             , getGitConfig     :: Git.GitConfig
             }
 
@@ -26,10 +28,12 @@ getAppConfig = do
   awsConfig <- AWS.getAWSConfig
   dbPool    <- makePool env
   gitConfig <- Git.getGitConfig
+  searchConfig <- Search.getElasticSearchConfig
   return $ AppConfig { getAWSConfig     = awsConfig
                      , getEnv           = env
                      , getRequestLogger = requestLogger env
                      , getDBConfig      = DBConfig dbPool
+                     , getSearchConfig  = searchConfig
                      , getGitConfig     = gitConfig
                      }
 

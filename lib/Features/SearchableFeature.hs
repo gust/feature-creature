@@ -24,6 +24,7 @@ data SearchableFeature =
 instance ToJSON   SearchableFeature
 instance FromJSON SearchableFeature
 
+-- handle failure
 indexFeatures :: [SearchableFeature] -> IO ()
 indexFeatures searchableFeatures =
   let indicies = map createBulkIndex searchableFeatures
@@ -41,7 +42,6 @@ indexFeatures searchableFeatures =
         (DocId (getFeaturePath f))
         (toJSON f)
 
--- search is not constrained to a mapping
 searchFeatures :: ProductID -> Text -> IO [SearchableFeature]
 searchFeatures prodID queryStr = do
   reply <- withBH' $ searchByIndex featureCreatureIndex search
