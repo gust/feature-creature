@@ -1,5 +1,8 @@
 module AppConfig
 ( AppConfig (..)
+, AWSConfig (..)
+, ElasticSearchConfig (..)
+, GitConfig (..)
 , readConfig
 ) where
 

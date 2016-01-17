@@ -42,6 +42,7 @@ processJob job = do
   case Job.getPayload job of
     CodeRepository _ -> do
       gitConfig <- reader getGitConfig
-      return $ Features.indexFeatures (Job.getPayload job) gitConfig
+      esConfig <- reader getElasticSearchConfig
+      return $ Features.indexFeatures (Job.getPayload job) gitConfig esConfig
     _ ->
       return $ throwError $ "Unprocessable job type: " ++ (Text.unpack $ Job.getJobType job)

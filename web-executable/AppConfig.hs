@@ -1,6 +1,9 @@
 module AppConfig
 ( AppConfig (..)
+, AWS.AWSConfig
+, Search.ElasticSearchConfig
 , Environment (..)
+, Git.GitConfig (..)
 , getAppConfig
 ) where
 
@@ -8,18 +11,18 @@ import qualified Config.AWS as AWS          (AWSConfig, getAWSConfig)
 import Config.Database                      (DBConfig (..), makePool)
 import Config.Environment                   (Environment (..))
 import qualified Config.Git as Git          (GitConfig (..), getGitConfig)
-import Config.Search as Search              (ElasticSearchConfig, getElasticSearchConfig)
+import qualified Config.Search as Search    (ElasticSearchConfig, getElasticSearchConfig)
 import Network.Wai.Middleware.RequestLogger (logStdoutDev, logStdout)
 import Network.Wai                          (Middleware)
 import System.Environment                   (lookupEnv)
 
 data AppConfig =
-  AppConfig { getAWSConfig     :: AWS.AWSConfig
-            , getEnv           :: Environment
-            , getDBConfig      :: DBConfig
-            , getRequestLogger :: Middleware
-            , getSearchConfig  :: ElasticSearchConfig
-            , getGitConfig     :: Git.GitConfig
+  AppConfig { getAWSConfig           :: AWS.AWSConfig
+            , getEnv                 :: Environment
+            , getDBConfig            :: DBConfig
+            , getRequestLogger       :: Middleware
+            , getElasticSearchConfig :: Search.ElasticSearchConfig
+            , getGitConfig           :: Git.GitConfig
             }
 
 getAppConfig :: IO AppConfig
@@ -29,12 +32,12 @@ getAppConfig = do
   dbPool    <- makePool env
   gitConfig <- Git.getGitConfig
   searchConfig <- Search.getElasticSearchConfig
-  return $ AppConfig { getAWSConfig     = awsConfig
-                     , getEnv           = env
-                     , getRequestLogger = requestLogger env
-                     , getDBConfig      = DBConfig dbPool
-                     , getSearchConfig  = searchConfig
-                     , getGitConfig     = gitConfig
+  return $ AppConfig { getAWSConfig           = awsConfig
+                     , getEnv                 = env
+                     , getRequestLogger       = requestLogger env
+                     , getDBConfig            = DBConfig dbPool
+                     , getElasticSearchConfig = searchConfig
+                     , getGitConfig           = gitConfig
                      }
 
 requestLogger :: Environment -> Middleware

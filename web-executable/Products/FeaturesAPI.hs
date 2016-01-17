@@ -13,7 +13,7 @@ module Products.FeaturesAPI
 ) where
 
 import App
-import AppConfig (getGitConfig)
+import AppConfig (ElasticSearchConfig, getGitConfig, getElasticSearchConfig)
 import Control.Monad.Except (runExceptT)
 import Control.Monad.Reader
 import Data.Aeson
@@ -37,8 +37,9 @@ type FeatureAPI  = "feature"  :> QueryParam "path" F.FeatureFile
                               :> Get '[JSON] APIFeature
 
 productsFeatures :: P.ProductID -> Maybe String -> App DirectoryTree
-productsFeatures prodID (Just searchTerm) =
-  liftIO $ searchFeatures prodID (pack searchTerm)
+productsFeatures prodID (Just searchTerm) = do
+  esConfig <- reader getElasticSearchConfig
+  liftIO $ searchFeatures prodID (pack searchTerm) esConfig
 productsFeatures prodID Nothing = do
   featuresPath <- CR.codeRepositoryDir prodID <$> reader getGitConfig
   result       <- liftIO $ runExceptT (F.getFeatures featuresPath)
@@ -46,9 +47,9 @@ productsFeatures prodID Nothing = do
     Left msg   -> error msg
     Right tree -> return tree
 
-searchFeatures :: P.ProductID -> Text -> IO DirectoryTree
-searchFeatures prodID searchTerm =
-  F.buildDirectoryTree <$> parseFeatureFiles <$> (SF.searchFeatures prodID searchTerm)
+searchFeatures :: P.ProductID -> Text -> ElasticSearchConfig -> IO DirectoryTree
+searchFeatures prodID searchTerm esConfig =
+  F.buildDirectoryTree <$> parseFeatureFiles <$> (SF.searchFeatures prodID searchTerm esConfig )
   where
     parseFeatureFiles :: [SF.SearchableFeature] -> [F.FeatureFile]
     parseFeatureFiles = map (unpack . SF.getFeaturePath)
