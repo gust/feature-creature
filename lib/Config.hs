@@ -1,6 +1,7 @@
 module Config
 ( AWSConfig (..)
 , DBConfig (..)
+, ElasticSearchConfig (..)
 , GitConfig (..)
 ) where
 
@@ -15,6 +16,11 @@ data AWSConfig =
 data DBConfig =
   DBConfig { getPool :: ConnectionPool
            } deriving (Show)
+
+data ElasticSearchConfig =
+  ElasticSearchConfig { getESUrl     :: String
+                      , getIndexName :: String
+                      } deriving (Show)
 
 data GitConfig =
   GitConfig { repoBasePath :: String

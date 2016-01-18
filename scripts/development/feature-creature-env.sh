@@ -12,6 +12,10 @@ FC_SERVER_PROJECT_ROOT="$HOME/workspace/feature-creature"
 FC_WEB_PROJECT_ROOT="$HOME/workspace/feature-creature-client"
 FC_DATA_FILES_PATH="$FC_SERVER_PROJECT_ROOT/.app-data"
 
+FC_AWS_SQS_URL="https://sqs.us-east-1.amazonaws.com/675495447720/feature-creature"
+FC_SEARCH_SERVICE_ROOT="$HOME/workspace/search-service"
+FC_ELASTIC_SEARCH_URL="http://localhost:9200"
+FC_ELASTIC_SEARCH_INDEX_NAME="feature-creature"
 
 echo "Setting FC_DB_NAME environment variable:" $FC_DB_NAME
 export FC_DB_NAME=$FC_DB_NAME
@@ -37,6 +41,18 @@ export FC_SERVER_PROJECT_ROOT=$FC_SERVER_PROJECT_ROOT
 echo "Setting FC_WEB_PROJECT_ROOT environment variable..." $FC_WEB_PROJECT_ROOT
 export FC_WEB_PROJECT_ROOT=$FC_WEB_PROJECT_ROOT
 
+echo "Setting FC_AWS_SQS_URL environment variable:" $FC_AWS_SQS_URL
+export FC_AWS_SQS_URL=$FC_AWS_SQS_URL
+
+echo "Setting FC_SEARCH_SERVICE_ROOT environment variable:" $FC_SEARCH_SERVICE_ROOT
+export FC_SEARCH_SERVICE_ROOT=$FC_SEARCH_SERVICE_ROOT
+
+echo "Setting FC_ELASTIC_SEARCH_URL environment variable:" $FC_ELASTIC_SEARCH_URL
+export FC_ELASTIC_SEARCH_URL=$FC_ELASTIC_SEARCH_URL
+
+echo "Setting FC_ELASTIC_SEARCH_INDEX_NAME environment variable: " $FC_ELASTIC_SEARCH_INDEX_NAME
+export FC_ELASTIC_SEARCH_INDEX_NAME=$FC_ELASTIC_SEARCH_INDEX_NAME
+
 echo
 
 echo "Attempting to create database user:" $FC_DB_USER
@@ -49,3 +65,6 @@ createdb -e $FC_DB_NAME
 
 echo "Attempting to create data directory:" $FC_DATA_FILES_PATH
 mkdir -p $FC_DATA_FILES_PATH
+
+echo "Attempting to create Elastic Search index:" $FC_ELASTIC_SEARCH_INDEX_NAME
+curl -XPUT "http://localhost:9200/"$FC_ELASTIC_SEARCH_INDEX_NAME
