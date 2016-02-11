@@ -57,7 +57,7 @@ export FC_ELASTIC_SEARCH_INDEX_NAME=$FC_ELASTIC_SEARCH_INDEX_NAME
 echo
 
 echo "Attempting to create database user:" $FC_DB_USER
-createuser -s -e $FC_DB_USER
+sudo -u postgres createuser -s -e $FC_DB_USER
 
 echo
 
