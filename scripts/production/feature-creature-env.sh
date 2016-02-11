@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
 
 # USAGE:
-# source ./script/development/feature-creature-env.sh
+# source ./script/production/feature-creature-env.sh
 
-FC_API_PATH="http://localhost:8081"
+FC_API_PATH="http://54.208.104.115:8081"
 FC_DB_NAME="feature_creature"
 FC_DB_HOST="localhost"
 FC_DB_PORT="5432"
 FC_DB_USER=$(whoami)
 FC_DB_POOL_SIZE=1
-FC_SERVER_PROJECT_ROOT="$HOME/workspace/feature-creature"
-FC_WEB_PROJECT_ROOT="$HOME/workspace/feature-creature-client"
+FC_SERVER_PROJECT_ROOT="$HOME/feature-creature"
+FC_WEB_PROJECT_ROOT="$HOME/feature-creature-client"
 FC_DATA_FILES_PATH="$FC_SERVER_PROJECT_ROOT/.app-data"
 
 FC_AWS_SQS_URL="https://sqs.us-east-1.amazonaws.com/675495447720/feature-creature"
-FC_SEARCH_SERVICE_ROOT="$HOME/workspace/search-service"
+FC_SEARCH_SERVICE_ROOT="$HOME/search-service"
 FC_ELASTIC_SEARCH_URL="http://localhost:9200"
 FC_ELASTIC_SEARCH_INDEX_NAME="feature-creature"
 
