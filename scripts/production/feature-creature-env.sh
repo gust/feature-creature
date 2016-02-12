@@ -3,7 +3,7 @@
 # USAGE:
 # source ./script/production/feature-creature-env.sh
 
-FC_API_PATH="http://54.208.104.115:8081"
+FC_API_PATH="http://www.feature-creature.io"
 FC_DB_NAME="feature_creature"
 FC_DB_HOST="localhost"
 FC_DB_PORT="5432"
