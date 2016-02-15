@@ -34,7 +34,7 @@ removeDomainTerm dbConfig productID domainTermID =
 -- rewrite this using a WithDBConn monad
 findDomainTerms :: DBConfig -> IO [DB.Entity DomainTerm]
 findDomainTerms dbConfig =
-  let query = DB.selectList ([] :: [DB.Filter DomainTerm]) []
+  let query = DB.selectList ([] :: [DB.Filter DomainTerm]) [ DB.Asc DomainTermTitle ]
       pool = getPool dbConfig
   in
     DB.runSqlPool query pool
@@ -42,7 +42,7 @@ findDomainTerms dbConfig =
 -- rewrite this using a WithDBConn monad
 findByProductId :: DBConfig -> ProductId -> IO [DB.Entity DomainTerm]
 findByProductId dbConfig productId =
-  let query = DB.selectList [DomainTermProductId DB.==. productId] []
+  let query = DB.selectList [DomainTermProductId DB.==. productId] [ DB.Asc DomainTermTitle ]
       pool = getPool dbConfig
   in
     DB.runSqlPool query pool
