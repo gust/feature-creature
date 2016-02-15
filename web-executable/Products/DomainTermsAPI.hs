@@ -8,7 +8,9 @@
 module Products.DomainTermsAPI
 ( DomainTermsAPI
 , CreateDomainTermsAPI
+, RemoveDomainTermAPI
 , createDomainTerm
+, removeDomainTerm
 , productsDomainTerms
 ) where
 
@@ -26,6 +28,7 @@ import qualified Servant.Docs     as SD
 
 type DomainTermsAPI       = "domain-terms" :> Get '[JSON] [APIDomainTerm]
 type CreateDomainTermsAPI = "domain-terms" :> ReqBody '[JSON] APIDomainTerm :> Post '[JSON] APIDomainTerm
+type RemoveDomainTermAPI  = "domain-terms" :> Capture "id" Int :> Delete '[JSON] ()
 
 data APIDomainTerm = APIDomainTerm { domainTermID :: Maybe Int64
                                    , productID    :: Maybe ProductId
@@ -52,16 +55,21 @@ instance FromJSON APIDomainTerm where
 createDomainTerm :: P.ProductID -> APIDomainTerm -> App APIDomainTerm
 createDomainTerm pID (APIDomainTerm _ _ t d) = do
   dbConfig <- reader getDBConfig
-  termID <- liftIO $ DT.createDomainTerm dbConfig (DT.DomainTerm (toKey pID) t d)
+  termID   <- liftIO $ DT.createDomainTerm dbConfig (DT.DomainTerm (toKey pID) t d)
   return $ APIDomainTerm { domainTermID = Just termID
                          , productID    = Just (toKey pID)
                          , title        = t
                          , description  = d
                          }
 
+removeDomainTerm :: P.ProductID -> Int -> App ()
+removeDomainTerm pID dtID = do
+  dbConfig <- reader getDBConfig
+  liftIO $ DT.removeDomainTerm dbConfig (toKey pID) (toKey dtID)
+
 productsDomainTerms :: P.ProductID -> App [APIDomainTerm]
 productsDomainTerms prodID = do
-  dbConfig <- reader getDBConfig
+  dbConfig    <- reader getDBConfig
   domainTerms <- liftIO $ DT.findByProductId dbConfig (toKey prodID)
   return $ map toDomainTerm domainTerms
     where
@@ -81,6 +89,12 @@ instance SD.ToSample [APIDomainTerm] [APIDomainTerm] where
 
 instance SD.ToSample APIDomainTerm APIDomainTerm where
   toSample _ = Just $ samplePostBody
+
+instance SD.ToSample () () where
+  toSample _ = Just () 
+
+instance SD.ToCapture (Capture "id" Int) where
+  toCapture _ = SD.DocCapture "id" "DomainTerm id"
 
 sampleAPIDomainTerm :: APIDomainTerm
 sampleAPIDomainTerm = APIDomainTerm (Just 1) (Just (toKey (10::Integer))) "mutation" "The genetic alteration granting monster powers"

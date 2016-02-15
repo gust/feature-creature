@@ -35,6 +35,7 @@ type ProductsAPI = "products" :> Get '[JSON] [APIProduct]
               :<|> "products" :> ProductIDCapture :> F.FeatureAPI
               :<|> "products" :> ProductIDCapture :> DT.DomainTermsAPI
               :<|> "products" :> ProductIDCapture :> DT.CreateDomainTermsAPI
+              :<|> "products" :> ProductIDCapture :> DT.RemoveDomainTermAPI
               :<|> "products" :> ProductIDCapture :> UR.UserRolesAPI
               :<|> "products" :> ProductIDCapture :> UR.CreateUserRolesAPI
 
@@ -66,6 +67,7 @@ productsServer = products
             :<|> F.productsFeature
             :<|> DT.productsDomainTerms
             :<|> DT.createDomainTerm
+            :<|> DT.removeDomainTerm
             :<|> UR.productsUserRoles
             :<|> UR.createUserRole
 
