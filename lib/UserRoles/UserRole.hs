@@ -23,7 +23,7 @@ createUserRole dbConfig userRole =
 -- rewrite this using a WithDBConn monad
 findUserRoles :: DBConfig -> IO [DB.Entity UserRole]
 findUserRoles dbConfig =
-  let query = DB.selectList ([] :: [DB.Filter UserRole]) []
+  let query = DB.selectList ([] :: [DB.Filter UserRole]) [ DB.Asc UserRoleTitle ]
       pool = getPool dbConfig
   in
     DB.runSqlPool query pool
@@ -31,7 +31,7 @@ findUserRoles dbConfig =
 -- rewrite this using a WithDBConn monad
 findByProductId :: DBConfig -> ProductId -> IO [DB.Entity UserRole]
 findByProductId dbConfig productId =
-  let query = DB.selectList [UserRoleProductId DB.==. productId] []
+  let query = DB.selectList [UserRoleProductId DB.==. productId] [ DB.Asc UserRoleTitle ]
       pool = getPool dbConfig
   in
     DB.runSqlPool query pool
