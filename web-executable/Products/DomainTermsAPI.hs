@@ -90,12 +90,6 @@ instance SD.ToSample [APIDomainTerm] [APIDomainTerm] where
 instance SD.ToSample APIDomainTerm APIDomainTerm where
   toSample _ = Just $ samplePostBody
 
-instance SD.ToSample () () where
-  toSample _ = Just () 
-
-instance SD.ToCapture (Capture "id" Int) where
-  toCapture _ = SD.DocCapture "id" "DomainTerm id"
-
 sampleAPIDomainTerm :: APIDomainTerm
 sampleAPIDomainTerm = APIDomainTerm (Just 1) (Just (toKey (10::Integer))) "mutation" "The genetic alteration granting monster powers"
 

@@ -20,7 +20,7 @@ createDomainTerm dbConfig domainTerm =
       pool = getPool dbConfig
   in
     DB.runSqlPool query pool >>= return . DB.fromSqlKey
---
+
 -- rewrite this using a WithDBConn monad
 removeDomainTerm :: DBConfig -> ProductId -> DomainTermId -> IO ()
 removeDomainTerm dbConfig productID domainTermID =

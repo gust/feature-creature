@@ -1,6 +1,7 @@
 module UserRoles.UserRole
 ( findByProductId
 , createUserRole
+, removeUserRole
 , findUserRoles
 , toUserRoleID
 , toUserRole
@@ -19,6 +20,16 @@ createUserRole dbConfig userRole =
       pool = getPool dbConfig
   in
     DB.runSqlPool query pool >>= return . DB.fromSqlKey
+
+-- rewrite this using a WithDBConn monad
+removeUserRole :: DBConfig -> ProductId -> UserRoleId -> IO ()
+removeUserRole dbConfig productID userRoleID =
+  let pool = getPool dbConfig
+      query = DB.deleteWhere [ UserRoleProductId DB.==. productID
+                             , UserRoleId DB.==. userRoleID
+                             ]
+  in
+    DB.runSqlPool query pool >>= return
 
 -- rewrite this using a WithDBConn monad
 findUserRoles :: DBConfig -> IO [DB.Entity UserRole]
