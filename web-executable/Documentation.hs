@@ -10,6 +10,7 @@ module Documentation
 ) where
 
 import App
+import Data.Int (Int64)
 import Data.Text               (Text, pack)
 import MimeTypes               (Markdown)
 import Products.ProductsAPI    (productsAPI)
@@ -30,5 +31,5 @@ intro = SD.DocIntro "feature-creature" ["![](http://www.homecinemachoice.com/sit
 instance SD.ToSample () () where
   toSample _ = Just ()
 
-instance SD.ToCapture (Capture "id" Int) where
-  toCapture _ = SD.DocCapture "id" "An ID"
+instance SD.ToCapture (Capture "id" Int64) where
+  toCapture _ = SD.DocCapture "id" "A database entity ID"

@@ -1,6 +1,7 @@
 module DomainTerms.DomainTerm
 ( findByProductId
 , createDomainTerm
+, updateDomainTerm
 , removeDomainTerm
 , findDomainTerms
 , toDomainTermID
@@ -20,6 +21,17 @@ createDomainTerm dbConfig domainTerm =
       pool = getPool dbConfig
   in
     DB.runSqlPool query pool >>= return . DB.fromSqlKey
+
+updateDomainTerm :: DBConfig -> DomainTermId -> DomainTerm -> IO DomainTerm
+updateDomainTerm dbConfig dtId domainTerm@(DomainTerm _ title description) =
+  let pool = getPool dbConfig
+      query = DB.update
+                dtId
+                [ DomainTermTitle DB.=. title
+                , DomainTermDescription DB.=. description
+                ]
+  in
+    DB.runSqlPool query pool >> return domainTerm
 
 -- rewrite this using a WithDBConn monad
 removeDomainTerm :: DBConfig -> ProductId -> DomainTermId -> IO ()

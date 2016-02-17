@@ -29,7 +29,7 @@ import qualified UserRoles.UserRole as UR
 
 type UserRolesAPI       = "user-roles" :> Get '[JSON] [APIUserRole]
 type CreateUserRolesAPI = "user-roles" :> ReqBody '[JSON] APIUserRole :> Post '[JSON] APIUserRole
-type RemoveUserRoleAPI  = "user-roles" :> Capture "id" Int :> Delete '[JSON] ()
+type RemoveUserRoleAPI  = "user-roles" :> Capture "id" Int64 :> Delete '[JSON] ()
 
 data APIUserRole = APIUserRole { userRoleID   :: Maybe Int64
                                , productID    :: Maybe ProductId
@@ -63,7 +63,7 @@ createUserRole pID (APIUserRole _ _ t d) = do
                        , description = d
                        }
 
-removeUserRole :: P.ProductID -> Int -> App ()
+removeUserRole :: P.ProductID -> Int64 -> App ()
 removeUserRole pID urID = do
   dbConfig <- reader getDBConfig
   liftIO $ UR.removeUserRole dbConfig (toKey pID) (toKey urID)
