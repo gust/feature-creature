@@ -66,7 +66,7 @@ createDomainTerm pID (APIDomainTerm _ _ t d) = do
                          }
 
 editDomainTerm :: P.ProductID -> Int64 -> APIDomainTerm -> App APIDomainTerm
-editDomainTerm pID dtID dt@(APIDomainTerm _ _ t d) = do
+editDomainTerm pID dtID (APIDomainTerm _ _ t d) = do
   dbConfig          <- reader getDBConfig
   updatedDomainTerm <- liftIO $ DT.updateDomainTerm dbConfig (toKey dtID) (DT.DomainTerm (toKey pID) t d)
   return $ APIDomainTerm { domainTermID = Just (dtID)

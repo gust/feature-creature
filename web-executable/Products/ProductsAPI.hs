@@ -39,6 +39,7 @@ type ProductsAPI = "products" :> Get '[JSON] [APIProduct]
               :<|> "products" :> ProductIDCapture :> DT.RemoveDomainTermAPI
               :<|> "products" :> ProductIDCapture :> UR.UserRolesAPI
               :<|> "products" :> ProductIDCapture :> UR.CreateUserRolesAPI
+              :<|> "products" :> ProductIDCapture :> UR.EditUserRolesAPI
               :<|> "products" :> ProductIDCapture :> UR.RemoveUserRoleAPI
 
 type ProductIDCapture = Capture "id" P.ProductID
@@ -73,6 +74,7 @@ productsServer = products
             :<|> DT.removeDomainTerm
             :<|> UR.productsUserRoles
             :<|> UR.createUserRole
+            :<|> UR.editUserRole
             :<|> UR.removeUserRole
 
 productsAPI :: Proxy ProductsAPI

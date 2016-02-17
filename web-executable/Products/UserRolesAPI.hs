@@ -8,8 +8,10 @@
 module Products.UserRolesAPI
 ( UserRolesAPI
 , CreateUserRolesAPI
+, EditUserRolesAPI
 , RemoveUserRoleAPI
 , createUserRole
+, editUserRole
 , removeUserRole
 , productsUserRoles
 ) where
@@ -29,6 +31,7 @@ import qualified UserRoles.UserRole as UR
 
 type UserRolesAPI       = "user-roles" :> Get '[JSON] [APIUserRole]
 type CreateUserRolesAPI = "user-roles" :> ReqBody '[JSON] APIUserRole :> Post '[JSON] APIUserRole
+type EditUserRolesAPI   = "user-roles" :> Capture "id" Int64 :> ReqBody '[JSON] APIUserRole :> Put '[JSON] APIUserRole
 type RemoveUserRoleAPI  = "user-roles" :> Capture "id" Int64 :> Delete '[JSON] ()
 
 data APIUserRole = APIUserRole { userRoleID   :: Maybe Int64
@@ -61,6 +64,16 @@ createUserRole pID (APIUserRole _ _ t d) = do
                        , productID   = Just (toKey pID)
                        , title       = t
                        , description = d
+                       }
+
+editUserRole :: P.ProductID -> Int64 -> APIUserRole -> App APIUserRole
+editUserRole pID urID (APIUserRole _ _ t d) = do
+  dbConfig        <- reader getDBConfig
+  updatedUserRole <- liftIO $ UR.updateUserRole dbConfig (toKey urID) (UR.UserRole (toKey pID) t d)
+  return $ APIUserRole { userRoleID = Just (urID)
+                       , productID    = Just (toKey pID)
+                       , title        = t
+                       , description  = d
                        }
 
 removeUserRole :: P.ProductID -> Int64 -> App ()

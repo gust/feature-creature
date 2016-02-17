@@ -1,6 +1,7 @@
 module UserRoles.UserRole
 ( findByProductId
 , createUserRole
+, updateUserRole
 , removeUserRole
 , findUserRoles
 , toUserRoleID
@@ -20,6 +21,17 @@ createUserRole dbConfig userRole =
       pool = getPool dbConfig
   in
     DB.runSqlPool query pool >>= return . DB.fromSqlKey
+
+updateUserRole :: DBConfig -> UserRoleId -> UserRole -> IO UserRole
+updateUserRole dbConfig urId userRole@(UserRole _ title description) =
+  let pool = getPool dbConfig
+      query = DB.update
+                urId
+                [ UserRoleTitle DB.=. title
+                , UserRoleDescription DB.=. description
+                ]
+  in
+    DB.runSqlPool query pool >> return userRole
 
 -- rewrite this using a WithDBConn monad
 removeUserRole :: DBConfig -> ProductId -> UserRoleId -> IO ()
