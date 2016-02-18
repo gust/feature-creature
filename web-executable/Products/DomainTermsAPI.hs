@@ -8,7 +8,11 @@
 module Products.DomainTermsAPI
 ( DomainTermsAPI
 , CreateDomainTermsAPI
+, EditDomainTermsAPI
+, RemoveDomainTermAPI
 , createDomainTerm
+, editDomainTerm
+, removeDomainTerm
 , productsDomainTerms
 ) where
 
@@ -26,6 +30,8 @@ import qualified Servant.Docs     as SD
 
 type DomainTermsAPI       = "domain-terms" :> Get '[JSON] [APIDomainTerm]
 type CreateDomainTermsAPI = "domain-terms" :> ReqBody '[JSON] APIDomainTerm :> Post '[JSON] APIDomainTerm
+type EditDomainTermsAPI   = "domain-terms" :> Capture "id" Int64 :> ReqBody '[JSON] APIDomainTerm :> Put '[JSON] APIDomainTerm
+type RemoveDomainTermAPI  = "domain-terms" :> Capture "id" Int64 :> Delete '[JSON] ()
 
 data APIDomainTerm = APIDomainTerm { domainTermID :: Maybe Int64
                                    , productID    :: Maybe ProductId
@@ -52,16 +58,31 @@ instance FromJSON APIDomainTerm where
 createDomainTerm :: P.ProductID -> APIDomainTerm -> App APIDomainTerm
 createDomainTerm pID (APIDomainTerm _ _ t d) = do
   dbConfig <- reader getDBConfig
-  termID <- liftIO $ DT.createDomainTerm dbConfig (DT.DomainTerm (toKey pID) t d)
+  termID   <- liftIO $ DT.createDomainTerm dbConfig (DT.DomainTerm (toKey pID) t d)
   return $ APIDomainTerm { domainTermID = Just termID
                          , productID    = Just (toKey pID)
                          , title        = t
                          , description  = d
                          }
 
+editDomainTerm :: P.ProductID -> Int64 -> APIDomainTerm -> App APIDomainTerm
+editDomainTerm pID dtID (APIDomainTerm _ _ t d) = do
+  dbConfig          <- reader getDBConfig
+  updatedDomainTerm <- liftIO $ DT.updateDomainTerm dbConfig (toKey dtID) (DT.DomainTerm (toKey pID) t d)
+  return $ APIDomainTerm { domainTermID = Just (dtID)
+                         , productID    = Just (toKey pID)
+                         , title        = t
+                         , description  = d
+                         }
+
+removeDomainTerm :: P.ProductID -> Int64 -> App ()
+removeDomainTerm pID dtID = do
+  dbConfig <- reader getDBConfig
+  liftIO $ DT.removeDomainTerm dbConfig (toKey pID) (toKey dtID)
+
 productsDomainTerms :: P.ProductID -> App [APIDomainTerm]
 productsDomainTerms prodID = do
-  dbConfig <- reader getDBConfig
+  dbConfig    <- reader getDBConfig
   domainTerms <- liftIO $ DT.findByProductId dbConfig (toKey prodID)
   return $ map toDomainTerm domainTerms
     where

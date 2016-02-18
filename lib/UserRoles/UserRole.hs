@@ -1,6 +1,8 @@
 module UserRoles.UserRole
 ( findByProductId
 , createUserRole
+, updateUserRole
+, removeUserRole
 , findUserRoles
 , toUserRoleID
 , toUserRole
@@ -20,10 +22,31 @@ createUserRole dbConfig userRole =
   in
     DB.runSqlPool query pool >>= return . DB.fromSqlKey
 
+updateUserRole :: DBConfig -> UserRoleId -> UserRole -> IO UserRole
+updateUserRole dbConfig urId userRole@(UserRole _ title description) =
+  let pool = getPool dbConfig
+      query = DB.update
+                urId
+                [ UserRoleTitle DB.=. title
+                , UserRoleDescription DB.=. description
+                ]
+  in
+    DB.runSqlPool query pool >> return userRole
+
+-- rewrite this using a WithDBConn monad
+removeUserRole :: DBConfig -> ProductId -> UserRoleId -> IO ()
+removeUserRole dbConfig productID userRoleID =
+  let pool = getPool dbConfig
+      query = DB.deleteWhere [ UserRoleProductId DB.==. productID
+                             , UserRoleId DB.==. userRoleID
+                             ]
+  in
+    DB.runSqlPool query pool >>= return
+
 -- rewrite this using a WithDBConn monad
 findUserRoles :: DBConfig -> IO [DB.Entity UserRole]
 findUserRoles dbConfig =
-  let query = DB.selectList ([] :: [DB.Filter UserRole]) []
+  let query = DB.selectList ([] :: [DB.Filter UserRole]) [ DB.Asc UserRoleTitle ]
       pool = getPool dbConfig
   in
     DB.runSqlPool query pool
@@ -31,7 +54,7 @@ findUserRoles dbConfig =
 -- rewrite this using a WithDBConn monad
 findByProductId :: DBConfig -> ProductId -> IO [DB.Entity UserRole]
 findByProductId dbConfig productId =
-  let query = DB.selectList [UserRoleProductId DB.==. productId] []
+  let query = DB.selectList [UserRoleProductId DB.==. productId] [ DB.Asc UserRoleTitle ]
       pool = getPool dbConfig
   in
     DB.runSqlPool query pool

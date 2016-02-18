@@ -35,8 +35,12 @@ type ProductsAPI = "products" :> Get '[JSON] [APIProduct]
               :<|> "products" :> ProductIDCapture :> F.FeatureAPI
               :<|> "products" :> ProductIDCapture :> DT.DomainTermsAPI
               :<|> "products" :> ProductIDCapture :> DT.CreateDomainTermsAPI
+              :<|> "products" :> ProductIDCapture :> DT.EditDomainTermsAPI
+              :<|> "products" :> ProductIDCapture :> DT.RemoveDomainTermAPI
               :<|> "products" :> ProductIDCapture :> UR.UserRolesAPI
               :<|> "products" :> ProductIDCapture :> UR.CreateUserRolesAPI
+              :<|> "products" :> ProductIDCapture :> UR.EditUserRolesAPI
+              :<|> "products" :> ProductIDCapture :> UR.RemoveUserRoleAPI
 
 type ProductIDCapture = Capture "id" P.ProductID
 
@@ -66,8 +70,12 @@ productsServer = products
             :<|> F.productsFeature
             :<|> DT.productsDomainTerms
             :<|> DT.createDomainTerm
+            :<|> DT.editDomainTerm
+            :<|> DT.removeDomainTerm
             :<|> UR.productsUserRoles
             :<|> UR.createUserRole
+            :<|> UR.editUserRole
+            :<|> UR.removeUserRole
 
 productsAPI :: Proxy ProductsAPI
 productsAPI = Proxy
@@ -109,9 +117,6 @@ instance SD.ToSample [APIProduct] [APIProduct] where
 
 instance SD.ToSample APIProduct APIProduct where
   toSample _ = Just sampleCreatureProduct
-
-instance SD.ToCapture (Capture "id" P.ProductID) where
-  toCapture _ = SD.DocCapture "id" "Product id"
 
 sampleMonsterProduct :: APIProduct
 sampleMonsterProduct = APIProduct { productID = Just 1

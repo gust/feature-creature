@@ -1,6 +1,8 @@
 module DomainTerms.DomainTerm
 ( findByProductId
 , createDomainTerm
+, updateDomainTerm
+, removeDomainTerm
 , findDomainTerms
 , toDomainTermID
 , toDomainTerm
@@ -20,10 +22,31 @@ createDomainTerm dbConfig domainTerm =
   in
     DB.runSqlPool query pool >>= return . DB.fromSqlKey
 
+updateDomainTerm :: DBConfig -> DomainTermId -> DomainTerm -> IO DomainTerm
+updateDomainTerm dbConfig dtId domainTerm@(DomainTerm _ title description) =
+  let pool = getPool dbConfig
+      query = DB.update
+                dtId
+                [ DomainTermTitle DB.=. title
+                , DomainTermDescription DB.=. description
+                ]
+  in
+    DB.runSqlPool query pool >> return domainTerm
+
+-- rewrite this using a WithDBConn monad
+removeDomainTerm :: DBConfig -> ProductId -> DomainTermId -> IO ()
+removeDomainTerm dbConfig productID domainTermID =
+  let pool = getPool dbConfig
+      query = DB.deleteWhere [ DomainTermProductId DB.==. productID
+                             , DomainTermId DB.==. domainTermID
+                             ]
+  in
+    DB.runSqlPool query pool >>= return
+
 -- rewrite this using a WithDBConn monad
 findDomainTerms :: DBConfig -> IO [DB.Entity DomainTerm]
 findDomainTerms dbConfig =
-  let query = DB.selectList ([] :: [DB.Filter DomainTerm]) []
+  let query = DB.selectList ([] :: [DB.Filter DomainTerm]) [ DB.Asc DomainTermTitle ]
       pool = getPool dbConfig
   in
     DB.runSqlPool query pool
@@ -31,7 +54,7 @@ findDomainTerms dbConfig =
 -- rewrite this using a WithDBConn monad
 findByProductId :: DBConfig -> ProductId -> IO [DB.Entity DomainTerm]
 findByProductId dbConfig productId =
-  let query = DB.selectList [DomainTermProductId DB.==. productId] []
+  let query = DB.selectList [DomainTermProductId DB.==. productId] [ DB.Asc DomainTermTitle ]
       pool = getPool dbConfig
   in
     DB.runSqlPool query pool
