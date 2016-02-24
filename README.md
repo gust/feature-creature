@@ -19,16 +19,17 @@ specific instructions.
 ---
 
 ## Building feature-creature
-feature-creature is built against [GHC v.7.10.2](https://www.haskell.org/ghc/download_ghc_7_10_2) and uses [Cabal](https://www.haskell.org/cabal/download.html) as a build tool.
+feature-creature is built against [GHC v.7.10.2](https://www.haskell.org/ghc/download_ghc_7_10_2) and uses [Stack](http://docs.haskellstack.org) as a build tool.
 
 * clone the repository
 * change to the newly created `feature-creature` directory (or the directory you specified)
-* run `cabal sandbox init` (optional, but recommended to isolate dependencies)
-* run `cabal install`
+* install stack; for Mac use `brew install haskell-stack` for other systems see http://docs.haskellstack.org/en/stable/README/#how-to-install
+* run `stack build`
 
-After a successful build, Cabal will output the location of the feature-creature binary. If not, the build can typically be found here (see Example Usage section below for more details):
-- CLI Tool: `dist/build/feature-creature/feature-creature`
-- Web Server: `dist/build/feature-creature-web/feature-creature-web`
+After a successful build, you can run the resulting binaries using `stack exec`
+
+* CLI Tool: `stack exec feature-creature`
+* Web Server: `stack exec feature-creature-web`
 
 ---
 
