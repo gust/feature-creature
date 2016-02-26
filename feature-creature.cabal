@@ -94,6 +94,19 @@ executable feature-creature-web
   default-language:  Haskell2010
   hs-source-dirs:    web-executable
   main-is:           Main.hs
+  other-modules:     App
+                     AppConfig
+                     Config.AWS
+                     Config.Database
+                     Config.Environment
+                     Config.Git
+                     Config.Search
+                     Documentation
+                     MimeTypes
+                     Products.DomainTermsAPI
+                     Products.FeaturesAPI
+                     Products.ProductsAPI
+                     Products.UserRolesAPI
 
 executable search-service
   build-depends:   aeson
@@ -115,3 +128,7 @@ executable search-service
   default-language:  Haskell2010
   hs-source-dirs:    search-service
   main-is:           Main.hs
+  other-modules:     App
+                     AppConfig
+                     Features
+                     Indexer
