@@ -137,6 +137,7 @@ executable repo-refresher
   build-depends:     base
                    , feature-creature
                    , mtl
+                   , persistent-postgresql
                    , text
 
   ghc-options:       -Wall
