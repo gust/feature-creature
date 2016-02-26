@@ -5,6 +5,7 @@ module Products.CodeRepository
 ( CodeRepository(..)
 , codeRepositoryDir
 , fetchRepo
+, getDiff
 , indexProductFeaturesJob
 , updateRepo
 ) where
@@ -46,6 +47,12 @@ fetchRepo prodID gitConfig =
   let repositoryPath = codeRepositoryDir prodID gitConfig
   in
     Git.fetch repositoryPath
+
+getDiff :: ProductID -> GitConfig -> WithErr String
+getDiff prodID gitConfig =
+  let repositoryPath = codeRepositoryDir prodID gitConfig
+  in
+    Git.diff repositoryPath
 
 -- maybe the combination of a ProductID and GitConfig is a ProductRepository?
 productDir :: ProductID -> GitConfig -> FilePath

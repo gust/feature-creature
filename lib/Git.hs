@@ -30,7 +30,7 @@ fetch path = do
 
 diff :: FilePath -> WithErr String
 diff path = do
-  result <- liftIO $ gitRepoCommand path ["diff", "--name-status"]
+  result <- liftIO $ gitRepoCommand path ["diff", "origin", "--name-status"]
   parseResult result
 
 parseResult :: (ExitCode, String, String) -> WithErr String

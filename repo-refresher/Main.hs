@@ -31,11 +31,18 @@ getProductEntities =
 refreshRepo :: ProductID -> App ()
 refreshRepo prodID =
   reader getGitConfig
-    >>= (\cfg -> liftIO $ fetchRepo prodID cfg)
+    >>= (\cfg -> (liftIO $ fetchRepoChanges prodID cfg) >> (liftIO $ getRepoDiff prodID cfg))
 
-fetchRepo :: ProductID -> GitConfig -> IO ()
-fetchRepo prodID gitConfig = do
+fetchRepoChanges :: ProductID -> GitConfig -> IO ()
+fetchRepoChanges prodID gitConfig = do
   result <- runExceptT $ Repo.fetchRepo prodID gitConfig
   case result of
     Left err -> putStrLn err
     Right _  -> putStrLn $ "Successfully fetched prodID: " ++ (show prodID)
+
+getRepoDiff :: ProductID -> GitConfig -> IO ()
+getRepoDiff prodID gitConfig = do
+  result <- runExceptT $ Repo.getDiff prodID gitConfig
+  case result of
+    Left err   -> putStrLn err
+    Right diff -> putStrLn diff
