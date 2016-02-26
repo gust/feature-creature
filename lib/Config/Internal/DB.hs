@@ -1,15 +1,18 @@
-module Config.Database
+module Config.Internal.DB
 ( DBConfig (..)
 , makePool
 ) where
 
-import Config (DBConfig (..))
-import Config.Environment
+import Config.Internal.Environment
 import Control.Monad.Logger        (runNoLoggingT, runStdoutLoggingT)
 import Data.ByteString.Char8       (pack)
 import Data.List                   (intersperse)
-import Database.Persist.Postgresql (ConnectionPool, createPostgresqlPool, ConnectionString)
-import System.Environment          (getEnv, lookupEnv)
+import Database.Persist.Postgresql (ConnectionPool, ConnectionString, createPostgresqlPool)
+import System.Environment (getEnv, lookupEnv)
+
+data DBConfig =
+  DBConfig { getPool :: ConnectionPool
+           } deriving (Show)
 
 data DbConnectionString =
   DbConnectionString { dbname   :: String

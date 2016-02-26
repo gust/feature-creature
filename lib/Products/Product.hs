@@ -7,7 +7,7 @@ module Products.Product
 , toProductID
 ) where
 
-import Config (DBConfig, getPool)
+import Config.Config (DBConfig, getPool)
 import qualified Database.Persist.Postgresql as DB
 import GHC.Int (Int64)
 import Models

@@ -9,7 +9,7 @@ module UserRoles.UserRole
 , UserRole(..)
 ) where
 
-import Config (DBConfig, getPool)
+import Config.Config (DBConfig, getPool)
 import Data.Int (Int64)
 import qualified Database.Persist.Postgresql as DB
 import Models

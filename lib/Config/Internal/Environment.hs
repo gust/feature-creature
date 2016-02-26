@@ -1,4 +1,4 @@
-module Config.Environment
+module Config.Internal.Environment
 ( Environment (..)
 ) where
 

@@ -7,7 +7,7 @@ import App
 import AppConfig (AppConfig, getAppConfig, getDBConfig)
 import Control.Monad.Reader       (runReaderT)
 import Control.Monad.Trans.Either (EitherT)
-import Config (getPool)
+import Config.Config (getPool)
 import Data.Monoid ((<>))
 import Documentation as Docs
 import Products.ProductsAPI (ProductsAPI, productsServer)
