@@ -58,6 +58,11 @@ library
 
   default-language:  Haskell2010
   hs-source-dirs:    lib
+  other-modules:     Config.Internal.AWS
+                   , Config.Internal.DB
+                   , Config.Internal.ElasticSearch
+                   , Config.Internal.Environment
+                   , Config.Internal.Git
 
 executable feature-creature-web
   build-depends:     aeson
