@@ -4,6 +4,7 @@
 module Products.CodeRepository
 ( CodeRepository(..)
 , codeRepositoryDir
+, fetchRepo
 , indexProductFeaturesJob
 , updateRepo
 ) where
@@ -39,6 +40,12 @@ updateGitRepo gitUrl prodID gitConfig = do
   case doesRepoExist of
     True  -> Git.pull repositoryPath
     False -> Git.clone repositoryPath gitUrl
+
+fetchRepo :: ProductID -> GitConfig -> WithErr String
+fetchRepo prodID gitConfig =
+  let repositoryPath = codeRepositoryDir prodID gitConfig
+  in
+    Git.fetch repositoryPath
 
 -- maybe the combination of a ProductID and GitConfig is a ProductRepository?
 productDir :: ProductID -> GitConfig -> FilePath
