@@ -7,7 +7,7 @@ module Features.SearchableFeature
 , searchFeatures
 ) where
 
-import Config (ElasticSearchConfig(..))
+import Config.Config (ElasticSearchConfig(..))
 import Database.Bloodhound
 import Data.Aeson
 import Data.Maybe (mapMaybe)

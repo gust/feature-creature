@@ -10,7 +10,7 @@ module Products.CodeRepository
 
 import Async.Job (Job(..))
 import CommonCreatures (WithErr)
-import Config (GitConfig (..))
+import Config.Config (GitConfig (..))
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson as Aeson
 import qualified Data.Text as T

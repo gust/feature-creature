@@ -14,7 +14,7 @@ module SQS
 ) where
 
 import           Async.Job (Job (..), EnqueuedJob (..), encodeJob, decodeJob)
-import           Config
+import           Config.Config
 import           Control.Lens
 import           Control.Monad
 import           Control.Monad.Trans.AWS

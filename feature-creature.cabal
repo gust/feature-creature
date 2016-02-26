@@ -15,7 +15,7 @@ cabal-version:       >=1.10
 
 library
   exposed-modules: Async.Job
-                   , Config
+                   , Config.Config
                    , CommonCreatures
                    , Data.DirectoryTree
                    , Features.Feature
@@ -96,11 +96,6 @@ executable feature-creature-web
   main-is:           Main.hs
   other-modules:     App
                      AppConfig
-                     Config.AWS
-                     Config.Database
-                     Config.Environment
-                     Config.Git
-                     Config.Search
                      Documentation
                      MimeTypes
                      Products.DomainTermsAPI

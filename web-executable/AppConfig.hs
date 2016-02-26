@@ -1,37 +1,33 @@
 module AppConfig
 ( AppConfig (..)
-, AWS.AWSConfig
-, Search.ElasticSearchConfig
-, Environment (..)
-, Git.GitConfig (..)
+, Config.AWSConfig
+, Config.ElasticSearchConfig
+, Config.Environment (..)
+, Config.GitConfig (..)
 , getAppConfig
 ) where
 
-import qualified Config.AWS as AWS          (AWSConfig, getAWSConfig)
-import Config.Database                      (DBConfig (..), makePool)
-import Config.Environment                   (Environment (..))
-import qualified Config.Git as Git          (GitConfig (..), getGitConfig)
-import qualified Config.Search as Search    (ElasticSearchConfig, getElasticSearchConfig)
+import Config.Config as Config
 import Network.Wai.Middleware.RequestLogger (logStdoutDev, logStdout)
 import Network.Wai                          (Middleware)
 import System.Environment                   (lookupEnv)
 
 data AppConfig =
-  AppConfig { getAWSConfig           :: AWS.AWSConfig
+  AppConfig { getAWSConfig           :: AWSConfig
             , getEnv                 :: Environment
             , getDBConfig            :: DBConfig
             , getRequestLogger       :: Middleware
-            , getElasticSearchConfig :: Search.ElasticSearchConfig
-            , getGitConfig           :: Git.GitConfig
+            , getElasticSearchConfig :: ElasticSearchConfig
+            , getGitConfig           :: GitConfig
             }
 
 getAppConfig :: IO AppConfig
 getAppConfig = do
-  env       <- lookupSetting "ENV" Development
-  awsConfig <- AWS.getAWSConfig
-  dbPool    <- makePool env
-  gitConfig <- Git.getGitConfig
-  searchConfig <- Search.getElasticSearchConfig
+  env          <- lookupSetting "ENV" Development
+  awsConfig    <- readAWSConfig
+  dbPool       <- makePool env
+  gitConfig    <- readGitConfig
+  searchConfig <- readElasticSearchConfig
   return $ AppConfig { getAWSConfig           = awsConfig
                      , getEnv                 = env
                      , getRequestLogger       = requestLogger env
