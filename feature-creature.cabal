@@ -132,3 +132,20 @@ executable search-service
                      AppConfig
                      Features
                      Indexer
+
+executable repo-refresher
+  build-depends:     base
+                   , feature-creature
+                   , mtl
+                   , text
+
+  ghc-options:       -Wall
+                     -fwarn-unused-matches
+                     -fwarn-unused-binds
+                     -fwarn-unused-imports
+
+  default-language:  Haskell2010
+  hs-source-dirs:    repo-refresher
+  main-is:           Main.hs
+  other-modules:     App
+                   , AppConfig
