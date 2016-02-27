@@ -38,6 +38,7 @@ library
                    , process
                    , monad-logger
                    , mtl
+                   , parsec
                    , persistent
                    , persistent-template
                    , persistent-postgresql
@@ -146,6 +147,7 @@ executable repo-refresher
   build-depends:     base
                    , feature-creature
                    , mtl
+                   , parsec
                    , persistent-postgresql
                    , text
 
