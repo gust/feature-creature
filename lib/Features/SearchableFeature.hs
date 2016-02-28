@@ -35,7 +35,8 @@ indexFeatures searchableFeatures esConfig =
     -- we're outputting something unhelpful here to hide the
     -- internal BH types from the user. we get a Response back
     -- which we can log in the future
-    withBH' esConfig (bulk stream) >>= putStrLn . ("ElasticSearch Reply: " ++) . show
+    withBH' esConfig (bulk stream)
+      >>= putStrLn . ("ElasticSearch Reply: " ++) . show
   where
     createBulkIndex indexName f =
       BulkIndex
@@ -52,10 +53,10 @@ searchFeatures prodID queryStr esConfig = do
     Left str   -> return [ (SearchableFeature (pack str) (pack str) prodID) ]
     Right searchResultHits -> return $ mapMaybe hitSource searchResultHits
   where
-    query = QueryMatchQuery $ mkMatchQuery (FieldName "getFeatureText") (QueryString queryStr)
+    query         = QueryMatchQuery $ mkMatchQuery (FieldName "getFeatureText") (QueryString queryStr)
     productFilter = BoolFilter (MustMatch (Term "getProductID" (pack $ show prodID)) False)
-    searchFilter = IdentityFilter <&&> productFilter
-    search = mkSearch (Just query) (Just searchFilter)
+    searchFilter  = IdentityFilter <&&> productFilter
+    search        = mkSearch (Just query) (Just searchFilter)
 
 withBH' :: ElasticSearchConfig -> BH IO a -> IO a
 withBH' esConfig a = withBH defaultManagerSettings (Server (pack (getESUrl esConfig))) a

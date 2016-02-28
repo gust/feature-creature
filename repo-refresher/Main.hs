@@ -8,6 +8,7 @@ import qualified Database.Persist.Postgresql as DB
 import qualified Products.CodeRepository as Repo
 import Products.Product as P
 
+import qualified Indexer
 import Text.ParserCombinators.Parsec (ParseError)
 
 main :: IO ()
@@ -35,6 +36,7 @@ refreshRepo prodID =
   fetchRepoChanges prodID
     >> getRepoDiff prodID
     >>= (\diff -> parseStatusDiff diff)
+    >>= (\results -> updateSearchIndex results prodID)
     >> return ()
 
 fetchRepoChanges :: ProductID -> App ()
@@ -50,7 +52,33 @@ getRepoDiff prodID = do
   gitConfig <- reader getGitConfig
   liftIO $ runExceptT $ Repo.getStatusDiff prodID gitConfig
 
--- we don't need App here, this is a pure function
+-- FIXME:
+-- We don't need App here, this is a pure function.
+-- App exists to keep the chain in `refreshRepo` moving along, but should definitely be removed.
 parseStatusDiff :: Either String String -> App (Either String [Either ParseError Repo.FileModification])
 parseStatusDiff (Left err)   = return $ Left err
 parseStatusDiff (Right diff) = return $ Right (Repo.parseStatusDiff (lines diff))
+
+updateSearchIndex :: (Either String [Either ParseError Repo.FileModification]) -> ProductID -> App (Either String ())
+updateSearchIndex (Left err) _            = return $ Left err
+updateSearchIndex (Right fileMods) prodID = (mapM_ ((flip updateSearchIndex') prodID) fileMods) >> return (Right ())
+
+updateSearchIndex' :: Either ParseError Repo.FileModification -> ProductID -> App (Either String ())
+updateSearchIndex' (Left err) _           = return $ Left $ show err
+updateSearchIndex' (Right fileMod) prodID = (updateSearchIndex'' fileMod prodID) >>= (\result -> return $ Right result)
+
+updateSearchIndex'' :: Repo.FileModification -> ProductID -> App ()
+updateSearchIndex'' fileMod pID = do
+  gCfg <- reader getGitConfig
+  esCfg <- reader getElasticSearchConfig
+  case fileMod of
+    (Repo.Added path)       -> liftIO $ Indexer.indexFeatures [path] pID gCfg esCfg
+    (Repo.Modified path)    -> liftIO $ Indexer.indexFeatures [path] pID gCfg esCfg
+    (Repo.Deleted path)     -> undefined
+    (Repo.Copied path)      -> undefined
+    (Repo.Renamed path)     -> undefined
+    (Repo.TypeChanged path) -> undefined
+    (Repo.Unmerged path)    -> undefined
+    (Repo.Unknown path)     -> undefined
+    (Repo.Broken path)      -> undefined
+    (Repo.Unrecognized modType path) -> undefined

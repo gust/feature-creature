@@ -20,6 +20,7 @@ library
                    , Data.DirectoryTree
                    , Features.Feature
                    , Features.SearchableFeature
+                   , Indexer
                    , Models
                    , Products.Product
                    , Products.CodeRepository
@@ -142,7 +143,6 @@ executable search-service
   other-modules:     App
                      AppConfig
                      Features
-                     Indexer
 
 executable repo-refresher
   build-depends:     base

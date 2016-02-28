@@ -2,8 +2,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Products.CodeRepository
-( CodeRepository(..)
-, Git.FileModification
+( CodeRepository (..)
+, Git.FileModification (..)
 , Git.parseStatusDiff
 , getStatusDiff
 , codeRepositoryDir
