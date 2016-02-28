@@ -26,6 +26,7 @@ library
                    , UserRoles.UserRole
                    , DomainTerms.DomainTerm
                    , Git
+                   , Git.Diff
                    , SQS
 
   build-depends:     aeson
