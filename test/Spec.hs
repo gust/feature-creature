@@ -3,7 +3,7 @@ import Test.Tasty.QuickCheck as QC
 import Test.Tasty.HUnit
 import Test.Tasty.Hspec
 
-import qualified Git
+import qualified Git.Git as Git
 import Data.Either (isLeft)
 
 main :: IO ()

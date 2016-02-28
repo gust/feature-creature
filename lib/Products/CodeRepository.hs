@@ -19,7 +19,7 @@ import Control.Monad.IO.Class (liftIO)
 import Data.Aeson as Aeson
 import qualified Data.Text as T
 import GHC.Generics (Generic)
-import qualified Git
+import qualified Git.Git as Git
 import Products.Product (Product (..), ProductID)
 import System.Directory (doesDirectoryExist, createDirectoryIfMissing)
 

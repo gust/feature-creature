@@ -1,4 +1,4 @@
-module Git
+module Git.Git
 ( GDiff.FileModification (..)
 , GDiff.parseStatusDiff
 , statusDiff
