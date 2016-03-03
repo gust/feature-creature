@@ -55,17 +55,24 @@ getRepoDiff prodID = do
 -- FIXME:
 -- We don't need App here, this is a pure function.
 -- App exists to keep the chain in `refreshRepo` moving along, but should definitely be removed.
-parseStatusDiff :: Either String String -> App (Either String [Either ParseError Repo.FileModification])
+parseStatusDiff :: Either String String
+                -> App (Either String [Either ParseError Repo.FileModification])
 parseStatusDiff (Left err)   = return $ Left err
 parseStatusDiff (Right diff) = return $ Right (Repo.parseStatusDiff (lines diff))
 
-updateSearchIndex :: (Either String [Either ParseError Repo.FileModification]) -> ProductID -> App (Either String ())
+updateSearchIndex :: (Either String [Either ParseError Repo.FileModification])
+                  -> ProductID
+                  -> App (Either String ())
 updateSearchIndex (Left err) _            = return $ Left err
-updateSearchIndex (Right fileMods) prodID = (mapM_ ((flip updateSearchIndex') prodID) fileMods) >> return (Right ())
+updateSearchIndex (Right fileMods) prodID =
+  (mapM_ ((flip updateSearchIndex') prodID) fileMods) >> return (Right ())
 
-updateSearchIndex' :: Either ParseError Repo.FileModification -> ProductID -> App (Either String ())
+updateSearchIndex' :: Either ParseError Repo.FileModification
+                   -> ProductID
+                   -> App (Either String ())
 updateSearchIndex' (Left err) _           = return $ Left $ show err
-updateSearchIndex' (Right fileMod) prodID = (updateSearchIndex'' fileMod prodID) >>= (\result -> return $ Right result)
+updateSearchIndex' (Right fileMod) prodID =
+  (updateSearchIndex'' fileMod prodID) >>= (\result -> return $ Right result)
 
 updateSearchIndex'' :: Repo.FileModification -> ProductID -> App ()
 updateSearchIndex'' fileMod pID = do
@@ -74,11 +81,11 @@ updateSearchIndex'' fileMod pID = do
   case fileMod of
     (Repo.Added path)       -> liftIO $ Indexer.indexFeatures [path] pID gCfg esCfg
     (Repo.Modified path)    -> liftIO $ Indexer.indexFeatures [path] pID gCfg esCfg
-    (Repo.Deleted path)     -> undefined
-    (Repo.Copied path)      -> undefined
-    (Repo.Renamed path)     -> undefined
-    (Repo.TypeChanged path) -> undefined
-    (Repo.Unmerged path)    -> undefined
-    (Repo.Unknown path)     -> undefined
-    (Repo.Broken path)      -> undefined
-    (Repo.Unrecognized modType path) -> undefined
+    (Repo.Deleted path)     -> liftIO $ Indexer.deleteFeatures [path] esCfg
+    (Repo.Copied _)      -> undefined
+    (Repo.Renamed _)     -> undefined
+    (Repo.TypeChanged _) -> undefined
+    (Repo.Unmerged _)    -> undefined
+    (Repo.Unknown _)     -> undefined
+    (Repo.Broken _)      -> undefined
+    (Repo.Unrecognized _ _) -> undefined

@@ -177,3 +177,5 @@ test-suite feature-creature-test
                        -rtsopts
                        -with-rtsopts=-N
   default-language:    Haskell2010
+  other-modules:       Features.SearchableFeatureSpec
+                     , Git.DiffSpec

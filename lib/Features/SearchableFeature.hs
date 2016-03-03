@@ -3,12 +3,16 @@
 
 module Features.SearchableFeature
 ( SearchableFeature (..)
+, createFeaturesIndex
+, deleteFeaturesIndex
 , indexFeatures
+, deleteFeatures
+, refreshFeaturesIndex
 , searchFeatures
 ) where
 
 import Config.Config (ElasticSearchConfig(..))
-import Database.Bloodhound
+import Database.Bloodhound as BH
 import Data.Aeson
 import Data.Maybe (mapMaybe)
 import Data.Text (Text, pack)
@@ -21,29 +25,45 @@ data SearchableFeature =
   SearchableFeature { getFeaturePath :: Text
                     , getFeatureText :: Text
                     , getProductID   :: ProductID
-                    } deriving (Show, Generic)
+                    } deriving (Show, Eq, Generic)
 
 instance ToJSON   SearchableFeature
 instance FromJSON SearchableFeature
 
--- handle failure
+createFeaturesIndex :: ElasticSearchConfig -> IO ()
+createFeaturesIndex esConfig =
+  withBH' esConfig (createIndex defaultIndexSettings (indexName esConfig))
+    >> putStrLn "ElasticSearch IndexCreated"
+
+deleteFeaturesIndex :: ElasticSearchConfig -> IO ()
+deleteFeaturesIndex esConfig =
+  withBH' esConfig (deleteIndex (indexName esConfig))
+    >> putStrLn "ElasticSearch IndexDeleted"
+
+refreshFeaturesIndex :: ElasticSearchConfig -> IO ()
+refreshFeaturesIndex esConfig =
+  withBH' esConfig (refreshIndex (indexName esConfig))
+    >> putStrLn "ElasticSearch RefreshIndex"
+
+-- TODO: handle failure
 indexFeatures :: [SearchableFeature] -> ElasticSearchConfig -> IO ()
 indexFeatures searchableFeatures esConfig =
-  let indicies = map (createBulkIndex (getIndexName esConfig)) searchableFeatures 
+  let indicies = map (createBulkIndex (getIndexName esConfig)) searchableFeatures
       stream = V.fromList indicies :: V.Vector BulkOperation
   in
-    -- we're outputting something unhelpful here to hide the
-    -- internal BH types from the user. we get a Response back
-    -- which we can log in the future
+    -- we're outputting the response in lieu of a proper log
     withBH' esConfig (bulk stream)
-      >>= putStrLn . ("ElasticSearch Reply: " ++) . show
-  where
-    createBulkIndex indexName f =
-      BulkIndex
-        (IndexName (pack indexName))
-        (MappingName "feature")
-        (DocId (getFeaturePath f))
-        (toJSON f)
+      >>= putStrLn . ("ElasticSearch BulkCreate Reply: " ++) . show
+
+-- TODO: better identify [Text] as the ID of the document
+deleteFeatures :: [Text] -> ElasticSearchConfig -> IO ()
+deleteFeatures docIDs esConfig =
+  let indicies = map (createBulkDelete (getIndexName esConfig)) docIDs
+      stream = V.fromList indicies :: V.Vector BulkOperation
+  in
+    -- we're outputting the response in lieu of a proper log
+    withBH' esConfig (bulk stream)
+      >>= putStrLn . ("ElasticSearch BulkDelete Reply: " ++) . show
 
 searchFeatures :: ProductID -> Text -> ElasticSearchConfig -> IO [SearchableFeature]
 searchFeatures prodID queryStr esConfig = do
@@ -57,6 +77,24 @@ searchFeatures prodID queryStr esConfig = do
     productFilter = BoolFilter (MustMatch (Term "getProductID" (pack $ show prodID)) False)
     searchFilter  = IdentityFilter <&&> productFilter
     search        = mkSearch (Just query) (Just searchFilter)
+
+createBulkIndex :: String -> SearchableFeature -> BulkOperation
+createBulkIndex idxName f =
+  BulkIndex
+    (IndexName (pack idxName))
+    (MappingName "feature")
+    (DocId (getFeaturePath f))
+    (toJSON f)
+
+createBulkDelete :: String -> Text -> BulkOperation
+createBulkDelete idxName f =
+  BulkDelete
+    (IndexName (pack idxName))
+    (MappingName "feature")
+    (DocId f)
+
+indexName :: ElasticSearchConfig -> IndexName
+indexName esConfig = IndexName $ pack (getIndexName esConfig)
 
 withBH' :: ElasticSearchConfig -> BH IO a -> IO a
 withBH' esConfig a = withBH defaultManagerSettings (Server (pack (getESUrl esConfig))) a
