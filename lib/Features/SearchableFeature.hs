@@ -48,22 +48,22 @@ refreshFeaturesIndex esConfig =
 -- TODO: handle failure
 indexFeatures :: [SearchableFeature] -> ElasticSearchConfig -> IO ()
 indexFeatures searchableFeatures esConfig =
-  let indicies = map (createBulkIndex (getIndexName esConfig)) searchableFeatures
-      stream = V.fromList indicies :: V.Vector BulkOperation
+  let ops = map (createBulkIndex (getIndexName esConfig)) searchableFeatures
   in
-    -- we're outputting the response in lieu of a proper log
-    withBH' esConfig (bulk stream)
+    withBH' esConfig (bulk (createStream ops))
       >>= putStrLn . ("ElasticSearch BulkCreate Reply: " ++) . show
 
 -- TODO: better identify [Text] as the ID of the document
 deleteFeatures :: [Text] -> ElasticSearchConfig -> IO ()
 deleteFeatures docIDs esConfig =
-  let indicies = map (createBulkDelete (getIndexName esConfig)) docIDs
-      stream = V.fromList indicies :: V.Vector BulkOperation
+  let ops = map (createBulkDelete (getIndexName esConfig)) docIDs
   in
-    -- we're outputting the response in lieu of a proper log
-    withBH' esConfig (bulk stream)
+    withBH' esConfig (bulk (createStream ops))
       >>= putStrLn . ("ElasticSearch BulkDelete Reply: " ++) . show
+
+createStream :: [BulkOperation] -> V.Vector BulkOperation
+createStream ops =
+  V.fromList ops :: V.Vector BulkOperation
 
 searchFeatures :: ProductID -> Text -> ElasticSearchConfig -> IO [SearchableFeature]
 searchFeatures prodID queryStr esConfig = do
