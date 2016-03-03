@@ -1,5 +1,6 @@
 module Git.Diff
 ( FileModification (..)
+, ParseResult
 , parseStatusDiff
 ) where
 
@@ -18,10 +19,12 @@ data FileModification = Added FilePath
                       | Unrecognized Char FilePath
   deriving (Show, Eq)
 
-parseStatusDiff :: [String] -> [Either ParseError FileModification]
+type ParseResult = Either ParseError FileModification
+
+parseStatusDiff :: [String] -> [ParseResult]
 parseStatusDiff = map parseStatusDiff'
 
-parseStatusDiff' :: String -> Either ParseError FileModification
+parseStatusDiff' :: String -> ParseResult
 parseStatusDiff' d = parse parseFileModification "fileModification" d
 
 parseFileModification :: Parser FileModification

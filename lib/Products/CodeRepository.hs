@@ -4,6 +4,7 @@
 module Products.CodeRepository
 ( CodeRepository (..)
 , Git.FileModification (..)
+, Git.ParseResult
 , Git.parseStatusDiff
 , getStatusDiff
 , codeRepositoryDir
@@ -33,7 +34,8 @@ instance FromJSON CodeRepository
 -- (ReaderT GitConfig (WithErr a)) could be a useful monad here
 updateRepo :: Product -> ProductID -> GitConfig -> WithErr String
 updateRepo prod prodID gitConfig =
-  (liftIO $ createRequiredDirectories prodID gitConfig) >> updateGitRepo (productRepoUrl prod) prodID gitConfig
+  (liftIO $ createRequiredDirectories prodID gitConfig)
+    >> updateGitRepo (productRepoUrl prod) prodID gitConfig
 
 -- (ReaderT GitConfig (WithErr a)) could be a useful monad here
 updateGitRepo :: T.Text -> ProductID -> GitConfig -> WithErr String

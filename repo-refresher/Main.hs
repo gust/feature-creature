@@ -5,11 +5,10 @@ import AppConfig as Cfg
 import Control.Monad.Except (runExceptT)
 import Control.Monad.Reader
 import qualified Database.Persist.Postgresql as DB
+import qualified Git.Git as Git
+import qualified Indexer
 import qualified Products.CodeRepository as Repo
 import Products.Product as P
-
-import qualified Indexer
-import Text.ParserCombinators.Parsec (ParseError)
 
 main :: IO ()
 main = do
@@ -36,7 +35,8 @@ refreshRepo prodID =
   fetchRepoChanges prodID
     >> getRepoDiff prodID
     >>= (\diff -> parseStatusDiff diff)
-    >>= (\results -> updateSearchIndex results prodID)
+    >>= (\diffResults -> updateSearchIndex diffResults prodID)
+    >>= (\indexResults -> updateGitRepo indexResults prodID)
     >> return ()
 
 fetchRepoChanges :: ProductID -> App ()
@@ -55,21 +55,16 @@ getRepoDiff prodID = do
 -- FIXME:
 -- We don't need App here, this is a pure function.
 -- App exists to keep the chain in `refreshRepo` moving along, but should definitely be removed.
-parseStatusDiff :: Either String String
-                -> App (Either String [Either ParseError Repo.FileModification])
+parseStatusDiff :: Either String String -> App (Either String [Repo.ParseResult])
 parseStatusDiff (Left err)   = return $ Left err
 parseStatusDiff (Right diff) = return $ Right (Repo.parseStatusDiff (lines diff))
 
-updateSearchIndex :: (Either String [Either ParseError Repo.FileModification])
-                  -> ProductID
-                  -> App (Either String ())
+updateSearchIndex :: (Either String [Repo.ParseResult]) -> ProductID -> App (Either String ())
 updateSearchIndex (Left err) _            = return $ Left err
 updateSearchIndex (Right fileMods) prodID =
   (mapM_ ((flip updateSearchIndex') prodID) fileMods) >> return (Right ())
 
-updateSearchIndex' :: Either ParseError Repo.FileModification
-                   -> ProductID
-                   -> App (Either String ())
+updateSearchIndex' :: Repo.ParseResult -> ProductID -> App (Either String ())
 updateSearchIndex' (Left err) _           = return $ Left $ show err
 updateSearchIndex' (Right fileMod) prodID =
   (updateSearchIndex'' fileMod prodID) >>= (\result -> return $ Right result)
@@ -79,13 +74,22 @@ updateSearchIndex'' fileMod pID = do
   gCfg <- reader getGitConfig
   esCfg <- reader getElasticSearchConfig
   case fileMod of
-    (Repo.Added path)       -> liftIO $ Indexer.indexFeatures [path] pID gCfg esCfg
-    (Repo.Modified path)    -> liftIO $ Indexer.indexFeatures [path] pID gCfg esCfg
-    (Repo.Deleted path)     -> liftIO $ Indexer.deleteFeatures [path] esCfg
-    (Repo.Copied _)      -> undefined
-    (Repo.Renamed _)     -> undefined
-    (Repo.TypeChanged _) -> undefined
-    (Repo.Unmerged _)    -> undefined
-    (Repo.Unknown _)     -> undefined
-    (Repo.Broken _)      -> undefined
-    (Repo.Unrecognized _ _) -> undefined
+    (Repo.Added path)    -> liftIO $ Indexer.indexFeatures [path] pID gCfg esCfg
+    (Repo.Modified path) -> liftIO $ Indexer.indexFeatures [path] pID gCfg esCfg
+    (Repo.Deleted path)  -> liftIO $ Indexer.deleteFeatures [path] esCfg
+    _                    -> return ()
+    {- (Repo.Copied _)      -> undefined -}
+    {- (Repo.Renamed _)     -> undefined -}
+    {- (Repo.TypeChanged _) -> undefined -}
+    {- (Repo.Unmerged _)    -> undefined -}
+    {- (Repo.Unknown _)     -> undefined -}
+    {- (Repo.Broken _)      -> undefined -}
+    {- (Repo.Unrecognized _ _) -> undefined -}
+
+updateGitRepo :: Either String () -> ProductID -> App (Either String String)
+updateGitRepo (Left err) _     = return $ Left err
+updateGitRepo (Right _) prodID = do
+  reader getGitConfig
+    >>= (\gitConfig -> liftIO $ runExceptT $ Git.pull $ Repo.codeRepositoryDir prodID gitConfig)
+    >>= (\result -> return result)
+

@@ -1,5 +1,6 @@
 module Git.Git
 ( GDiff.FileModification (..)
+, GDiff.ParseResult
 , GDiff.parseStatusDiff
 , statusDiff
 , clone
