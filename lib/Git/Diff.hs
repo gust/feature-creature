@@ -30,7 +30,7 @@ parseStatusDiff' d = parse parseFileModification "fileModification" d
 parseFileModification :: Parser FileModification
 parseFileModification = do
   modType <- oneOf "ACDMRTUXB"
-  void $ many1 $ char ' '
+  void $ many1 $ space
   fileName <- many1 $ anyChar
   return $ fileModification modType fileName
 

@@ -34,10 +34,14 @@ refreshRepo :: ProductID -> App ()
 refreshRepo prodID =
   fetchRepoChanges prodID
     >> getRepoDiff prodID
-    >>= (\diff -> parseStatusDiff diff)
-    >>= (\diffResults -> updateSearchIndex diffResults prodID)
-    >>= (\indexResults -> updateGitRepo indexResults prodID)
-    >> return ()
+    >>= (\diff              -> parseStatusDiff diff)
+    >>= (\diffResults       -> updateSearchIndex diffResults prodID)
+    >>= (\indexResults      -> updateGitRepo indexResults prodID)
+    >>= (\repoUpdateResults -> printResults repoUpdateResults prodID)
+
+printResults :: Either String String -> ProductID -> App ()
+printResults (Left err)  prodID = liftIO $ putStrLn ("Failed to update repo " ++ (show prodID) ++ "" ++ err)
+printResults (Right msg) prodID = liftIO $ putStrLn ("Successfully updated repo " ++ (show prodID) ++ " " ++ msg)
 
 fetchRepoChanges :: ProductID -> App ()
 fetchRepoChanges prodID = do
@@ -62,7 +66,13 @@ parseStatusDiff (Right diff) = return $ Right (Repo.parseStatusDiff (lines diff)
 updateSearchIndex :: (Either String [Repo.ParseResult]) -> ProductID -> App (Either String ())
 updateSearchIndex (Left err) _            = return $ Left err
 updateSearchIndex (Right fileMods) prodID =
-  (mapM_ ((flip updateSearchIndex') prodID) fileMods) >> return (Right ())
+  (mapM ((flip updateSearchIndex') prodID) fileMods)
+    >>= (\results -> liftIO $ mapM_ printSearchIndexResults results)
+    >> return (Right ())
+
+printSearchIndexResults :: Either String () -> IO ()
+printSearchIndexResults (Left err) = putStrLn err
+printSearchIndexResults (Right _ ) = putStrLn "Successful index!"
 
 updateSearchIndex' :: Repo.ParseResult -> ProductID -> App (Either String ())
 updateSearchIndex' (Left err) _           = return $ Left $ show err
