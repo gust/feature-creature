@@ -2,8 +2,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Products.CodeRepository
-( CodeRepository(..)
+( CodeRepository (..)
+, Git.FileModification (..)
+, Git.ParseResult
+, Git.parseStatusDiff
+, getStatusDiff
 , codeRepositoryDir
+, fetchRepo
 , indexProductFeaturesJob
 , updateRepo
 ) where
@@ -15,7 +20,7 @@ import Control.Monad.IO.Class (liftIO)
 import Data.Aeson as Aeson
 import qualified Data.Text as T
 import GHC.Generics (Generic)
-import qualified Git
+import qualified Git.Git as Git
 import Products.Product (Product (..), ProductID)
 import System.Directory (doesDirectoryExist, createDirectoryIfMissing)
 
@@ -29,7 +34,8 @@ instance FromJSON CodeRepository
 -- (ReaderT GitConfig (WithErr a)) could be a useful monad here
 updateRepo :: Product -> ProductID -> GitConfig -> WithErr String
 updateRepo prod prodID gitConfig =
-  (liftIO $ createRequiredDirectories prodID gitConfig) >> updateGitRepo (productRepoUrl prod) prodID gitConfig
+  (liftIO $ createRequiredDirectories prodID gitConfig)
+    >> updateGitRepo (productRepoUrl prod) prodID gitConfig
 
 -- (ReaderT GitConfig (WithErr a)) could be a useful monad here
 updateGitRepo :: T.Text -> ProductID -> GitConfig -> WithErr String
@@ -39,6 +45,18 @@ updateGitRepo gitUrl prodID gitConfig = do
   case doesRepoExist of
     True  -> Git.pull repositoryPath
     False -> Git.clone repositoryPath gitUrl
+
+fetchRepo :: ProductID -> GitConfig -> WithErr String
+fetchRepo prodID gitConfig =
+  let repositoryPath = codeRepositoryDir prodID gitConfig
+  in
+    Git.fetch repositoryPath
+
+getStatusDiff :: ProductID -> GitConfig -> WithErr String
+getStatusDiff prodID gitConfig =
+  let repositoryPath = codeRepositoryDir prodID gitConfig
+  in
+    Git.statusDiff repositoryPath
 
 -- maybe the combination of a ProductID and GitConfig is a ProductRepository?
 productDir :: ProductID -> GitConfig -> FilePath
