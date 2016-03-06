@@ -7,5 +7,6 @@ RUN apt-get update && apt-get install -y \
     git \
     libpq-dev
 
-RUN stack setup
 RUN stack build
+
+CMD stack exec feature-creature-web
