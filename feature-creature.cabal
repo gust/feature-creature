@@ -83,6 +83,7 @@ executable feature-creature-web
                    , monad-logger
                    , mtl
                    , persistent-postgresql
+                   , retry
                    , servant
                    , servant-client
                    , servant-docs
