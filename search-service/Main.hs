@@ -15,34 +15,37 @@ import           Products.CodeRepository (CodeRepository(..))
 import           SQS (getSQSMessages, deleteSQSMessage)
 
 main :: IO ()
-main = do
-  appConfig <- readConfig
-  runReaderT processJobs appConfig
+main = readConfig >>= runReaderT processJobs
 
 processJobs :: App ()
-processJobs = do
-  cfg    <- ask
-  awsCfg <- reader getAWSConfig
+processJobs =
+  forever $ do
+    reader getAWSConfig
+      >>= (liftIO . getSQSMessages)
+      >>= (mapM_ processEnqueuedJob)
+      >>  (liftIO $ threadDelay 10000)
 
-  liftIO $ forever $ do
-    enqueuedJobs <- getSQSMessages awsCfg
-    forM_ enqueuedJobs $ \enqueuedJob -> do
-      case enqueuedJob of
-        Left err ->
-          liftIO $ putStrLn err
-        Right (EnqueuedJob job deliveryReceipt) -> do
-          result <- runReaderT (processJob job) cfg >>= liftIO . runExceptT
-          case result of
-            Left errStr -> liftIO $ putStrLn errStr
-            Right _     -> deleteSQSMessage deliveryReceipt awsCfg >> return ()
-    threadDelay 10000
+processEnqueuedJob :: Either String (EnqueuedJob CodeRepository) -> App ()
+processEnqueuedJob (Left err) = liftIO $ putStrLn err
+processEnqueuedJob (Right (EnqueuedJob job deliveryReceipt)) = do
+  processJob job
+    >>= (liftIO . runExceptT)
+    >>= (\result -> processJobResult result deliveryReceipt)
 
 processJob :: Job CodeRepository -> App (WithErr ())
 processJob job = do
   case Job.getPayload job of
-    CodeRepository _ -> do
-      gitConfig <- reader getGitConfig
-      esConfig <- reader getElasticSearchConfig
-      return $ Features.indexFeatures (Job.getPayload job) gitConfig esConfig
+    CodeRepository _ ->
+      ask >>= (\cfg ->
+        let gitConfig = getGitConfig cfg
+            esConfig  = getElasticSearchConfig cfg
+        in return $ Features.indexFeatures (Job.getPayload job) gitConfig esConfig)
     _ ->
       return $ throwError $ "Unprocessable job type: " ++ (Text.unpack $ Job.getJobType job)
+
+processJobResult :: Either String () -> Text.Text -> App ()
+processJobResult (Left errStr) _ = liftIO $ putStrLn errStr
+processJobResult (Right _) deliveryReceipt =
+  reader getAWSConfig
+    >>= (liftIO . (deleteSQSMessage deliveryReceipt))
+
