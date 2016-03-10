@@ -17,4 +17,5 @@ cabal.sandbox.config
 *.aux
 *.hp
 scripts/development/aws-env.sh
+scripts/development/aws.env
 ScratchPad.hs
