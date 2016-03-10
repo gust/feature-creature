@@ -142,7 +142,6 @@ executable search-service
   main-is:           Main.hs
   other-modules:     App
                      AppConfig
-                     Features
 
 executable repo-refresher
   build-depends:     base
