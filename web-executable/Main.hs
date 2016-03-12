@@ -14,7 +14,7 @@ import Products.ProductsAPI (ProductsAPI, productsServer)
 import Network.Wai as Wai
 import Network.Wai.Handler.Warp as Warp
 import Network.Wai.Middleware.Cors
-import qualified Control.Retry as Retry
+import Retry (withRetry)
 import Servant
 
 import Database.Persist.Postgresql (runSqlPool, runMigration)
@@ -29,8 +29,7 @@ main = do
 
   let pool = getPool (getDBConfig appConfig)
 
-  Retry.recoverAll (Retry.constantDelay 1000000 <> Retry.limitRetries 120)
-                   (\rs -> (putStrLn $ "Migrations: " ++ (show rs)) >> (runSqlPool (runMigration migrateAll) pool))
+  withRetry (runSqlPool (runMigration migrateAll) pool)
 
   Warp.run 8081 (app appConfig)
 

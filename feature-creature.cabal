@@ -18,17 +18,18 @@ library
                    , Config.Config
                    , CommonCreatures
                    , Data.DirectoryTree
+                   , DomainTerms.DomainTerm
                    , Features.Feature
                    , Features.SearchableFeature
+                   , Git.Git
+                   , Git.Diff
                    , Indexer
                    , Models
                    , Products.Product
                    , Products.CodeRepository
-                   , UserRoles.UserRole
-                   , DomainTerms.DomainTerm
-                   , Git.Git
-                   , Git.Diff
+                   , Retry
                    , SQS
+                   , UserRoles.UserRole
 
   build-depends:     aeson
                    , base >= 4.8.1.0 && < 4.8.3.0
@@ -36,6 +37,7 @@ library
                    , bloodhound
                    , containers
                    , directory
+                   , exceptions
                    , http-client
                    , process
                    , monad-logger
@@ -53,6 +55,7 @@ library
                    , amazonka-core
                    , amazonka-sqs
                    , lens
+                   , retry
 
   ghc-options:       -Wall
                      -fwarn-unused-matches
@@ -150,6 +153,7 @@ executable repo-refresher
                    , mtl
                    , parsec
                    , persistent-postgresql
+                   , retry
                    , text
 
   ghc-options:       -Wall

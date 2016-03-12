@@ -9,6 +9,7 @@ import qualified Git.Git as Git
 import qualified Indexer
 import qualified Products.CodeRepository as Repo
 import Products.Product as P
+import Retry (withRetry)
 
 main :: IO ()
 main = do
@@ -26,9 +27,9 @@ getProductIDs =
     >>= (\entities -> return $ map P.toProductID entities)
 
 getProductEntities :: App [DB.Entity Product]
-getProductEntities =
-  reader getDBConfig
-    >>= (\cfg -> liftIO $ P.findProducts cfg)
+getProductEntities = do
+  (reader getDBConfig)
+    >>= (\cfg -> liftIO $ withRetry (P.findProducts cfg))
 
 refreshRepo :: ProductID -> App ()
 refreshRepo prodID =
