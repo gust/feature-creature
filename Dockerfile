@@ -1,19 +1,14 @@
 FROM haskell:7.10.3
 
-COPY . /usr/local/feature-creature
-
-WORKDIR "/usr/local/feature-creature"
-
 RUN apt-get update && apt-get install -y \
     git \
     libpq-dev
 
-RUN stack build
+COPY . /usr/local/feature-creature
 
-# logging
-RUN mkdir /usr/local/feature-creature/log
-VOLUME [ "/usr/local/feature-creature/log" ]
+WORKDIR /usr/local/feature-creature
 
-RUN tee -a stack exec feature-creature-web /usr/local/feature-creature/log/api.log
+RUN mkdir .stack-work/bin
+VOLUME [ "/root/.stack", "/usr/local/feature-creature/.stack-work" ]
 
-CMD stack exec feature-creature-web
+RUN stack --local-bin-path=.stack-work/bin install
