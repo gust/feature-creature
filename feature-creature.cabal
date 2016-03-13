@@ -130,6 +130,7 @@ executable search-service
                    , feature-creature
                    , lens
                    , mtl
+                   , retry
                    , text
                    , transformers
 

@@ -16,8 +16,17 @@ import Products.CodeRepository (CodeRepository(..), codeRepositoryDir)
 import Products.Product (ProductID)
 import SQS (getSQSMessages, deleteSQSMessage)
 
+{- import qualified Features -}
+{- import           Products.CodeRepository (CodeRepository(..)) -}
+import           Features.SearchableFeature (createFeaturesIndex)
+import           Retry (withRetry)
+{- import           SQS (getSQSMessages, deleteSQSMessage) -}
+
 main :: IO ()
-main = readConfig >>= runReaderT processJobs
+main = do
+  appConfig <- readConfig
+  withRetry (createFeaturesIndex (getElasticSearchConfig appConfig))
+  runReaderT processJobs appConfig
 
 processJobs :: App ()
 processJobs =
