@@ -11,8 +11,6 @@ RUN mkdir -p $FEATURE_CREATURE_DIR
 
 WORKDIR $FEATURE_CREATURE_DIR
 
-COPY .stack-work/docker/_home/.local/bin/ .
-
 RUN /bin/echo $PATH
 RUN /bin/echo $(pwd)
 
