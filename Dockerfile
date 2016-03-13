@@ -1,14 +1,19 @@
-FROM haskell:7.10.3
+FROM fpco/stack-build:lts-4.2
 
 RUN apt-get update && apt-get install -y \
     git \
     libpq-dev
 
-COPY . /usr/local/feature-creature
+ENV FEATURE_CREATURE_DIR=/usr/share/feature-creature
+ENV PATH $FEATURE_CREATURE_DIR:$PATH
 
-WORKDIR /usr/local/feature-creature
+RUN mkdir -p $FEATURE_CREATURE_DIR
 
-RUN mkdir .stack-work/bin
-VOLUME [ "/root/.stack", "/usr/local/feature-creature/.stack-work" ]
+WORKDIR $FEATURE_CREATURE_DIR
 
-RUN stack --local-bin-path=.stack-work/bin install
+COPY .stack-work/docker/_home/.local/bin/ .
+
+RUN /bin/echo $PATH
+RUN /bin/echo $(pwd)
+
+CMD /bin/echo $PATH
