@@ -5,6 +5,7 @@ import AppConfig as Cfg
 import Control.Monad.Except (runExceptT)
 import Control.Monad.Reader
 import qualified Database.Persist.Postgresql as DB
+import Features.Feature (FeatureFile (..))
 import qualified Git.Git as Git
 import qualified Indexer
 import qualified Products.CodeRepository as Repo
@@ -85,9 +86,9 @@ updateSearchIndex'' fileMod pID = do
   gCfg <- reader getGitConfig
   esCfg <- reader getElasticSearchConfig
   case fileMod of
-    (Repo.Added path)    -> liftIO $ Indexer.indexFeatures [path] pID gCfg esCfg
-    (Repo.Modified path) -> liftIO $ Indexer.indexFeatures [path] pID gCfg esCfg
-    (Repo.Deleted path)  -> liftIO $ Indexer.deleteFeatures [path] esCfg
+    (Repo.Added path)    -> liftIO $ Indexer.indexFeatures [FeatureFile path] pID gCfg esCfg
+    (Repo.Modified path) -> liftIO $ Indexer.indexFeatures [FeatureFile path] pID gCfg esCfg
+    (Repo.Deleted path)  -> liftIO $ Indexer.deleteFeatures [FeatureFile path] esCfg
     _                    -> return ()
     {- (Repo.Copied _)      -> undefined -}
     {- (Repo.Renamed _)     -> undefined -}
