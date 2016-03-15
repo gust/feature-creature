@@ -33,17 +33,17 @@ instance FromJSON SearchableFeature
 createFeaturesIndex :: ElasticSearchConfig -> IO ()
 createFeaturesIndex esConfig =
   withBH' esConfig (createIndex defaultIndexSettings (indexName esConfig))
-    >> putStrLn "ElasticSearch IndexCreated"
+    >>= putStrLn . ("ElasticSearch IndexCreated " ++) . show
 
 deleteFeaturesIndex :: ElasticSearchConfig -> IO ()
 deleteFeaturesIndex esConfig =
   withBH' esConfig (deleteIndex (indexName esConfig))
-    >> putStrLn "ElasticSearch IndexDeleted"
+    >>= putStrLn . ("ElasticSearch IndexDeleted " ++) . show
 
 refreshFeaturesIndex :: ElasticSearchConfig -> IO ()
 refreshFeaturesIndex esConfig =
   withBH' esConfig (refreshIndex (indexName esConfig))
-    >> putStrLn "ElasticSearch RefreshIndex"
+    >>= putStrLn . ("ElasticSearch RefreshIndex " ++) . show
 
 -- TODO: handle failure
 indexFeatures :: [SearchableFeature] -> ElasticSearchConfig -> IO ()
@@ -97,4 +97,4 @@ indexName :: ElasticSearchConfig -> IndexName
 indexName esConfig = IndexName $ pack (getIndexName esConfig)
 
 withBH' :: ElasticSearchConfig -> BH IO a -> IO a
-withBH' esConfig a = withBH defaultManagerSettings (Server (pack (getESUrl esConfig))) a
+withBH' esConfig a = putStrLn (getESUrl esConfig) >> withBH defaultManagerSettings (Server (pack (getESUrl esConfig))) a

@@ -23,13 +23,13 @@ refreshRepos =
 
 getProductIDs :: App [ProductID]
 getProductIDs =
-  getProductEntities
+  (withRetry getProductEntities)
     >>= (\entities -> return $ map P.toProductID entities)
 
 getProductEntities :: App [DB.Entity Product]
 getProductEntities = do
   (reader getDBConfig)
-    >>= (\cfg -> liftIO $ withRetry (P.findProducts cfg))
+    >>= (\cfg -> liftIO $ P.findProducts cfg)
 
 refreshRepo :: ProductID -> App ()
 refreshRepo prodID =
