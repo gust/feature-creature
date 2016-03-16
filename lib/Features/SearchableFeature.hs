@@ -32,7 +32,7 @@ instance FromJSON SearchableFeature
 
 createFeaturesIndex :: ElasticSearchConfig -> IO ()
 createFeaturesIndex esConfig =
-  withBH' esConfig (createIndex defaultIndexSettings (indexName esConfig))
+  withBH' esConfig (createIndex (indexSettings esConfig) (indexName esConfig))
     >>= putStrLn . ("ElasticSearch IndexCreated " ++) . show
 
 deleteFeaturesIndex :: ElasticSearchConfig -> IO ()
@@ -96,5 +96,10 @@ createBulkDelete idxName f =
 indexName :: ElasticSearchConfig -> IndexName
 indexName esConfig = IndexName $ pack (getIndexName esConfig)
 
+indexSettings :: ElasticSearchConfig -> IndexSettings
+indexSettings esConfig = IndexSettings (ShardCount (getShardCount esConfig)) (ReplicaCount (getReplicaCount esConfig))
+
 withBH' :: ElasticSearchConfig -> BH IO a -> IO a
-withBH' esConfig a = putStrLn (getESUrl esConfig) >> withBH defaultManagerSettings (Server (pack (getESUrl esConfig))) a
+withBH' esConfig a =
+  putStrLn (getESUrl esConfig)
+    >> withBH defaultManagerSettings (Server (pack (getESUrl esConfig))) a
