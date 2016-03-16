@@ -10,6 +10,7 @@ import qualified Features.Feature as F
 import qualified Features.SearchableFeature as SF
 import Products.CodeRepository (codeRepositoryDir)
 import Products.Product (ProductID)
+import System.Directory (doesFileExist)
 import System.IO (IOMode (ReadMode), openFile, hClose, hGetContents)
 
 -- create an abstraction here
@@ -39,12 +40,17 @@ indexFeature filePath prodID gitConfig esConfig =
   let featureFileBasePath = codeRepositoryDir prodID gitConfig
       fullFilePath        = featureFileBasePath ++ filePath
   in
-    handle handleIOException $
-      bracket (openFile fullFilePath ReadMode) hClose $ \h -> do
-        fileContents <- hGetContents h
-        let searchableFeature = SF.SearchableFeature (pack filePath) (pack fileContents) prodID
-        putStrLn $ "Indexing: " ++ (show searchableFeature)
-        SF.indexFeatures [searchableFeature] esConfig
+    (doesFileExist fullFilePath)
+      >>= \exists ->
+        case exists of
+          False -> putStrLn $ "File does not exist: " ++ fullFilePath
+          True ->
+            handle handleIOException $
+              bracket (openFile fullFilePath ReadMode) hClose $ \h -> do
+                fileContents <- hGetContents h
+                let searchableFeature = SF.SearchableFeature (pack filePath) (pack fileContents) prodID
+                putStrLn $ "Indexing: " ++ (show searchableFeature)
+                SF.indexFeatures [searchableFeature] esConfig
 
 deleteFeature :: FilePath -> ElasticSearchConfig -> IO ()
 deleteFeature filePath esConfig =
