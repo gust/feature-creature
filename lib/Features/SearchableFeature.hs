@@ -66,17 +66,28 @@ createStream ops =
   V.fromList ops :: V.Vector BulkOperation
 
 searchFeatures :: ProductID -> Text -> ElasticSearchConfig -> IO [SearchableFeature]
-searchFeatures prodID queryStr esConfig = do
-  reply <- withBH' esConfig $ searchByIndex (IndexName (pack (getIndexName esConfig))) search
-  let results = eitherDecode (responseBody reply) :: Either String (SearchResult SearchableFeature)
-  case fmap (hits . searchHits) results of
-    Left str   -> return [ (SearchableFeature (pack str) (pack str) prodID) ]
-    Right searchResultHits -> return $ mapMaybe hitSource searchResultHits
-  where
-    query         = QueryMatchQuery $ mkMatchQuery (FieldName "getFeatureText") (QueryString queryStr)
-    productFilter = BoolFilter (MustMatch (Term "getProductID" (pack $ show prodID)) False)
-    searchFilter  = IdentityFilter <&&> productFilter
-    search        = mkSearch (Just query) (Just searchFilter)
+searchFeatures prodID queryStr esConfig =
+  let index      = IndexName (pack . getIndexName $ esConfig)
+      searchTerm = featureTextSearch queryStr prodID
+  in (withBH' esConfig $ searchByIndex index searchTerm)
+       >>= \reply ->
+             let results = eitherDecode (responseBody reply)
+             in case fmap (hits . searchHits) results of
+               Left str -> return [ (SearchableFeature (pack str) (pack str) prodID) ]
+               Right searchResultHits -> return $ mapMaybe hitSource searchResultHits
+
+featureTextSearch :: Text -> ProductID -> Search
+featureTextSearch queryStr prodID =
+  mkSearch (Just (featureTextQuery queryStr)) (Just (searchFilter prodID))
+
+featureTextQuery :: Text -> Query
+featureTextQuery queryStr =
+  QueryMatchQuery $ mkMatchQuery (FieldName "getFeatureText") (QueryString queryStr)
+
+searchFilter :: ProductID -> Filter
+searchFilter prodID =
+  let searchTerm = (Term "getProductID" (pack $ show prodID))
+  in IdentityFilter <&&> BoolFilter (MustMatch searchTerm False)
 
 createBulkIndex :: String -> SearchableFeature -> BulkOperation
 createBulkIndex idxName f =

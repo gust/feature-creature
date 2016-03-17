@@ -14,7 +14,7 @@ defaultRetryPolicy :: (MonadIO m, MonadMask m) => CR.RetryPolicyM m
 defaultRetryPolicy = everySecondForTwoMinutes
 
 everySecondForTwoMinutes :: (MonadIO m, MonadMask m) => CR.RetryPolicyM m
-everySecondForTwoMinutes = everySecond <> (forMinutes 2)
+everySecondForTwoMinutes = everySecond <> (forMinutes 1)
 
 everySecond :: (MonadIO m, MonadMask m) => CR.RetryPolicyM m
 everySecond = CR.constantDelay 1000000
