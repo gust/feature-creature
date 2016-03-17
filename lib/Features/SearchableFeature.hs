@@ -11,7 +11,10 @@ module Features.SearchableFeature
 , searchFeatures
 ) where
 
+import CommonCreatures
 import Config.Config (ElasticSearchConfig(..))
+import Control.Monad.Except (throwError)
+import Control.Monad.IO.Class (liftIO)
 import Database.Bloodhound as BH
 import Data.Aeson
 import Data.Maybe (mapMaybe)
@@ -65,15 +68,15 @@ createStream :: [BulkOperation] -> V.Vector BulkOperation
 createStream ops =
   V.fromList ops :: V.Vector BulkOperation
 
-searchFeatures :: ProductID -> Text -> ElasticSearchConfig -> IO [SearchableFeature]
+searchFeatures :: ProductID -> Text -> ElasticSearchConfig -> WithErr [SearchableFeature]
 searchFeatures prodID queryStr esConfig =
   let index      = IndexName (pack . getIndexName $ esConfig)
       searchTerm = featureTextSearch queryStr prodID
-  in (withBH' esConfig $ searchByIndex index searchTerm)
+  in (liftIO $ withBH' esConfig $ searchByIndex index searchTerm)
        >>= \reply ->
              let results = eitherDecode (responseBody reply)
              in case fmap (hits . searchHits) results of
-               Left str -> return [ (SearchableFeature (pack str) (pack str) prodID) ]
+               Left str -> throwError str
                Right searchResultHits -> return $ mapMaybe hitSource searchResultHits
 
 featureTextSearch :: Text -> ProductID -> Search

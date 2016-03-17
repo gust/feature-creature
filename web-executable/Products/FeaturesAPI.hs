@@ -49,10 +49,13 @@ productsFeatures prodID Nothing = do
 
 searchFeatures :: P.ProductID -> Text -> ElasticSearchConfig -> IO DirectoryTree
 searchFeatures prodID searchTerm esConfig =
-  F.buildDirectoryTree <$> parseFeatureFiles <$> (SF.searchFeatures prodID searchTerm esConfig )
-  where
-    parseFeatureFiles :: [SF.SearchableFeature] -> [F.FeatureFile]
-    parseFeatureFiles = map (F.FeatureFile . unpack . SF.getFeaturePath)
+  (liftIO $ runExceptT (SF.searchFeatures prodID searchTerm esConfig))
+    >>= \fs -> case fs of
+                 (Left err) -> error err
+                 (Right features) -> return $ F.buildDirectoryTree . parseFeatureFiles $ features
+
+parseFeatureFiles :: [SF.SearchableFeature] -> [F.FeatureFile]
+parseFeatureFiles = map (F.FeatureFile . unpack . SF.getFeaturePath)
 
 productsFeature :: P.ProductID -> Maybe F.FeatureFile -> App APIFeature
 productsFeature _ Nothing = error "Missing required query param 'path'"
