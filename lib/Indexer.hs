@@ -3,9 +3,10 @@ module Indexer
 , deleteFeatures
 ) where
 
-import Data.Text (pack)
 import Config.Config (ElasticSearchConfig, GitConfig)
 import Control.Exception (IOException, bracket, handle)
+import Control.Monad.Except (runExceptT)
+import Data.Text (pack)
 import qualified Features.Feature as F
 import qualified Features.SearchableFeature as SF
 import Products.CodeRepository (codeRepositoryDir)
@@ -39,18 +40,18 @@ indexFeature :: FilePath -> ProductID -> GitConfig -> ElasticSearchConfig -> IO 
 indexFeature filePath prodID gitConfig esConfig =
   let featureFileBasePath = codeRepositoryDir prodID gitConfig
       fullFilePath        = featureFileBasePath ++ filePath
-  in
-    (doesFileExist fullFilePath)
-      >>= \exists ->
-        case exists of
-          False -> putStrLn $ "File does not exist: " ++ fullFilePath
-          True ->
-            handle handleIOException $
-              bracket (openFile fullFilePath ReadMode) hClose $ \h -> do
-                fileContents <- hGetContents h
+  in (doesFileExist fullFilePath) >>= \exists ->
+      case exists of
+        False -> putStrLn $ "File does not exist: " ++ fullFilePath
+        True ->
+          handle handleIOException $
+            bracket (openFile fullFilePath ReadMode) hClose $ \h ->
+              hGetContents h >>= \fileContents ->
                 let searchableFeature = SF.SearchableFeature (pack filePath) (pack fileContents) prodID
-                putStrLn $ "Indexing: " ++ (show searchableFeature)
-                SF.indexFeatures [searchableFeature] esConfig
+                in (runExceptT $ SF.indexFeatures [searchableFeature] esConfig) >>= \result ->
+                     case result of
+                       (Left err) -> putStrLn ("Error indexing feature: " ++ err) >> putStrLn (show searchableFeature)
+                       (Right _)  -> putStrLn ("Successfully indexed: " ++ filePath)
 
 deleteFeature :: FilePath -> ElasticSearchConfig -> IO ()
 deleteFeature filePath esConfig =
