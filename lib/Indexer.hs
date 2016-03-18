@@ -55,7 +55,10 @@ indexFeature filePath prodID gitConfig esConfig =
 
 deleteFeature :: FilePath -> ElasticSearchConfig -> IO ()
 deleteFeature filePath esConfig =
-  SF.deleteFeatures [(pack filePath)] esConfig
+  (runExceptT $ SF.deleteFeatures [(pack filePath)] esConfig) >>= \result ->
+    case result of
+      (Left err) -> putStrLn ("Error deleting index: " ++ err) >> putStrLn filePath
+      (Right _)  -> putStrLn ("Successfully deleted: " ++ filePath)
 
 handleIOException :: IOException -> IO ()
 handleIOException ex = putStrLn $ "IOExcpetion: " ++ (show ex)

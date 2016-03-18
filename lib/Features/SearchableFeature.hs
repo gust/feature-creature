@@ -52,27 +52,19 @@ refreshFeaturesIndex esConfig =
 indexFeatures :: [SearchableFeature] -> ElasticSearchConfig -> WithErr ()
 indexFeatures searchableFeatures esConfig =
   let ops = map (createBulkIndex (getIndexName esConfig)) searchableFeatures
-  in liftIO $ withBH'' esConfig (bulk (createStream ops))
-       >>= \result -> case result of
-                        (Left err) -> throwError err
-                        (Right result) -> (liftIO $ putStrLn . show $ result) >> return ()
-
-putResult :: (Exception e, Show e, Show a) => Either e a -> WithErr a
-putResult (Left err)     = (liftIO $ putShow err) >> throwError (show err)
-putResult (Right result) = (liftIO $ putShow result) >> return result
-
-putShow :: Show a => a -> IO ()
-putShow = putStrLn . show
+  in liftIO $ withBH'' esConfig (bulk (createStream ops)) >>= \result ->
+    case result of
+      (Left err) -> throwError err
+      (Right r)  -> (liftIO $ putStrLn . show $ r) >> return ()
 
 -- TODO: better identify [Text] as the ID of the document
-deleteFeatures :: [Text] -> ElasticSearchConfig -> IO ()
+deleteFeatures :: [Text] -> ElasticSearchConfig -> WithErr ()
 deleteFeatures docIDs esConfig =
   let ops = map (createBulkDelete (getIndexName esConfig)) docIDs
-  in withBH' esConfig (bulk (createStream ops))
-       >>= putStrLn . ("ElasticSearch BulkDelete Reply: " ++) . show
-
-createStream :: [BulkOperation] -> V.Vector BulkOperation
-createStream ops = V.fromList ops :: V.Vector BulkOperation
+  in liftIO $ withBH'' esConfig (bulk (createStream ops)) >>= \result ->
+    case result of
+      (Left err) -> throwError err
+      (Right r)  -> (liftIO $ putStrLn . show $ r) >> return ()
 
 searchFeatures :: ProductID -> Text -> ElasticSearchConfig -> WithErr [SearchableFeature]
 searchFeatures prodID queryStr esConfig =
@@ -115,6 +107,9 @@ createBulkDelete idxName f =
     (IndexName (pack idxName))
     (MappingName "feature")
     (DocId f)
+
+createStream :: [BulkOperation] -> V.Vector BulkOperation
+createStream ops = V.fromList ops :: V.Vector BulkOperation
 
 indexName :: ElasticSearchConfig -> IndexName
 indexName esConfig = IndexName $ pack (getIndexName esConfig)
