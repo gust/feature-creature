@@ -11,16 +11,12 @@ import Control.Monad.Except (runExceptT, throwError)
 import Control.Monad.Reader
 import qualified Data.Text as Text
 import Features.Feature (FeatureFile, findFeatureFiles)
+import Features.SearchableFeature (createFeaturesIndex)
 import qualified Indexer
 import Products.CodeRepository (CodeRepository(..), codeRepositoryDir)
 import Products.Product (ProductID)
+import Retry (withRetry)
 import SQS (getSQSMessages, deleteSQSMessage)
-
-{- import qualified Features -}
-{- import           Products.CodeRepository (CodeRepository(..)) -}
-import           Features.SearchableFeature (createFeaturesIndex)
-import           Retry (withRetry)
-{- import           SQS (getSQSMessages, deleteSQSMessage) -}
 
 main :: IO ()
 main = do
