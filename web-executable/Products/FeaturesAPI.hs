@@ -30,7 +30,7 @@ import qualified Servant.Docs     as SD
 
 data APIFeature = APIFeature { featureID :: F.FeatureFile
                              , description :: F.Feature
-                             }
+                             } deriving (Show)
 
 type FeaturesAPI = "features" :> QueryParam "search" String :> Get '[JSON] DirectoryTree
 type FeatureAPI  = "feature"  :> QueryParam "path" F.FeatureFile
@@ -49,21 +49,23 @@ productsFeatures prodID Nothing = do
 
 searchFeatures :: P.ProductID -> Text -> ElasticSearchConfig -> IO DirectoryTree
 searchFeatures prodID searchTerm esConfig =
-  F.buildDirectoryTree <$> parseFeatureFiles <$> (SF.searchFeatures prodID searchTerm esConfig )
-  where
-    parseFeatureFiles :: [SF.SearchableFeature] -> [F.FeatureFile]
-    parseFeatureFiles = map (unpack . SF.getFeaturePath)
+  (liftIO $ runExceptT (SF.searchFeatures prodID searchTerm esConfig))
+    >>= \fs -> case fs of
+                 (Left err) -> error err
+                 (Right features) -> return $ F.buildDirectoryTree . parseFeatureFiles $ features
+
+parseFeatureFiles :: [SF.SearchableFeature] -> [F.FeatureFile]
+parseFeatureFiles = map (F.FeatureFile . unpack . SF.getFeaturePath)
 
 productsFeature :: P.ProductID -> Maybe F.FeatureFile -> App APIFeature
-productsFeature _ Nothing =
-  error "Missing required query param 'path'"
-productsFeature prodID (Just path) = do
+productsFeature _ Nothing = error "Missing required query param 'path'"
+productsFeature prodID (Just (F.FeatureFile path)) = do
   featuresPath <- CR.codeRepositoryDir prodID <$> reader getGitConfig
-  result       <- liftIO $ runExceptT (F.getFeature (featuresPath ++ path))
+  result       <- liftIO $ runExceptT (F.getFeature $ F.FeatureFile (featuresPath ++ path))
   case result of
     Left msg      -> error msg
     Right feature ->
-      return $ APIFeature { featureID = path
+      return $ APIFeature { featureID = F.FeatureFile path
                           , description = feature
                           }
 
@@ -81,15 +83,19 @@ featureDirectoryExample = rootNode
       Node (FileDescription "animal-instincts.feature" "features/creatures/wolfman/animal-instincts.feature") []
       ]
 
+
+instance FromText F.FeatureFile where
+  fromText path = Just $ F.FeatureFile (unpack path)
+
 instance ToJSON APIFeature where
-  toJSON (APIFeature featID desc) =
+  toJSON (APIFeature (F.FeatureFile featID) (F.Feature desc)) =
     object [ "featureID"   .= featID
            , "description" .= desc
            ]
 
 instance SD.ToSample APIFeature APIFeature where
   toSample _ =
-    Just $ APIFeature { featureID = "/features/werewolves/hunting.feature"
+    Just $ APIFeature { featureID = F.FeatureFile "/features/werewolves/hunting.feature"
                       , description = featureFileSample
                       }
 
@@ -114,7 +120,7 @@ instance SD.ToParam (QueryParam "search" String) where
 
 featureFileSample :: F.Feature
 featureFileSample =
-  concat . (L.intersperse "\n")
+  F.Feature $ concat . (L.intersperse "\n")
   $ [ "@some-feature-tag"
     , "Feature: Slaying a Werewolf"
     , "  As a Werewolf Hunter"

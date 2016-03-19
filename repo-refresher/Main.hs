@@ -5,10 +5,12 @@ import AppConfig as Cfg
 import Control.Monad.Except (runExceptT)
 import Control.Monad.Reader
 import qualified Database.Persist.Postgresql as DB
+import Features.Feature (FeatureFile (..))
 import qualified Git.Git as Git
 import qualified Indexer
 import qualified Products.CodeRepository as Repo
 import Products.Product as P
+import Retry (withRetry)
 
 main :: IO ()
 main = do
@@ -22,12 +24,12 @@ refreshRepos =
 
 getProductIDs :: App [ProductID]
 getProductIDs =
-  getProductEntities
+  (withRetry getProductEntities)
     >>= (\entities -> return $ map P.toProductID entities)
 
 getProductEntities :: App [DB.Entity Product]
-getProductEntities =
-  reader getDBConfig
+getProductEntities = do
+  (reader getDBConfig)
     >>= (\cfg -> liftIO $ P.findProducts cfg)
 
 refreshRepo :: ProductID -> App ()
@@ -64,7 +66,7 @@ parseStatusDiff (Left err)   = return $ Left err
 parseStatusDiff (Right diff) = return $ Right (Repo.parseStatusDiff (lines diff))
 
 updateSearchIndex :: (Either String [Repo.ParseResult]) -> ProductID -> App (Either String ())
-updateSearchIndex (Left err) _            = return $ Left err
+updateSearchIndex (Left err) _ = return $ Left err
 updateSearchIndex (Right fileMods) prodID =
   (mapM ((flip updateSearchIndex') prodID) fileMods)
     >>= (\results -> liftIO $ mapM_ printSearchIndexResults results)
@@ -75,7 +77,7 @@ printSearchIndexResults (Left err) = putStrLn err
 printSearchIndexResults (Right _ ) = putStrLn "Successful index!"
 
 updateSearchIndex' :: Repo.ParseResult -> ProductID -> App (Either String ())
-updateSearchIndex' (Left err) _           = return $ Left $ show err
+updateSearchIndex' (Left err) _ = return $ Left $ show err
 updateSearchIndex' (Right fileMod) prodID =
   (updateSearchIndex'' fileMod prodID) >>= (\result -> return $ Right result)
 
@@ -84,9 +86,9 @@ updateSearchIndex'' fileMod pID = do
   gCfg <- reader getGitConfig
   esCfg <- reader getElasticSearchConfig
   case fileMod of
-    (Repo.Added path)    -> liftIO $ Indexer.indexFeatures [path] pID gCfg esCfg
-    (Repo.Modified path) -> liftIO $ Indexer.indexFeatures [path] pID gCfg esCfg
-    (Repo.Deleted path)  -> liftIO $ Indexer.deleteFeatures [path] esCfg
+    (Repo.Added path)    -> liftIO $ Indexer.indexFeatures [FeatureFile path] pID gCfg esCfg
+    (Repo.Modified path) -> liftIO $ Indexer.indexFeatures [FeatureFile path] pID gCfg esCfg
+    (Repo.Deleted path)  -> liftIO $ Indexer.deleteFeatures [FeatureFile path] esCfg
     _                    -> return ()
     {- (Repo.Copied _)      -> undefined -}
     {- (Repo.Renamed _)     -> undefined -}

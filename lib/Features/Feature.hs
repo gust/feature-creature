@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Features.Feature
-( Feature
-, FeatureFile
+( Feature (..)
+, FeatureFile (..)
 , buildDirectoryTree
 , findFeatureFiles
 , getFeature
@@ -19,23 +19,24 @@ import System.Directory (doesFileExist)
 import System.Exit (ExitCode(ExitFailure, ExitSuccess))
 import System.Process (readProcessWithExitCode)
 
-type Feature                = String
-type FeatureFile            = FilePath
+newtype Feature     = Feature String deriving (Show)
+newtype FeatureFile = FeatureFile String deriving (Show)
 
 getFeatures :: FilePath -> WithErr DirectoryTree
 getFeatures path = buildDirectoryTree <$> findFeatureFiles path
 
 getFeature :: FeatureFile -> WithErr Feature
-getFeature path = do
+getFeature (FeatureFile path) = do
   fileExists <- liftIO $ doesFileExist path
   case fileExists of
     False -> throwError $ "Feature file does not exist at path: " ++ path
     True  -> do
       fileContents <- liftIO (readFile path)
-      return fileContents
+      return $ Feature fileContents
 
 buildDirectoryTree :: [FeatureFile] -> DirectoryTree
-buildDirectoryTree = foldr (\featureFile dirTree -> addToDirectoryTree dirTree featureFile) rootNode
+buildDirectoryTree =
+  foldr (\(FeatureFile featureFile) dirTree -> addToDirectoryTree dirTree featureFile) rootNode
   where
     rootNode :: DirectoryTree
     rootNode = createNode $ FileDescription "/" "/"
@@ -47,7 +48,7 @@ findFeatureFiles path = do
 
 parseFeatureFiles :: (ExitCode, String, String) -> FilePath -> WithErr [FeatureFile]
 parseFeatureFiles (ExitFailure _, stdout, stderr) _      = throwError $ stderr ++ stdout
-parseFeatureFiles (ExitSuccess, stdout, stderr) basePath = return $ mapMaybe stripPath $ outputLines
+parseFeatureFiles (ExitSuccess, stdout, stderr) basePath = return $ FeatureFile <$> (mapMaybe stripPath $ outputLines)
   where
     stripPath = (stripPrefix basePath)
     outputLines = lines (stderr ++ stdout)

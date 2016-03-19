@@ -13,10 +13,12 @@ FC_SERVER_PROJECT_ROOT="$HOME/workspace/feature-creature"
 FC_WEB_PROJECT_ROOT="$HOME/workspace/feature-creature-client"
 FC_DATA_FILES_PATH="$FC_SERVER_PROJECT_ROOT/.app-data"
 
-FC_AWS_SQS_URL="https://sqs.us-east-1.amazonaws.com/675495447720/feature-creature"
+FC_AWS_SQS_URL="https://sqs.us-east-1.amazonaws.com/675495447720/feature-creature-development"
 FC_SEARCH_SERVICE_ROOT="$HOME/workspace/search-service"
 FC_ELASTIC_SEARCH_URL="http://localhost:9200"
 FC_ELASTIC_SEARCH_INDEX_NAME="feature-creature"
+FC_ELASTIC_SEARCH_SHARD_COUNT=1
+FC_ELASTIC_SEARCH_REPLICA_COUNT=0
 
 echo "Setting FC_DB_NAME environment variable:" $FC_DB_NAME
 export FC_DB_NAME=$FC_DB_NAME
@@ -53,6 +55,12 @@ export FC_ELASTIC_SEARCH_URL=$FC_ELASTIC_SEARCH_URL
 
 echo "Setting FC_ELASTIC_SEARCH_INDEX_NAME environment variable: " $FC_ELASTIC_SEARCH_INDEX_NAME
 export FC_ELASTIC_SEARCH_INDEX_NAME=$FC_ELASTIC_SEARCH_INDEX_NAME
+
+echo "Setting FC_ELASTIC_SEARCH_SHARD_COUNT environment variable: " $FC_ELASTIC_SEARCH_INDEX_NAME
+export FC_ELASTIC_SEARCH_SHARD_COUNT=$FC_ELASTIC_SEARCH_SHARD_COUNT
+
+echo "Setting FC_ELASTIC_SEARCH_REPLICA_COUNT environment variable: " $FC_ELASTIC_SEARCH_INDEX_NAME
+export FC_ELASTIC_SEARCH_REPLICA_COUNT=$FC_ELASTIC_SEARCH_REPLICA_COUNT
 
 echo
 

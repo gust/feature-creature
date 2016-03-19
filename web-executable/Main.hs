@@ -14,6 +14,7 @@ import Products.ProductsAPI (ProductsAPI, productsServer)
 import Network.Wai as Wai
 import Network.Wai.Handler.Warp as Warp
 import Network.Wai.Middleware.Cors
+import Retry (withRetry)
 import Servant
 
 import Database.Persist.Postgresql (runSqlPool, runMigration)
@@ -25,9 +26,11 @@ type FeatureCreatureAPI = ProductsAPI
 main :: IO ()
 main = do
   appConfig <- getAppConfig
+
   let pool = getPool (getDBConfig appConfig)
 
-  runSqlPool (runMigration migrateAll) pool
+  withRetry (runSqlPool (runMigration migrateAll) pool)
+
   Warp.run 8081 (app appConfig)
 
 app :: AppConfig -> Wai.Application

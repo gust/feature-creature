@@ -11,7 +11,11 @@ module Features.SearchableFeature
 , searchFeatures
 ) where
 
+import CommonCreatures
 import Config.Config (ElasticSearchConfig(..))
+import Control.Exception (Exception, try)
+import Control.Monad.Except (throwError)
+import Control.Monad.IO.Class (liftIO)
 import Database.Bloodhound as BH
 import Data.Aeson
 import Data.Maybe (mapMaybe)
@@ -32,51 +36,62 @@ instance FromJSON SearchableFeature
 
 createFeaturesIndex :: ElasticSearchConfig -> IO ()
 createFeaturesIndex esConfig =
-  withBH' esConfig (createIndex defaultIndexSettings (indexName esConfig))
-    >> putStrLn "ElasticSearch IndexCreated"
+  withBH' esConfig (createIndex (indexSettings esConfig) (indexName esConfig))
+    >>= putStrLn . ("ElasticSearch IndexCreated " ++) . show
 
 deleteFeaturesIndex :: ElasticSearchConfig -> IO ()
 deleteFeaturesIndex esConfig =
   withBH' esConfig (deleteIndex (indexName esConfig))
-    >> putStrLn "ElasticSearch IndexDeleted"
+    >>= putStrLn . ("ElasticSearch IndexDeleted " ++) . show
 
 refreshFeaturesIndex :: ElasticSearchConfig -> IO ()
 refreshFeaturesIndex esConfig =
   withBH' esConfig (refreshIndex (indexName esConfig))
-    >> putStrLn "ElasticSearch RefreshIndex"
+    >>= putStrLn . ("ElasticSearch RefreshIndex " ++) . show
 
--- TODO: handle failure
-indexFeatures :: [SearchableFeature] -> ElasticSearchConfig -> IO ()
+indexFeatures :: [SearchableFeature] -> ElasticSearchConfig -> WithErr ()
 indexFeatures searchableFeatures esConfig =
   let ops = map (createBulkIndex (getIndexName esConfig)) searchableFeatures
-  in
-    withBH' esConfig (bulk (createStream ops))
-      >>= putStrLn . ("ElasticSearch BulkCreate Reply: " ++) . show
+  in liftIO $ withBH'' esConfig (bulk (createStream ops)) >>= \result ->
+    case result of
+      (Left err) -> throwError err
+      (Right r)  -> (liftIO $ putStrLn . show $ r) >> return ()
 
 -- TODO: better identify [Text] as the ID of the document
-deleteFeatures :: [Text] -> ElasticSearchConfig -> IO ()
+deleteFeatures :: [Text] -> ElasticSearchConfig -> WithErr ()
 deleteFeatures docIDs esConfig =
   let ops = map (createBulkDelete (getIndexName esConfig)) docIDs
-  in
-    withBH' esConfig (bulk (createStream ops))
-      >>= putStrLn . ("ElasticSearch BulkDelete Reply: " ++) . show
+  in liftIO $ withBH'' esConfig (bulk (createStream ops)) >>= \result ->
+    case result of
+      (Left err) -> throwError err
+      (Right r)  -> (liftIO $ putStrLn . show $ r) >> return ()
 
-createStream :: [BulkOperation] -> V.Vector BulkOperation
-createStream ops =
-  V.fromList ops :: V.Vector BulkOperation
+searchFeatures :: ProductID -> Text -> ElasticSearchConfig -> WithErr [SearchableFeature]
+searchFeatures prodID queryStr esConfig =
+  let index      = IndexName (pack . getIndexName $ esConfig)
+      searchTerm = featureTextSearch queryStr prodID
+  in (liftIO $ withBH' esConfig $ searchByIndex index searchTerm)
+       >>= \reply -> parseSearchResults reply
 
-searchFeatures :: ProductID -> Text -> ElasticSearchConfig -> IO [SearchableFeature]
-searchFeatures prodID queryStr esConfig = do
-  reply <- withBH' esConfig $ searchByIndex (IndexName (pack (getIndexName esConfig))) search
-  let results = eitherDecode (responseBody reply) :: Either String (SearchResult SearchableFeature)
-  case fmap (hits . searchHits) results of
-    Left str   -> return [ (SearchableFeature (pack str) (pack str) prodID) ]
+parseSearchResults :: Reply -> WithErr [SearchableFeature]
+parseSearchResults reply =
+  let results = eitherDecode (responseBody reply)
+  in case fmap (hits . searchHits) results of
+    Left str -> throwError str
     Right searchResultHits -> return $ mapMaybe hitSource searchResultHits
-  where
-    query         = QueryMatchQuery $ mkMatchQuery (FieldName "getFeatureText") (QueryString queryStr)
-    productFilter = BoolFilter (MustMatch (Term "getProductID" (pack $ show prodID)) False)
-    searchFilter  = IdentityFilter <&&> productFilter
-    search        = mkSearch (Just query) (Just searchFilter)
+
+featureTextSearch :: Text -> ProductID -> Search
+featureTextSearch queryStr prodID =
+  mkSearch (Just (featureTextQuery queryStr)) (Just (searchFilter prodID))
+
+featureTextQuery :: Text -> Query
+featureTextQuery queryStr =
+  QueryMatchQuery $ mkMatchQuery (FieldName "getFeatureText") (QueryString queryStr)
+
+searchFilter :: ProductID -> Filter
+searchFilter prodID =
+  let searchTerm = (Term "getProductID" (pack $ show prodID))
+  in IdentityFilter <&&> BoolFilter (MustMatch searchTerm False)
 
 createBulkIndex :: String -> SearchableFeature -> BulkOperation
 createBulkIndex idxName f =
@@ -93,8 +108,21 @@ createBulkDelete idxName f =
     (MappingName "feature")
     (DocId f)
 
+createStream :: [BulkOperation] -> V.Vector BulkOperation
+createStream ops = V.fromList ops :: V.Vector BulkOperation
+
 indexName :: ElasticSearchConfig -> IndexName
 indexName esConfig = IndexName $ pack (getIndexName esConfig)
 
+indexSettings :: ElasticSearchConfig -> IndexSettings
+indexSettings esConfig = IndexSettings (ShardCount (getShardCount esConfig)) (ReplicaCount (getReplicaCount esConfig))
+
 withBH' :: ElasticSearchConfig -> BH IO a -> IO a
-withBH' esConfig a = withBH defaultManagerSettings (Server (pack (getESUrl esConfig))) a
+withBH' esConfig a =
+  putStrLn (getESUrl esConfig)
+    >> withBH defaultManagerSettings (Server (pack (getESUrl esConfig))) a
+
+withBH'' :: Exception e => ElasticSearchConfig -> BH IO a -> IO (Either e a)
+withBH'' esConfig a =
+  putStrLn (getESUrl esConfig)
+    >> try (withBH defaultManagerSettings (Server (pack (getESUrl esConfig))) a)
