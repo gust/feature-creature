@@ -66,7 +66,7 @@ parseStatusDiff (Left err)   = return $ Left err
 parseStatusDiff (Right diff) = return $ Right (Repo.parseStatusDiff (lines diff))
 
 updateSearchIndex :: (Either String [Repo.ParseResult]) -> ProductID -> App (Either String ())
-updateSearchIndex (Left err) _            = return $ Left err
+updateSearchIndex (Left err) _ = return $ Left err
 updateSearchIndex (Right fileMods) prodID =
   (mapM ((flip updateSearchIndex') prodID) fileMods)
     >>= (\results -> liftIO $ mapM_ printSearchIndexResults results)
@@ -77,7 +77,7 @@ printSearchIndexResults (Left err) = putStrLn err
 printSearchIndexResults (Right _ ) = putStrLn "Successful index!"
 
 updateSearchIndex' :: Repo.ParseResult -> ProductID -> App (Either String ())
-updateSearchIndex' (Left err) _           = return $ Left $ show err
+updateSearchIndex' (Left err) _ = return $ Left $ show err
 updateSearchIndex' (Right fileMod) prodID =
   (updateSearchIndex'' fileMod prodID) >>= (\result -> return $ Right result)
 
