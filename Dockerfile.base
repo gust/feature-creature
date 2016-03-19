@@ -11,7 +11,4 @@ RUN mkdir -p $FEATURE_CREATURE_DIR
 
 WORKDIR $FEATURE_CREATURE_DIR
 
-RUN /bin/echo $PATH
-RUN /bin/echo $(pwd)
-
-CMD /bin/echo $PATH
+CMD /bin/echo "Done building base image!"

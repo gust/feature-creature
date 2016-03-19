@@ -1,5 +1,6 @@
 module Retry
 ( withRetry
+, withRetryStatus
 ) where
 
 import Control.Monad.Catch
@@ -9,6 +10,9 @@ import Data.Monoid ((<>))
 
 withRetry :: (MonadIO m, MonadMask m) => m a -> m a
 withRetry f = CR.recoverAll defaultRetryPolicy (\_ -> f)
+
+withRetryStatus :: (MonadIO m, MonadMask m) => m a -> m a
+withRetryStatus f = CR.recoverAll defaultRetryPolicy (\rs -> (liftIO $ putStrLn (show rs)) >> f)
 
 defaultRetryPolicy :: (MonadIO m, MonadMask m) => CR.RetryPolicyM m
 defaultRetryPolicy = everySecondForTwoMinutes

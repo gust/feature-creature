@@ -119,10 +119,8 @@ indexSettings esConfig = IndexSettings (ShardCount (getShardCount esConfig)) (Re
 
 withBH' :: ElasticSearchConfig -> BH IO a -> IO a
 withBH' esConfig a =
-  putStrLn (getESUrl esConfig)
-    >> withBH defaultManagerSettings (Server (pack (getESUrl esConfig))) a
+  withBH defaultManagerSettings (Server (pack (getESUrl esConfig))) a
 
 withBH'' :: Exception e => ElasticSearchConfig -> BH IO a -> IO (Either e a)
 withBH'' esConfig a =
-  putStrLn (getESUrl esConfig)
-    >> try (withBH defaultManagerSettings (Server (pack (getESUrl esConfig))) a)
+  try (withBH defaultManagerSettings (Server (pack (getESUrl esConfig))) a)

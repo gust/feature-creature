@@ -179,6 +179,7 @@ test-suite feature-creature-test
                      , feature-creature
                      , hspec >= 2.2.2 && < 2.3.0
                      , mtl
+                     , transformers
 
   ghc-options:         -threaded
                        -rtsopts

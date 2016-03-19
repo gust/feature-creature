@@ -8,18 +8,20 @@ import Control.Monad (liftM)
 import Control.Monad.Except (runExceptT)
 import Data.List (elem)
 import Features.SearchableFeature as SF
+import Retry (withRetryStatus)
 import Test.Hspec
 
 main :: IO ()
 main = hspec spec
 
 testFeature = SearchableFeature "some/path" "Hot Doggin" 1
-esConfig    = ElasticSearchConfig "http://localhost:9200" "feature-creature-test" 1 0
+esConfig    = ElasticSearchConfig "http://search.local:9200" "feature-creature-test" 1 0
 
 cleanTestFeatures :: IO ()
-cleanTestFeatures =
-  (runExceptT $ deleteFeatures [(getFeaturePath testFeature)] esConfig)
-    >> refreshFeaturesIndex esConfig
+cleanTestFeatures = withRetryStatus resetFeaturesIndex
+
+resetFeaturesIndex :: IO ()
+resetFeaturesIndex = (SF.deleteFeaturesIndex esConfig) >> (SF.createFeaturesIndex esConfig)
 
 spec :: Spec
 spec = before_ cleanTestFeatures $ do
