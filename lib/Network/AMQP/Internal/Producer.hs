@@ -10,9 +10,9 @@ import qualified Network.AMQP as AMQP
 import qualified Data.ByteString.Lazy.Char8 as BL
 import qualified Data.Text as Text
 
-produceTopicMessage :: ExchangeName -> RoutingKey -> Message -> WithAMQP ()
-produceTopicMessage exchName rtKey msg =
-  withChannel (\ch -> publishMessage ch exchName rtKey (buildMessage msg))
+produceTopicMessage :: ExchangeName -> Topic -> Message -> WithAMQP ()
+produceTopicMessage exchName topic msg =
+  withChannel (\ch -> publishMessage ch exchName topic (buildMessage msg))
 
 buildMessage :: Message -> AMQP.Message
 buildMessage (Message msg) =
@@ -20,7 +20,7 @@ buildMessage (Message msg) =
               , AMQP.msgDeliveryMode = Just AMQP.NonPersistent
               }
 
-publishMessage :: AMQP.Channel -> ExchangeName -> RoutingKey -> AMQP.Message -> IO ()
-publishMessage channel (ExchangeName exchName) (RoutingKey rtKey) message =
-  AMQP.publishMsg channel exchName rtKey message
+publishMessage :: AMQP.Channel -> ExchangeName -> Topic -> AMQP.Message -> IO ()
+publishMessage channel (ExchangeName exchName) (Topic topic) message =
+  AMQP.publishMsg channel exchName topic message
 

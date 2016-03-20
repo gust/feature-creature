@@ -1,7 +1,7 @@
 module Network.AMQP.MessageBus
 ( WithAMQP
 , ExchangeName
-, RoutingKey
+, Topic
 , Message
 , produceTopicMessage
 ) where

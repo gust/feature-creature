@@ -3,7 +3,7 @@
 module Network.AMQP.Internal.Types
 ( WithAMQP (..)
 , ExchangeName (..)
-, RoutingKey (..)
+, Topic (..)
 , Message (..)
 ) where
 
@@ -15,6 +15,6 @@ newtype WithAMQP a   = WithAMQP { runAMQP :: ReaderT RabbitMQConfig IO a }
                          deriving (Functor, Applicative, Monad, MonadReader RabbitMQConfig, MonadIO)
 
 newtype ExchangeName = ExchangeName Text.Text
-newtype RoutingKey   = RoutingKey Text.Text
+newtype Topic        = Topic Text.Text
 newtype Message      = Message Text.Text
 
