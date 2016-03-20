@@ -32,6 +32,7 @@ library
                    , UserRoles.UserRole
 
   build-depends:     aeson
+                   , amqp >= 0.13.0 && < 0.14.0
                    , base >= 4.8.1.0 && < 4.8.3.0
                    , bytestring
                    , bloodhound
@@ -72,6 +73,7 @@ library
                    , Config.Internal.ElasticSearch
                    , Config.Internal.Environment
                    , Config.Internal.Git
+                   , Config.Internal.RabbitMQ
 
 executable feature-creature-web
   build-depends:     aeson

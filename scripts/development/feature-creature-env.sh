@@ -14,6 +14,12 @@ FC_WEB_PROJECT_ROOT="$HOME/workspace/feature-creature-client"
 FC_DATA_FILES_PATH="$FC_SERVER_PROJECT_ROOT/.app-data"
 
 FC_AWS_SQS_URL="https://sqs.us-east-1.amazonaws.com/675495447720/feature-creature-development"
+
+FC_RABBITMQ_HOST="127.0.0.1"
+FC_RABBITMQ_PATH="/"
+FC_RABBITMQ_USER="guest"
+FC_RABBITMQ_PASS="guest"
+
 FC_SEARCH_SERVICE_ROOT="$HOME/workspace/search-service"
 FC_ELASTIC_SEARCH_URL="http://localhost:9200"
 FC_ELASTIC_SEARCH_INDEX_NAME="feature-creature"

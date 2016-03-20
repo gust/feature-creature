@@ -3,6 +3,7 @@ module AppConfig
 , AWSConfig (..)
 , ElasticSearchConfig (..)
 , GitConfig (..)
+, RabbitMQConfig (..)
 , readConfig
 ) where
 
@@ -14,6 +15,7 @@ data AppConfig =
             , getGitConfig           :: GitConfig
             , getElasticSearchConfig :: ElasticSearchConfig
             , featureFilePath        :: String
+            , getRabbitMQConfig      :: RabbitMQConfig
             }
 
 readConfig :: IO AppConfig
@@ -23,4 +25,5 @@ readConfig = do
     <*> readGitConfig
     <*> readElasticSearchConfig
     <*> getEnv "FC_DATA_FILES_PATH"
+    <*> readRabbitMQConfig
 
