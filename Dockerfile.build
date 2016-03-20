@@ -1,5 +1,3 @@
 FROM toddmohney/feature-creature-base:v1
 
-COPY .stack-work/docker/_home/.local/bin/ .
-
-CMD feature-creature-web
+CMD /bin/echo "Done building feature-creature services"

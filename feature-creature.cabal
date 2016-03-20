@@ -178,6 +178,8 @@ test-suite feature-creature-test
   build-depends:       base
                      , feature-creature
                      , hspec >= 2.2.2 && < 2.3.0
+                     , mtl
+                     , transformers
 
   ghc-options:         -threaded
                        -rtsopts
