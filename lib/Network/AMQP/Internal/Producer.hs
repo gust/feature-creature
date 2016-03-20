@@ -4,7 +4,7 @@ module Network.AMQP.Internal.Producer
 ( produceTopicMessage
 ) where
 
-import Network.AMQP.Internal.Connection
+import Network.AMQP.Internal.Connection (withChannel)
 import Network.AMQP.Internal.Types
 import qualified Network.AMQP as AMQP
 import qualified Data.ByteString.Lazy.Char8 as BL

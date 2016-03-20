@@ -76,6 +76,7 @@ library
                    , Config.Internal.Git
                    , Config.Internal.RabbitMQ
                    , Network.AMQP.Internal.Connection
+                   , Network.AMQP.Internal.Consumer
                    , Network.AMQP.Internal.Producer
                    , Network.AMQP.Internal.Types
 

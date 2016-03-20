@@ -4,7 +4,10 @@ module Network.AMQP.MessageBus
 , Topic
 , Message
 , produceTopicMessage
+, getTopicMessages
+, subscribe
 ) where
 
+import Network.AMQP.Internal.Consumer
 import Network.AMQP.Internal.Producer
 import Network.AMQP.Internal.Types
