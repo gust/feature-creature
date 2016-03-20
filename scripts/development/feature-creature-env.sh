@@ -19,6 +19,7 @@ FC_RABBITMQ_HOST="127.0.0.1"
 FC_RABBITMQ_PATH="/"
 FC_RABBITMQ_USER="guest"
 FC_RABBITMQ_PASS="guest"
+FC_RABBITMQ_EXCHANGE_NAME="feature-creature"
 
 FC_SEARCH_SERVICE_ROOT="$HOME/workspace/search-service"
 FC_ELASTIC_SEARCH_URL="http://localhost:9200"

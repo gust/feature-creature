@@ -25,6 +25,7 @@ library
                    , Git.Diff
                    , Indexer
                    , Models
+                   , Network.AMQP.MessageBus
                    , Products.Product
                    , Products.CodeRepository
                    , Retry
@@ -74,6 +75,9 @@ library
                    , Config.Internal.Environment
                    , Config.Internal.Git
                    , Config.Internal.RabbitMQ
+                   , Network.AMQP.Internal.Connection
+                   , Network.AMQP.Internal.Producer
+                   , Network.AMQP.Internal.Types
 
 executable feature-creature-web
   build-depends:     aeson
