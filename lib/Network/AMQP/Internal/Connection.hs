@@ -3,7 +3,10 @@ module Network.AMQP.Internal.Connection
 , deleteExchange
 , createQueue
 , deleteQueue
-, withChannel
+, withConn
+, openConnection
+, closeConnection
+, openChannel
 ) where
 
 import Config.Config (RabbitMQConfig (..))
@@ -14,46 +17,39 @@ import Data.Word (Word32)
 import qualified Network.AMQP as AMQP
 import Network.AMQP.Internal.Types
 
-withChannel :: (AMQP.Channel -> IO a) -> WithAMQP a
-withChannel f = ask >>= \cfg ->
-   liftIO $ withChannel' f cfg
+withConn :: RabbitMQConfig -> WithConn a -> IO a
+withConn cfg f =
+  bracket (openConnection cfg) closeConnection $ \conn ->
+    (openChannel conn) >>= \ch ->
+      runReaderT (runConn f) (Connection conn ch cfg)
 
-withChannel' :: (AMQP.Channel -> IO a) -> RabbitMQConfig -> IO a
-withChannel' f cfg =
-  (openConnection cfg)
-    >>= \conn -> (openChannel conn)
-    >>= \ch -> f ch
+createExchange :: Exchange -> WithConn ()
+createExchange (Exchange exchName exchType exchIsDurable) =
+  (reader getChannel) >>= \ch ->
+    let exchange = AMQP.newExchange { AMQP.exchangeName = exchName
+                                    , AMQP.exchangeType = exchType
+                                    , AMQP.exchangeDurable = exchIsDurable
+                                    }
+    in liftIO $ AMQP.declareExchange ch exchange
 
-{- withChannel' :: (AMQP.Channel -> IO a) -> RabbitMQConfig -> IO a -}
-{- withChannel' f cfg = -}
-  {- bracket (openConnection cfg) closeConnection $ \conn -> -}
-    {- (openChannel conn) -}
-      {- >>= \ch -> f ch -}
-      {- >>= \result -> return result -}
-
-createExchange :: Exchange -> WithAMQP ()
-createExchange (Exchange exchName exchType exchIsDurable) = withChannel (\ch ->
-  let exchange = AMQP.newExchange { AMQP.exchangeName = exchName
-                                  , AMQP.exchangeType = exchType
-                                  , AMQP.exchangeDurable = exchIsDurable
-                                  }
-  in AMQP.declareExchange ch exchange)
-
-deleteExchange :: ExchangeName -> WithAMQP ()
+deleteExchange :: ExchangeName -> WithConn ()
 deleteExchange (ExchangeName exchName) =
-  withChannel (\ch -> AMQP.deleteExchange ch exchName)
+  (reader getChannel) >>= \ch ->
+    liftIO $ AMQP.deleteExchange ch exchName
 
-createQueue :: Queue -> WithAMQP QueueStatus
-createQueue (Queue qName qAutoDelete qIsDurable) = withChannel (\ch ->
-  let queue = AMQP.newQueue { AMQP.queueName = qName
-                            , AMQP.queueAutoDelete = qAutoDelete
-                            , AMQP.queueDurable = qIsDurable
-                            }
-  in QueueStatus <$> AMQP.declareQueue ch queue)
+createQueue :: Queue -> WithConn QueueStatus
+createQueue (Queue qName qAutoDelete qIsDurable) =
+  (reader getChannel) >>= \ch ->
+    let queue = AMQP.newQueue { AMQP.queueName = qName
+                              , AMQP.queueAutoDelete = qAutoDelete
+                              , AMQP.queueDurable = qIsDurable
+                              }
+    in QueueStatus <$> (liftIO $ AMQP.declareQueue ch queue)
 
-deleteQueue :: QueueName -> WithAMQP Word32
+deleteQueue :: QueueName -> WithConn Word32
 deleteQueue (QueueName queueName) =
-  withChannel (\ch -> AMQP.deleteQueue ch queueName)
+  (reader getChannel) >>= \ch ->
+    liftIO $ AMQP.deleteQueue ch queueName
 
 openChannel :: AMQP.Connection -> IO AMQP.Channel
 openChannel = AMQP.openChannel

@@ -7,7 +7,7 @@ module Network.AMQP.MessageBus
 , QueueName (..)
 , QueueStatus (..)
 , TopicName (..)
-, WithAMQP (..)
+, WithConn (..)
 , ackEnvelope
 , createExchange
 , deleteExchange
@@ -16,6 +16,7 @@ module Network.AMQP.MessageBus
 , getTopicMessages
 , produceTopicMessage
 , subscribe
+, withConn
 ) where
 
 import Network.AMQP.Internal.Connection

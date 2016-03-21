@@ -1,23 +1,26 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Network.AMQP.Internal.Producer
-( produceTopicMessage
-, ackEnvelope
+( ackEnvelope
+, produceTopicMessage
 ) where
 
 import Config.Config as Config (RabbitMQConfig (..))
 import Control.Monad.Reader
-import Network.AMQP.Internal.Connection (withChannel)
 import Network.AMQP.Internal.Types
 import qualified Network.AMQP as AMQP
 import qualified Data.ByteString.Lazy.Char8 as BL
 import qualified Data.Text as Text
 
-produceTopicMessage :: TopicName -> Message -> WithAMQP ()
-produceTopicMessage topic msg = ask >>= \cfg ->
-  let exchangeName = ExchangeName $ Config.getExchangeName cfg
+ackEnvelope :: AMQP.Envelope -> IO ()
+ackEnvelope = AMQP.ackEnv
+
+produceTopicMessage :: TopicName -> Message -> WithConn ()
+produceTopicMessage topic msg = ask >>= \conn ->
+  let exchangeName = ExchangeName $ Config.getExchangeName (getConfig conn)
       message      = buildMessage msg
-  in withChannel (\ch -> publishMessage ch exchangeName topic message)
+      channel      = getChannel conn
+  in liftIO $ publishMessage channel exchangeName topic message
 
 buildMessage :: Message -> AMQP.Message
 buildMessage (Message msg) =
@@ -28,7 +31,4 @@ buildMessage (Message msg) =
 publishMessage :: AMQP.Channel -> ExchangeName -> TopicName -> AMQP.Message -> IO ()
 publishMessage channel (ExchangeName exchName) (TopicName topic) message =
   AMQP.publishMsg channel exchName topic message
-
-ackEnvelope :: AMQP.Envelope -> IO ()
-ackEnvelope = AMQP.ackEnv
 

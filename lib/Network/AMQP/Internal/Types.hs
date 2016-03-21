@@ -1,7 +1,8 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Network.AMQP.Internal.Types
-( Exchange (..)
+( Connection (..)
+, Exchange (..)
 , ExchangeName (..)
 , Message (..)
 , MessageHandler (..)
@@ -9,16 +10,26 @@ module Network.AMQP.Internal.Types
 , QueueName (..)
 , QueueStatus (..)
 , TopicName (..)
-, WithAMQP (..)
+{- , WithAMQP (..) -}
+, WithConn (..)
 ) where
 
-import Config.Config (RabbitMQConfig (..))
+import Config.Config as Config (RabbitMQConfig (..))
 import Control.Monad.Reader
 import Data.Text (Text)
 import qualified Network.AMQP as AMQP
 
-newtype WithAMQP a   = WithAMQP { runAMQP :: ReaderT RabbitMQConfig IO a }
-                         deriving (Functor, Applicative, Monad, MonadReader RabbitMQConfig, MonadIO)
+{- newtype WithAMQP a = WithAMQP { runAMQP :: ReaderT RabbitMQConfig IO a } -}
+                       {- deriving (Functor, Applicative, Monad, MonadReader RabbitMQConfig, MonadIO) -}
+
+newtype WithConn a = WithConn { runConn :: ReaderT Connection IO a }
+                       deriving (Functor, Applicative, Monad, MonadReader Connection, MonadIO)
+
+data Connection =
+  Connection { getConnection :: AMQP.Connection
+             , getChannel    :: AMQP.Channel
+             , getConfig     :: RabbitMQConfig
+             }
 
 data Exchange =
   Exchange { getExchangeName :: Text
@@ -30,7 +41,8 @@ data Queue =
         , getQueueAutoDelete :: Bool
         , getQueueIsDurable    :: Bool
         }
-newtype QueueStatus  = QueueStatus (Text, MessageCount, ConsumerCount) deriving (Show, Read, Eq)
+newtype QueueStatus  = QueueStatus (Text, MessageCount, ConsumerCount)
+                         deriving (Show, Read, Eq)
 type MessageCount    = Int
 type ConsumerCount   = Int
 
