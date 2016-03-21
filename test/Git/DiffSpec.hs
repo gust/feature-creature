@@ -1,9 +1,8 @@
 module Git.DiffSpec where
 
-import Test.Hspec
-
 import qualified Git.Git as Git
 import Data.Either (isLeft)
+import Test.Hspec
 
 main :: IO ()
 main = hspec spec

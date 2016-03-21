@@ -1,26 +1,43 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Network.AMQP.Internal.Types
-( WithAMQP (..)
+( Exchange (..)
 , ExchangeName (..)
-, Queue (..)
-, Topic (..)
 , Message (..)
 , MessageHandler (..)
+, Queue (..)
+, QueueName (..)
+, QueueStatus (..)
+, TopicName (..)
+, WithAMQP (..)
 ) where
 
 import Config.Config (RabbitMQConfig (..))
 import Control.Monad.Reader
-import qualified Data.Text as Text
+import Data.Text (Text)
 import qualified Network.AMQP as AMQP
 
 newtype WithAMQP a   = WithAMQP { runAMQP :: ReaderT RabbitMQConfig IO a }
                          deriving (Functor, Applicative, Monad, MonadReader RabbitMQConfig, MonadIO)
 
-newtype ExchangeName = ExchangeName Text.Text
-newtype Queue        = Queue Text.Text
-newtype Topic        = Topic Text.Text
-newtype Message      = Message Text.Text
+data Exchange =
+  Exchange { getExchangeName :: Text
+           , getExchangeType :: Text
+           , getIsDurable    :: Bool
+           }
+data Queue =
+  Queue { getQueueName       :: Text
+        , getQueueAutoDelete :: Bool
+        , getQueueIsDurable    :: Bool
+        }
+newtype QueueStatus  = QueueStatus (Text, MessageCount, ConsumerCount) deriving (Show, Read, Eq)
+type MessageCount    = Int
+type ConsumerCount   = Int
+
+newtype ExchangeName = ExchangeName Text
+newtype QueueName    = QueueName Text
+newtype TopicName    = TopicName Text
+newtype Message      = Message Text
 
 newtype MessageHandler = MessageHandler { processMessage :: (AMQP.Message, AMQP.Envelope) -> IO () }
 
