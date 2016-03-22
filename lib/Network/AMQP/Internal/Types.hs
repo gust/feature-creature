@@ -49,7 +49,7 @@ type ConsumerCount   = Int
 newtype ExchangeName = ExchangeName Text
 newtype QueueName    = QueueName Text
 newtype TopicName    = TopicName Text
-newtype Message      = Message Text
+newtype Message a    = Message a
 
 newtype MessageHandler = MessageHandler { processMessage :: (AMQP.Message, AMQP.Envelope) -> IO () }
 

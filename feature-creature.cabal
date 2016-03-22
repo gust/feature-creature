@@ -182,11 +182,13 @@ test-suite feature-creature-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Spec.hs
-  build-depends:       amqp >= 0.13.0 && < 0.14.0
+  build-depends:       aeson
+                     , amqp >= 0.13.0 && < 0.14.0
                      , base
                      , feature-creature
                      , hspec >= 2.2.2 && < 2.3.0
                      , mtl
+                     , text
                      , transformers
 
   ghc-options:         -threaded

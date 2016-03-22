@@ -1,13 +1,23 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Network.AMQP.MessageBusSpec where
 
 import Config.Config as Config (RabbitMQConfig (..))
 import Control.Concurrent (threadDelay)
 import Control.Monad.Reader
+import Data.Aeson
+import Data.Text (Text)
+import GHC.Generics (Generic)
 import Network.AMQP.MessageBus as MB
 import qualified Network.AMQP as AMQP
 import Test.Hspec
+
+data TestMessage = TestMessage { getName :: Text, getAge :: Int }
+                     deriving (Show, Generic)
+
+instance ToJSON   TestMessage
+instance FromJSON TestMessage
 
 main :: IO ()
 main = hspec spec
@@ -27,11 +37,11 @@ testTopicSubscription =
     >> (liftIO $ threadDelay (1000 * 100))
 
     >> (assertMessageCount 0)
-    >> (produceTopicMessage (TopicName "test.important.things") (Message "catapults!"))
+    >> (produceTopicMessage (TopicName "test.important.things") (Message (TestMessage "catapults!" 800)))
 
     >> (liftIO $ threadDelay (1000 * 100))
     >> (assertMessageCount 1)
-    >> (produceTopicMessage (TopicName "test.unimportant.things") (Message "haircuts"))
+    >> (produceTopicMessage (TopicName "test.unimportant.things") (Message (TestMessage "haircuts" 25)))
 
     >> (liftIO $ threadDelay (1000 * 100))
     >> (assertMessageCount 1)
