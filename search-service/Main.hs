@@ -3,10 +3,10 @@
 module Main where
 
 import App
-import AppConfig (AppConfig(..), readConfig)
+import AppConfig as Config (AppConfig(..), RabbitMQConfig (..), readConfig)
 import Async.Job as Job
 import CommonCreatures (WithErr)
-import Control.Concurrent (threadDelay)
+import Control.Concurrent (forkIO, threadDelay)
 import Control.Monad.Except (runExceptT, throwError)
 import Control.Monad.Reader
 import qualified Data.Aeson as Aeson
@@ -14,59 +14,69 @@ import Features.Feature (FeatureFile, findFeatureFiles)
 import Features.SearchableFeature (createFeaturesIndex)
 import qualified Indexer
 import qualified Network.AMQP as AMQP
-import Network.AMQP.MessageBus as MB
+import qualified Network.AMQP.MessageBus as MB
 import Products.CodeRepository (CodeRepository(..), codeRepositoryDir)
 import Products.Product (ProductID)
+import qualified Products.Messaging as PM
 import Retry (withRetry)
 
 main :: IO ()
 main = do
   appConfig <- readConfig
   withRetry (createFeaturesIndex (getElasticSearchConfig appConfig))
-  runReaderT processJobs appConfig
+    >> MB.withConn (getRabbitMQConfig appConfig) (initMessageBroker appConfig)
+    >> runReaderT processJobs appConfig
+
+initMessageBroker :: AppConfig -> MB.WithConn ()
+initMessageBroker cfg =
+  (featureCreatureExchange (getRabbitMQConfig cfg))
+    >> PM.createProductsQueue
+    >>= (\queueStatus -> liftIO $ putStrLn ("Initialized queue: " ++ (show queueStatus)))
+    >> PM.subscribeToProductCreation
 
 processJobs :: App ()
 processJobs =
   forever $ do
-    (liftIO $ threadDelay 10000) >> ask >>= \cfg ->
-      (liftIO $ MB.withConn (getRabbitMQConfig cfg) subscribeToProductCreation)
-        >> (liftIO $ MB.withConn  (getRabbitMQConfig cfg) (getTopicMessages productCreatedQueue (MB.MessageHandler (indexProductFeatures cfg))))
-        >>= return
+    (liftIO $ threadDelay (20000 * 100)) >> ask >>= \cfg ->
+      (liftIO $ forkIO $ MB.withConn (getRabbitMQConfig cfg) (getMessages cfg))
+        >> return ()
 
-subscribeToProductCreation :: MB.WithConn ()
-subscribeToProductCreation = MB.subscribe productCreatedQueue productCreatedTopic
+getMessages :: AppConfig -> MB.WithConn ()
+getMessages cfg =
+  (liftIO $ putStrLn "Getting messages from queue...")
+    >> initMessageBroker cfg
+    >> (MB.getTopicMessages PM.productsQueue (MB.MessageHandler (indexProductFeatures cfg)))
 
-productCreatedTopic :: MB.TopicName
-productCreatedTopic = (MB.TopicName "*.product.created")
-
-productCreatedQueue :: MB.QueueName
-productCreatedQueue = (MB.QueueName "product.created")
+featureCreatureExchange :: RabbitMQConfig -> MB.WithConn ()
+featureCreatureExchange cfg =
+  let exch = MB.Exchange (Config.getExchangeName cfg) "topic" True
+  in MB.createExchange exch
 
 indexProductFeatures :: AppConfig -> (AMQP.Message, AMQP.Envelope) -> IO ()
 indexProductFeatures cfg (message, envelope) =
-  indexProductFeatures' cfg (parseJob message) envelope
+  (runExceptT $ indexProductFeatures' cfg (parseJob message))
+    >>= (resolveJob envelope)
 
-indexProductFeatures' :: AppConfig -> Either String (Job CodeRepository) -> AMQP.Envelope -> IO ()
-indexProductFeatures' _ (Left err) _ = putStrLn ("Unable to parse: " ++ err)
-indexProductFeatures' cfg (Right (Job _ codeRepository)) envelope =
+indexProductFeatures' :: AppConfig -> Either String (Job CodeRepository) -> WithErr ()
+indexProductFeatures' _ (Left err) = throwError err
+indexProductFeatures' cfg (Right (Job _ codeRepository)) =
   let productID = getProductID codeRepository
-  in (runExceptT $ featureFiles productID cfg)
-       >>= (\files -> runExceptT $ indexFeatures files productID cfg)
-       >>= (\result -> resolveJob result envelope)
+  in (liftIO $ runExceptT $ featureFiles productID cfg)
+       >>= (indexFeatures productID cfg)
+
+indexFeatures :: ProductID -> AppConfig -> Either String [FeatureFile] -> WithErr ()
+indexFeatures _ _ (Left err) = throwError err
+indexFeatures productID cfg (Right features) =
+  (liftIO $ Indexer.indexFeatures features productID (getGitConfig cfg) (getElasticSearchConfig cfg))
+    >>= return
 
 featureFiles :: ProductID -> AppConfig -> WithErr [FeatureFile]
 featureFiles productID cfg =
   findFeatureFiles (codeRepositoryDir productID (getGitConfig cfg))
 
-indexFeatures :: Either String [FeatureFile] -> ProductID -> AppConfig -> WithErr ()
-indexFeatures (Left err) _ _ = throwError err
-indexFeatures (Right features) productID cfg =
-  (liftIO $ Indexer.indexFeatures features productID (getGitConfig cfg) (getElasticSearchConfig cfg))
-    >>= return
-
-resolveJob :: Either String () -> AMQP.Envelope -> IO ()
-resolveJob (Left err) _ = putStrLn ("Job failed: " ++ err)
-resolveJob (Right _) envelope = MB.ackEnvelope envelope
+resolveJob :: AMQP.Envelope -> Either String () -> IO ()
+resolveJob _ (Left err)       = putStrLn ("Job failed: " ++ err)
+resolveJob envelope (Right _) = MB.ackEnvelope envelope
 
 parseJob :: AMQP.Message -> Either String (Job CodeRepository)
 parseJob message = Aeson.eitherDecode (AMQP.msgBody message)

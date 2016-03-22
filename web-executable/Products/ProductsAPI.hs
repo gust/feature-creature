@@ -13,6 +13,7 @@ module Products.ProductsAPI
 
 import App
 import AppConfig (getDBConfig, getGitConfig, getRabbitMQConfig)
+import Async.Job (Job)
 import Control.Monad.Except (runExceptT)
 import Control.Monad.Reader
 import Control.Monad.Trans.Either (left)
@@ -25,6 +26,7 @@ import qualified Products.CodeRepository    as CR
 import qualified Products.DomainTermsAPI    as DT
 import qualified Products.FeaturesAPI       as F
 import qualified Products.Product           as P
+import qualified Products.Messaging         as PM
 import qualified Products.UserRolesAPI      as UR
 import Servant
 import qualified Servant.Docs               as SD
@@ -88,11 +90,16 @@ createProduct (APIProduct _ prodName prodRepoUrl) = do
   case result of
     Left err ->
       lift $ left $ err503 { errBody = BS.pack err }
-    Right _ -> do
-      rabbitCfg <- reader getRabbitMQConfig
-      let job = CR.indexProductFeaturesJob $ CR.CodeRepository prodID
-      (liftIO $ MB.withConn rabbitCfg (MB.produceTopicMessage (MB.TopicName "api.product.created") (MB.Message job)))
-        >> (return $ APIProduct { productID = Just prodID, name = prodName, repoUrl = prodRepoUrl })
+    Right _ ->
+      let job        = CR.indexProductFeaturesJob $ CR.CodeRepository prodID
+          apiProduct = APIProduct { productID = Just prodID, name = prodName, repoUrl = prodRepoUrl }
+      in (reader getRabbitMQConfig) >>= \rabbitCfg ->
+           (liftIO $ MB.withConn rabbitCfg (enqueueMessage job)) >> (return apiProduct)
+
+enqueueMessage :: Job CR.CodeRepository -> WithConn ()
+enqueueMessage job =
+  PM.subscribeToProductCreation
+    >> MB.produceTopicMessage (PM.productCreatedTopic PM.API) (MB.Message job)
 
 products :: App [APIProduct]
 products = do

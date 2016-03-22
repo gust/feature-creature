@@ -56,6 +56,7 @@ openChannel = AMQP.openChannel
 
 openConnection :: RabbitMQConfig -> IO AMQP.Connection
 openConnection cfg =
+  (putStrLn "Opening AMQP connection...") >>
   AMQP.openConnection
     (Text.unpack $ getHost cfg)
     (getPath cfg)
@@ -63,4 +64,4 @@ openConnection cfg =
     (getPass cfg)
 
 closeConnection :: AMQP.Connection -> IO ()
-closeConnection = AMQP.closeConnection
+closeConnection conn = (putStrLn "Closing AMQP connection...") >> (AMQP.closeConnection conn)

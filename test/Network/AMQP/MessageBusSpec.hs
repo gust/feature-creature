@@ -54,7 +54,7 @@ testTopicSubscription =
 assertMessageCount :: Int -> WithConn ()
 assertMessageCount count =
   (createQueue testQueue)
-    >>= \(QueueStatus (_, msgCount, _)) -> liftIO $ msgCount `shouldBe` count
+    >>= \qs@(QueueStatus (_, msgCount, _)) -> (liftIO $ putStrLn (show qs)) >> (liftIO $ msgCount `shouldBe` count)
 
 resetBroker :: WithConn ()
 resetBroker =
