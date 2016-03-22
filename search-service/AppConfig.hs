@@ -1,6 +1,5 @@
 module AppConfig
 ( AppConfig (..)
-, AWSConfig (..)
 , ElasticSearchConfig (..)
 , GitConfig (..)
 , RabbitMQConfig (..)
@@ -11,8 +10,7 @@ import Config.Config
 import System.Environment (getEnv)
 
 data AppConfig =
-  AppConfig { getAWSConfig           :: AWSConfig
-            , getGitConfig           :: GitConfig
+  AppConfig { getGitConfig           :: GitConfig
             , getElasticSearchConfig :: ElasticSearchConfig
             , featureFilePath        :: String
             , getRabbitMQConfig      :: RabbitMQConfig
@@ -21,8 +19,7 @@ data AppConfig =
 readConfig :: IO AppConfig
 readConfig = do
   AppConfig
-    <$> readAWSConfig
-    <*> readGitConfig
+    <$> readGitConfig
     <*> readElasticSearchConfig
     <*> getEnv "FC_DATA_FILES_PATH"
     <*> readRabbitMQConfig

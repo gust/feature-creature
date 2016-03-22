@@ -13,8 +13,6 @@ FC_SERVER_PROJECT_ROOT="$HOME/workspace/feature-creature"
 FC_WEB_PROJECT_ROOT="$HOME/workspace/feature-creature-client"
 FC_DATA_FILES_PATH="$FC_SERVER_PROJECT_ROOT/.app-data"
 
-FC_AWS_SQS_URL="https://sqs.us-east-1.amazonaws.com/675495447720/feature-creature-development"
-
 FC_RABBITMQ_HOST="127.0.0.1"
 FC_RABBITMQ_PATH="/"
 FC_RABBITMQ_USER="guest"
@@ -50,9 +48,6 @@ export FC_SERVER_PROJECT_ROOT=$FC_SERVER_PROJECT_ROOT
 
 echo "Setting FC_WEB_PROJECT_ROOT environment variable..." $FC_WEB_PROJECT_ROOT
 export FC_WEB_PROJECT_ROOT=$FC_WEB_PROJECT_ROOT
-
-echo "Setting FC_AWS_SQS_URL environment variable:" $FC_AWS_SQS_URL
-export FC_AWS_SQS_URL=$FC_AWS_SQS_URL
 
 echo "Setting FC_SEARCH_SERVICE_ROOT environment variable:" $FC_SEARCH_SERVICE_ROOT
 export FC_SEARCH_SERVICE_ROOT=$FC_SEARCH_SERVICE_ROOT
