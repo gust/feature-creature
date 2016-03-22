@@ -82,6 +82,7 @@ library
 
 executable feature-creature-web
   build-depends:     aeson
+                   , amqp >= 0.13.0 && < 0.14.0
                    , base
                    , bytestring
                    , containers
@@ -132,6 +133,7 @@ executable search-service
   build-depends:   aeson
                    , amazonka
                    , amazonka-sqs
+                   , amqp >= 0.13.0 && < 0.14.0
                    , base
                    , bytestring
                    , feature-creature

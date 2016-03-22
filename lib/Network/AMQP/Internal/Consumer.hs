@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Network.AMQP.Internal.Consumer
-( subscribe
+( ackEnvelope
+, subscribe
 , getTopicMessages
 ) where
 
@@ -22,4 +23,7 @@ getTopicMessages (QueueName q) (MessageHandler handler) =
   ask >>= \conn ->
     let ch = getChannel conn
     in (liftIO $ AMQP.consumeMsgs ch q AMQP.Ack handler) >> return ()
+
+ackEnvelope :: AMQP.Envelope -> IO ()
+ackEnvelope = AMQP.ackEnv
 

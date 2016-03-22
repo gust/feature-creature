@@ -9,14 +9,15 @@ import CommonCreatures (WithErr)
 import Control.Concurrent (threadDelay)
 import Control.Monad.Except (runExceptT, throwError)
 import Control.Monad.Reader
-import qualified Data.Text as Text
+import qualified Data.Aeson as Aeson
 import Features.Feature (FeatureFile, findFeatureFiles)
 import Features.SearchableFeature (createFeaturesIndex)
 import qualified Indexer
+import qualified Network.AMQP as AMQP
+import Network.AMQP.MessageBus as MB
 import Products.CodeRepository (CodeRepository(..), codeRepositoryDir)
 import Products.Product (ProductID)
 import Retry (withRetry)
-import SQS (getSQSMessages, deleteSQSMessage)
 
 main :: IO ()
 main = do
@@ -27,43 +28,46 @@ main = do
 processJobs :: App ()
 processJobs =
   forever $ do
-    reader getAWSConfig
-      >>= (liftIO . getSQSMessages)
-      >>= (mapM_ processEnqueuedJob)
-      >>  (liftIO $ threadDelay 10000)
+    (liftIO $ threadDelay 10000) >> ask >>= \cfg ->
+      (liftIO $ MB.withConn (getRabbitMQConfig cfg) subscribeToProductCreation)
+        >> (liftIO $ MB.withConn  (getRabbitMQConfig cfg) (getTopicMessages productCreatedQueue (MB.MessageHandler (indexProductFeatures cfg))))
+        >>= return
 
-processEnqueuedJob :: Either String (EnqueuedJob CodeRepository) -> App ()
-processEnqueuedJob (Left err) = liftIO $ putStrLn err
-processEnqueuedJob (Right (EnqueuedJob job deliveryReceipt)) = do
-  processJob (Job.getPayload job) job
-    >>= (liftIO . runExceptT)
-    >>= (\result -> processJobResult result deliveryReceipt)
+subscribeToProductCreation :: MB.WithConn ()
+subscribeToProductCreation = MB.subscribe productCreatedQueue productCreatedTopic
 
-processJob :: CodeRepository -> Job a -> App (WithErr ())
-processJob (CodeRepository productID) _ =
-  (featureFiles productID)
-    >>= (liftIO . runExceptT)
-    >>= (\files -> indexFeatures files productID)
-processJob _ job =
-  return
-    $ throwError
-    $ "Unprocessable job type: " ++ (Text.unpack $ Job.getJobType job)
+productCreatedTopic :: MB.TopicName
+productCreatedTopic = (MB.TopicName "*.product.created")
 
-processJobResult :: Either String () -> Text.Text -> App ()
-processJobResult (Left errStr) _ = liftIO $ putStrLn errStr
-processJobResult (Right _) deliveryReceipt =
-  reader getAWSConfig
-    >>= (liftIO . (deleteSQSMessage deliveryReceipt))
+productCreatedQueue :: MB.QueueName
+productCreatedQueue = (MB.QueueName "product.created")
 
-featureFiles :: ProductID -> App (WithErr [FeatureFile])
-featureFiles productID =
-  (reader getGitConfig)
-    >>= (\gitConfig -> return $ findFeatureFiles (codeRepositoryDir productID gitConfig))
+indexProductFeatures :: AppConfig -> (AMQP.Message, AMQP.Envelope) -> IO ()
+indexProductFeatures cfg (message, envelope) =
+  indexProductFeatures' cfg (parseJob message) envelope
 
-indexFeatures :: Either String [FeatureFile] -> ProductID -> App (WithErr ())
-indexFeatures (Left err) _ = return $ throwError err
-indexFeatures (Right features) productID =
-  ask
-    >>= (\cfg -> (liftIO $ Indexer.indexFeatures features productID (getGitConfig cfg) (getElasticSearchConfig cfg)))
-    >> return (return ())
+indexProductFeatures' :: AppConfig -> Either String (Job CodeRepository) -> AMQP.Envelope -> IO ()
+indexProductFeatures' _ (Left err) _ = putStrLn ("Unable to parse: " ++ err)
+indexProductFeatures' cfg (Right (Job _ codeRepository)) envelope =
+  let productID = getProductID codeRepository
+  in (runExceptT $ featureFiles productID cfg)
+       >>= (\files -> runExceptT $ indexFeatures files productID cfg)
+       >>= (\result -> resolveJob result envelope)
+
+featureFiles :: ProductID -> AppConfig -> WithErr [FeatureFile]
+featureFiles productID cfg =
+  findFeatureFiles (codeRepositoryDir productID (getGitConfig cfg))
+
+indexFeatures :: Either String [FeatureFile] -> ProductID -> AppConfig -> WithErr ()
+indexFeatures (Left err) _ _ = throwError err
+indexFeatures (Right features) productID cfg =
+  (liftIO $ Indexer.indexFeatures features productID (getGitConfig cfg) (getElasticSearchConfig cfg))
+    >>= return
+
+resolveJob :: Either String () -> AMQP.Envelope -> IO ()
+resolveJob (Left err) _ = putStrLn ("Job failed: " ++ err)
+resolveJob (Right _) envelope = MB.ackEnvelope envelope
+
+parseJob :: AMQP.Message -> Either String (Job CodeRepository)
+parseJob message = Aeson.eitherDecode (AMQP.msgBody message)
 

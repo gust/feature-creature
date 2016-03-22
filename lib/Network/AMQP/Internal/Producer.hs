@@ -1,8 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Network.AMQP.Internal.Producer
-( ackEnvelope
-, produceTopicMessage
+( produceTopicMessage
 ) where
 
 import Config.Config as Config (RabbitMQConfig (..))
@@ -10,9 +9,6 @@ import Control.Monad.Reader
 import Data.Aeson as Aeson
 import Network.AMQP.Internal.Types
 import qualified Network.AMQP as AMQP
-
-ackEnvelope :: AMQP.Envelope -> IO ()
-ackEnvelope = AMQP.ackEnv
 
 produceTopicMessage :: ToJSON a => TopicName -> Message a -> WithConn ()
 produceTopicMessage topic msg = ask >>= \conn ->
