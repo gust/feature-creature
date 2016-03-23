@@ -10,6 +10,7 @@ module Products.UserRolesAPI
 , CreateUserRolesAPI
 , EditUserRolesAPI
 , RemoveUserRoleAPI
+, APIUserRole (..)
 , createUserRole
 , editUserRole
 , removeUserRole
@@ -25,7 +26,6 @@ import qualified Data.Text          as T
 import Models
 import qualified Products.Product   as P
 import Servant
-import qualified Servant.Docs       as SD
 import qualified UserRoles.UserRole as UR
 
 
@@ -96,31 +96,3 @@ productsUserRoles prodID = do
                     , description  = userRoleDescription dbTerm
                     }
 
--- API Documentation Instance Definitions --
-
-instance SD.ToSample [APIUserRole] [APIUserRole] where
-  toSample _ = Just $ [ sampleMonsterMaker, sampleMonsterHunter ]
-
-instance SD.ToSample APIUserRole APIUserRole where
-  toSample _ = Just $ samplePostBody
-
-sampleMonsterMaker :: APIUserRole
-sampleMonsterMaker = APIUserRole { userRoleID  = Just 1
-                                 , productID   = Just (toKey (10::Integer))
-                                 , title       = "monster maker"
-                                 , description = "A scientist responsible for creating abominable life forms."
-                                 }
-
-sampleMonsterHunter :: APIUserRole
-sampleMonsterHunter = APIUserRole { userRoleID  = Just 2
-                                  , productID   = Just (toKey (10::Integer))
-                                  , title       = "monster hunter"
-                                  , description = "A hunter specializing in the elimination of monsters."
-                                  }
-
-samplePostBody :: APIUserRole
-samplePostBody = APIUserRole { userRoleID  = Nothing
-                             , productID   = Just (toKey (10::Integer))
-                             , title       = "monster magnet"
-                             , description = "A person or object which attracts monsters"
-                             }

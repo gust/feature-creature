@@ -7,6 +7,7 @@
 
 module Products.ProductsAPI
 ( ProductsAPI
+, APIProduct (..)
 , productsAPI
 , productsServer
 ) where
@@ -25,7 +26,6 @@ import qualified Products.FeaturesAPI       as F
 import qualified Products.Product           as P
 import qualified Products.UserRolesAPI      as UR
 import Servant
-import qualified Servant.Docs               as SD
 
 type ProductsAPI = "products" :> Get '[JSON] [APIProduct]
               :<|> "products" :> ReqBody '[JSON] APIProduct :> Post '[JSON] APIProduct
@@ -105,22 +105,3 @@ products = do
                    , name      = productName dbProd
                    , repoUrl   = productRepoUrl dbProd }
 
--- API Documentation Instance Definitions --
-
-instance SD.ToSample [APIProduct] [APIProduct] where
-  toSample _ = Just $ [ sampleMonsterProduct, sampleCreatureProduct ]
-
-instance SD.ToSample APIProduct APIProduct where
-  toSample _ = Just sampleCreatureProduct
-
-sampleMonsterProduct :: APIProduct
-sampleMonsterProduct = APIProduct { productID = Just 1
-                                  , name      = "monsters"
-                                  , repoUrl   = "http://monsters.com/repo.git"
-                                  }
-
-sampleCreatureProduct :: APIProduct
-sampleCreatureProduct = APIProduct { productID = Just 2
-                                   , name      = "creatures"
-                                   , repoUrl   = "ssh://creatures.com/repo.git"
-                                   }

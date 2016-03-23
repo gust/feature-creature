@@ -10,6 +10,7 @@ module Products.DomainTermsAPI
 , CreateDomainTermsAPI
 , EditDomainTermsAPI
 , RemoveDomainTermAPI
+, APIDomainTerm (..)
 , createDomainTerm
 , editDomainTerm
 , removeDomainTerm
@@ -26,7 +27,6 @@ import qualified DomainTerms.DomainTerm as DT
 import Models
 import qualified Products.Product as P
 import Servant
-import qualified Servant.Docs     as SD
 
 type DomainTermsAPI       = "domain-terms" :> Get '[JSON] [APIDomainTerm]
 type CreateDomainTermsAPI = "domain-terms" :> ReqBody '[JSON] APIDomainTerm :> Post '[JSON] APIDomainTerm
@@ -95,19 +95,3 @@ productsDomainTerms prodID = do
                       , description  = domainTermDescription dbTerm
                       }
 
--- API Documentation Instance Definitions --
-
-instance SD.ToSample [APIDomainTerm] [APIDomainTerm] where
-  toSample _ = Just $ [ sampleAPIDomainTerm, sampleAPIDomainTerm2 ]
-
-instance SD.ToSample APIDomainTerm APIDomainTerm where
-  toSample _ = Just $ samplePostBody
-
-sampleAPIDomainTerm :: APIDomainTerm
-sampleAPIDomainTerm = APIDomainTerm (Just 1) (Just (toKey (10::Integer))) "mutation" "The genetic alteration granting monster powers"
-
-sampleAPIDomainTerm2 :: APIDomainTerm
-sampleAPIDomainTerm2 = APIDomainTerm (Just 2) (Just (toKey (10::Integer))) "vampirism" "The disease affecting Vampires"
-
-samplePostBody :: APIDomainTerm
-samplePostBody = APIDomainTerm (Just 2) (Just (toKey (10::Integer))) "monsterism" "The quality of being a monster"
