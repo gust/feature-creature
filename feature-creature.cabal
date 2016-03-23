@@ -14,8 +14,7 @@ data-files:          data/cli/*.txt
 cabal-version:       >=1.10
 
 library
-  exposed-modules: Async.Job
-                   , Config.Config
+  exposed-modules:   Config.Config
                    , CommonCreatures
                    , Data.DirectoryTree
                    , DomainTerms.DomainTerm
@@ -24,11 +23,12 @@ library
                    , Git.Git
                    , Git.Diff
                    , Indexer
+                   , Messaging.Job
+                   , Messaging.Products
                    , Models
                    , Network.AMQP.MessageBus
                    , Products.Product
                    , Products.CodeRepository
-                   , Products.Messaging
                    , Retry
                    , UserRoles.UserRole
 

@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Products.Messaging
+module Messaging.Products
 ( MessageSource (..)
 , createProductsQueue
 , getProductsMessages
@@ -36,3 +36,4 @@ subscribeToProductCreation =
   MB.subscribe productsQueue (productCreatedTopic All)
     >> createProductsQueue
     >>= liftIO . putStrLn . show
+

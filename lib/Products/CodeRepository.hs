@@ -9,11 +9,10 @@ module Products.CodeRepository
 , getStatusDiff
 , codeRepositoryDir
 , fetchRepo
-, indexProductFeaturesJob
 , updateRepo
 ) where
 
-import Async.Job (Job(..))
+import Messaging.Job (Job (..))
 import CommonCreatures (WithErr)
 import Config.Config (GitConfig (..))
 import Control.Monad.IO.Class (liftIO)
@@ -72,7 +71,4 @@ codeRepositoryDir prodID gitConfig =
 createRequiredDirectories :: ProductID -> GitConfig -> IO ()
 createRequiredDirectories prodID gitConfig =
   createDirectoryIfMissing True (productDir prodID gitConfig)
-
-indexProductFeaturesJob :: CodeRepository -> Job CodeRepository
-indexProductFeaturesJob codeRepo = Job "IndexFeatures" codeRepo
 
