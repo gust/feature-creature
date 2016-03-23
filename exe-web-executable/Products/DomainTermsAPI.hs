@@ -20,9 +20,11 @@ module Products.DomainTermsAPI
 import App
 import AppConfig (getDBConfig)
 import Control.Monad.Reader
+import Control.Monad.Trans.Either (left)
 import Data.Aeson
 import Data.Int (Int64)
 import qualified Data.Text              as T
+import Data.Time.Clock as Clock
 import qualified DomainTerms.DomainTerm as DT
 import Models
 import qualified Products.Product as P
@@ -58,7 +60,8 @@ instance FromJSON APIDomainTerm where
 createDomainTerm :: P.ProductID -> APIDomainTerm -> App APIDomainTerm
 createDomainTerm pID (APIDomainTerm _ _ t d) = do
   dbConfig <- reader getDBConfig
-  termID   <- liftIO $ DT.createDomainTerm dbConfig (DT.DomainTerm (toKey pID) t d)
+  utcTime  <- liftIO $ Clock.getCurrentTime
+  termID   <- liftIO $ DT.createDomainTerm dbConfig (DT.DomainTerm (toKey pID) t d utcTime)
   return $ APIDomainTerm { domainTermID = Just termID
                          , productID    = Just (toKey pID)
                          , title        = t
@@ -68,12 +71,15 @@ createDomainTerm pID (APIDomainTerm _ _ t d) = do
 editDomainTerm :: P.ProductID -> Int64 -> APIDomainTerm -> App APIDomainTerm
 editDomainTerm pID dtID (APIDomainTerm _ _ t d) = do
   dbConfig          <- reader getDBConfig
-  updatedDomainTerm <- liftIO $ DT.updateDomainTerm dbConfig (toKey dtID) (DT.DomainTerm (toKey pID) t d)
-  return $ APIDomainTerm { domainTermID = Just (dtID)
-                         , productID    = Just (toKey pID)
-                         , title        = t
-                         , description  = d
-                         }
+  domainTerm        <- liftIO $ DT.findDomainTerm dbConfig (toKey dtID)
+  case domainTerm of
+    Nothing   -> lift $ left $ err404
+    (Just dt) -> (liftIO $ DT.updateDomainTerm dbConfig (toKey dtID) dt)
+                  >> (return $ APIDomainTerm { domainTermID = Just (dtID)
+                                             , productID    = Just (toKey pID)
+                                             , title        = t
+                                             , description  = d
+                                             })
 
 removeDomainTerm :: P.ProductID -> Int64 -> App ()
 removeDomainTerm pID dtID = do

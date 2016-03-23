@@ -26,6 +26,7 @@ library
                    , Messaging.Job
                    , Messaging.Products
                    , Models
+                   , ModelTypes
                    , Network.AMQP.MessageBus
                    , Products.Product
                    , Products.CodeRepository

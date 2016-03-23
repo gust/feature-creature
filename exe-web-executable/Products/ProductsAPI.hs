@@ -14,10 +14,11 @@ module Products.ProductsAPI
 
 import App
 import AppConfig (getDBConfig, getRabbitMQConfig)
-import Messaging.Job (Job (..), JobType (..))
+import Messaging.Job as Job (Job (..), JobType (..))
 import Control.Monad.Reader
 import Data.Aeson
 import qualified Data.Text                  as T
+import Data.Time.Clock as Clock
 import qualified Messaging.Products         as MP
 import Models
 import Network.AMQP.MessageBus              as MB
@@ -79,14 +80,14 @@ productsAPI :: Proxy ProductsAPI
 productsAPI = Proxy
 
 createProduct :: APIProduct -> App APIProduct
-createProduct (APIProduct _ prodName prodRepoUrl) =
-  let newProduct = P.Product prodName prodRepoUrl in ask
-    >>= \cfg    -> liftIO $ (P.createProduct newProduct (getDBConfig cfg))
-    >>= \prodID ->
-          let apiProduct = APIProduct (Just prodID) prodName prodRepoUrl
-              job        = Job RepositoryCreated apiProduct
-          in (liftIO $ MB.withConn (getRabbitMQConfig cfg) (enqueueMessage job))
-              >> return apiProduct
+createProduct (APIProduct _ prodName prodRepoUrl) = ask
+  >>= \cfg     -> liftIO $ Clock.getCurrentTime
+  >>= \utcTime -> liftIO $ P.createProduct (P.Product prodName prodRepoUrl utcTime) (getDBConfig cfg)
+  >>= \prodID  ->
+        let apiProduct = APIProduct (Just prodID) prodName prodRepoUrl
+            job        = Job Job.ProductCreated apiProduct
+        in (liftIO $ MB.withConn (getRabbitMQConfig cfg) (enqueueMessage job))
+            >> return apiProduct
 
 enqueueMessage :: ToJSON a => Job a -> WithConn ()
 enqueueMessage job =

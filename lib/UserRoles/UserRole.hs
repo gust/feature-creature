@@ -4,6 +4,7 @@ module UserRoles.UserRole
 , updateUserRole
 , removeUserRole
 , findUserRoles
+, findUserRole
 , toUserRoleID
 , toUserRole
 , UserRole(..)
@@ -23,7 +24,7 @@ createUserRole dbConfig userRole =
     DB.runSqlPool query pool >>= return . DB.fromSqlKey
 
 updateUserRole :: DBConfig -> UserRoleId -> UserRole -> IO UserRole
-updateUserRole dbConfig urId userRole@(UserRole _ title description) =
+updateUserRole dbConfig urId userRole@(UserRole _ title description _) =
   let pool = getPool dbConfig
       query = DB.update
                 urId
@@ -48,6 +49,13 @@ findUserRoles :: DBConfig -> IO [DB.Entity UserRole]
 findUserRoles dbConfig =
   let query = DB.selectList ([] :: [DB.Filter UserRole]) [ DB.Asc UserRoleTitle ]
       pool = getPool dbConfig
+  in
+    DB.runSqlPool query pool
+
+findUserRole :: DBConfig -> UserRoleId -> IO (Maybe UserRole)
+findUserRole dbConfig urID =
+  let pool = getPool dbConfig
+      query = DB.get urID
   in
     DB.runSqlPool query pool
 

@@ -20,9 +20,11 @@ module Products.UserRolesAPI
 import App
 import AppConfig (getDBConfig)
 import Control.Monad.Reader
+import Control.Monad.Trans.Either (left)
 import Data.Aeson
 import Data.Int (Int64)
 import qualified Data.Text          as T
+import Data.Time.Clock as Clock
 import Models
 import qualified Products.Product   as P
 import Servant
@@ -59,7 +61,8 @@ instance FromJSON APIUserRole where
 createUserRole :: P.ProductID -> APIUserRole -> App APIUserRole
 createUserRole pID (APIUserRole _ _ t d) = do
   dbConfig <- reader getDBConfig
-  roleID <- liftIO $ UR.createUserRole dbConfig (UserRole (toKey pID) t d)
+  utcTime  <- liftIO $ Clock.getCurrentTime
+  roleID   <- liftIO $ UR.createUserRole dbConfig (UserRole (toKey pID) t d utcTime)
   return $ APIUserRole { userRoleID  = Just roleID
                        , productID   = Just (toKey pID)
                        , title       = t
@@ -68,13 +71,16 @@ createUserRole pID (APIUserRole _ _ t d) = do
 
 editUserRole :: P.ProductID -> Int64 -> APIUserRole -> App APIUserRole
 editUserRole pID urID (APIUserRole _ _ t d) = do
-  dbConfig        <- reader getDBConfig
-  updatedUserRole <- liftIO $ UR.updateUserRole dbConfig (toKey urID) (UR.UserRole (toKey pID) t d)
-  return $ APIUserRole { userRoleID = Just (urID)
-                       , productID    = Just (toKey pID)
-                       , title        = t
-                       , description  = d
-                       }
+  dbConfig <- reader getDBConfig
+  userRole <- liftIO $ UR.findUserRole dbConfig (toKey urID)
+  case userRole of
+    Nothing -> lift $ left $ err404
+    (Just ur) -> (liftIO $ UR.updateUserRole dbConfig (toKey urID) ur)
+                   >> (return $ APIUserRole { userRoleID = Just (urID)
+                                            , productID    = Just (toKey pID)
+                                            , title        = t
+                                            , description  = d
+                                            })
 
 removeUserRole :: P.ProductID -> Int64 -> App ()
 removeUserRole pID urID = do

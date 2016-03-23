@@ -4,6 +4,7 @@ module DomainTerms.DomainTerm
 , updateDomainTerm
 , removeDomainTerm
 , findDomainTerms
+, findDomainTerm
 , toDomainTermID
 , toDomainTerm
 , DomainTerm(..)
@@ -23,7 +24,7 @@ createDomainTerm dbConfig domainTerm =
     DB.runSqlPool query pool >>= return . DB.fromSqlKey
 
 updateDomainTerm :: DBConfig -> DomainTermId -> DomainTerm -> IO DomainTerm
-updateDomainTerm dbConfig dtId domainTerm@(DomainTerm _ title description) =
+updateDomainTerm dbConfig dtId domainTerm@(DomainTerm _ title description _) =
   let pool = getPool dbConfig
       query = DB.update
                 dtId
@@ -40,6 +41,13 @@ removeDomainTerm dbConfig productID domainTermID =
       query = DB.deleteWhere [ DomainTermProductId DB.==. productID
                              , DomainTermId DB.==. domainTermID
                              ]
+  in
+    DB.runSqlPool query pool >>= return
+
+findDomainTerm :: DBConfig -> DomainTermId -> IO (Maybe DomainTerm)
+findDomainTerm dbConfig dtID =
+  let pool = getPool dbConfig
+      query = DB.get dtID
   in
     DB.runSqlPool query pool >>= return
 
