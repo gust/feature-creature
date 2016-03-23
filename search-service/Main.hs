@@ -55,12 +55,11 @@ indexProductFeatures cfg (message, envelope) =
 
 indexProductFeatures' :: AppConfig -> Either String (Job CodeRepository) -> WithErr ()
 indexProductFeatures' _ (Left err) = throwError err
-indexProductFeatures' cfg (Right (Job "IndexFeatures" codeRepository)) =
+indexProductFeatures' cfg (Right (Job IndexFeatures codeRepository)) =
   let productID = getProductID codeRepository
   in (liftIO $ putStrLn "Getting feature files...")
        >> (liftIO $ runExceptT $ featureFiles productID cfg)
        >>= (indexFeatures productID cfg)
-indexProductFeatures' _ (Right (Job _ _)) = return ()
 
 indexFeatures :: ProductID -> AppConfig -> Either String [FeatureFile] -> WithErr ()
 indexFeatures _ _ (Left err) = (liftIO $ putStrLn ("Error: " ++ err)) >> throwError err

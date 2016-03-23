@@ -13,7 +13,7 @@ module Products.ProductsAPI
 
 import App
 import AppConfig (getDBConfig, getGitConfig, getRabbitMQConfig)
-import Messaging.Job (Job (..))
+import Messaging.Job (Job (..), JobType (..))
 import Control.Monad.Except (runExceptT)
 import Control.Monad.Reader
 import Control.Monad.Trans.Either (left)
@@ -91,7 +91,7 @@ createProduct (APIProduct _ prodName prodRepoUrl) = do
     Left err ->
       lift $ left $ err503 { errBody = BS.pack err }
     Right _ ->
-      let job        = Job "IndexFeatures" (CR.CodeRepository prodID)
+      let job        = Job IndexFeatures (CR.CodeRepository prodID)
           apiProduct = APIProduct { productID = Just prodID, name = prodName, repoUrl = prodRepoUrl }
       in (reader getRabbitMQConfig) >>= \rabbitCfg ->
            (liftIO $ MB.withConn rabbitCfg (enqueueMessage job)) >> (return apiProduct)

@@ -12,7 +12,6 @@ module Products.CodeRepository
 , updateRepo
 ) where
 
-import Messaging.Job (Job (..))
 import CommonCreatures (WithErr)
 import Config.Config (GitConfig (..))
 import Control.Monad.IO.Class (liftIO)
