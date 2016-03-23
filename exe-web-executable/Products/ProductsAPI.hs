@@ -12,18 +12,14 @@ module Products.ProductsAPI
 ) where
 
 import App
-import AppConfig (getDBConfig, getGitConfig, getRabbitMQConfig)
+import AppConfig (getDBConfig, getRabbitMQConfig)
 import Messaging.Job (Job (..), JobType (..))
-import Control.Monad.Except (runExceptT)
 import Control.Monad.Reader
-import Control.Monad.Trans.Either (left)
 import Data.Aeson
 import qualified Data.Text                  as T
-import qualified Data.ByteString.Lazy.Char8 as BS
 import qualified Messaging.Products         as MP
 import Models
 import Network.AMQP.MessageBus              as MB
-import qualified Products.CodeRepository    as CR
 import qualified Products.DomainTermsAPI    as DT
 import qualified Products.FeaturesAPI       as F
 import qualified Products.Product           as P
@@ -83,22 +79,18 @@ productsAPI :: Proxy ProductsAPI
 productsAPI = Proxy
 
 createProduct :: APIProduct -> App APIProduct
-createProduct (APIProduct _ prodName prodRepoUrl) = do
-  let newProduct = P.Product prodName prodRepoUrl
-  prodID <- reader getDBConfig >>= liftIO . (P.createProduct newProduct)
-  result <- reader getGitConfig >>= liftIO . runExceptT . (CR.updateRepo newProduct prodID)
-  case result of
-    Left err ->
-      lift $ left $ err503 { errBody = BS.pack err }
-    Right _ ->
-      let job        = Job IndexFeatures (CR.CodeRepository prodID)
-          apiProduct = APIProduct { productID = Just prodID, name = prodName, repoUrl = prodRepoUrl }
-      in (reader getRabbitMQConfig) >>= \rabbitCfg ->
-           (liftIO $ MB.withConn rabbitCfg (enqueueMessage job)) >> (return apiProduct)
+createProduct (APIProduct _ prodName prodRepoUrl) =
+  let newProduct = P.Product prodName prodRepoUrl in ask
+    >>= \cfg    -> liftIO $ (P.createProduct newProduct (getDBConfig cfg))
+    >>= \prodID ->
+          let apiProduct = APIProduct (Just prodID) prodName prodRepoUrl
+              job        = Job RepositoryCreated apiProduct
+          in (liftIO $ MB.withConn (getRabbitMQConfig cfg) (enqueueMessage job))
+              >> return apiProduct
 
-enqueueMessage :: Job CR.CodeRepository -> WithConn ()
+enqueueMessage :: ToJSON a => Job a -> WithConn ()
 enqueueMessage job =
-  MP.subscribeToProductCreation
+  MP.subscribeToProductCreation -- we may not need to do this here
     >> MB.produceTopicMessage (MP.productCreatedTopic MP.API) (MB.Message job)
 
 products :: App [APIProduct]

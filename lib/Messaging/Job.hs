@@ -18,12 +18,15 @@ data Job a =
 instance ToJSON a   => ToJSON (Job a)
 instance FromJSON a => FromJSON (Job a)
 
-data JobType = IndexFeatures
+data JobType = ProductCreated
+             | RepositoryCreated
   deriving (Show, Read, Eq)
 
 instance ToJSON JobType where
-  toJSON IndexFeatures = String "IndexFeatures"
+  toJSON ProductCreated    = String "ProductCreated"
+  toJSON RepositoryCreated = String "RepositoryCreated"
 
 instance FromJSON JobType where
-  parseJSON (String "IndexFeatures") = pure IndexFeatures
+  parseJSON (String "ProductCreated")    = pure ProductCreated
+  parseJSON (String "RepositoryCreated") = pure RepositoryCreated
   parseJSON _ = empty
