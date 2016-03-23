@@ -24,7 +24,7 @@ main :: IO ()
 main = do
   appConfig <- readConfig
   withRetry (createFeaturesIndex (getElasticSearchConfig appConfig))
-    >> MB.withConn (getRabbitMQConfig appConfig) (initMessageBroker appConfig)
+    >> withRetry (MB.withConn (getRabbitMQConfig appConfig) (initMessageBroker appConfig))
     >> runReaderT processJobs appConfig
 
 initMessageBroker :: AppConfig -> MB.WithConn ()
@@ -39,7 +39,7 @@ initMessageBroker cfg =
 processJobs :: App ()
 processJobs =
   forever $ do
-    (liftIO $ threadDelay (1 * 1000 * 1000)) >> ask >>= \cfg ->
+    (liftIO $ threadDelay (5 * 1000 * 1000)) >> ask >>= \cfg ->
       (liftIO $ MB.withConn (getRabbitMQConfig cfg) (getMessages cfg))
         >> return ()
 
