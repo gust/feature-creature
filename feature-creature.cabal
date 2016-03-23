@@ -114,7 +114,7 @@ executable feature-creature-web
                      -with-rtsopts=-N
 
   default-language:  Haskell2010
-  hs-source-dirs:    web-executable
+  hs-source-dirs:    exe-web-executable
   main-is:           Main.hs
   other-modules:     App
                      AppConfig
@@ -146,7 +146,7 @@ executable search-service
                      -with-rtsopts=-N
 
   default-language:  Haskell2010
-  hs-source-dirs:    search-service
+  hs-source-dirs:    exe-search-service
   main-is:           Main.hs
   other-modules:     App
                      AppConfig
@@ -169,7 +169,7 @@ executable repo-refresher
                      -with-rtsopts=-N
 
   default-language:  Haskell2010
-  hs-source-dirs:    repo-refresher
+  hs-source-dirs:    exe-repo-refresher
   main-is:           Main.hs
   other-modules:     App
                    , AppConfig
