@@ -3,67 +3,84 @@
 module Main where
 
 import App
-import AppConfig (AppConfig(..), readConfig)
-import Async.Job as Job
+import AppConfig as Config (AppConfig(..), RabbitMQConfig (..), readConfig)
+import Messaging.Job as Job
 import CommonCreatures (WithErr)
 import Control.Concurrent (threadDelay)
 import Control.Monad.Except (runExceptT, throwError)
 import Control.Monad.Reader
-import qualified Data.Text as Text
+import qualified Data.Aeson as Aeson
 import Features.Feature (FeatureFile, findFeatureFiles)
 import Features.SearchableFeature (createFeaturesIndex)
 import qualified Indexer
+import qualified Messaging.Products as MP
+import qualified Network.AMQP as AMQP
+import qualified Network.AMQP.MessageBus as MB
 import Products.CodeRepository (CodeRepository(..), codeRepositoryDir)
 import Products.Product (ProductID)
 import Retry (withRetry)
-import SQS (getSQSMessages, deleteSQSMessage)
 
 main :: IO ()
 main = do
   appConfig <- readConfig
   withRetry (createFeaturesIndex (getElasticSearchConfig appConfig))
-  runReaderT processJobs appConfig
+    >> MB.withConn (getRabbitMQConfig appConfig) (initMessageBroker appConfig)
+    >> runReaderT processJobs appConfig
+
+initMessageBroker :: AppConfig -> MB.WithConn ()
+initMessageBroker cfg =
+  (liftIO $ putStrLn "Creating exchange...")
+    >> (featureCreatureExchange (getRabbitMQConfig cfg))
+    >> (liftIO $ putStrLn "Creating queue...")
+    >> MP.createProductsQueue
+    >>= (\queueStatus -> liftIO $ putStrLn ("Queue status: " ++ (show queueStatus)))
+    >> MP.subscribeToProductCreation
 
 processJobs :: App ()
 processJobs =
   forever $ do
-    reader getAWSConfig
-      >>= (liftIO . getSQSMessages)
-      >>= (mapM_ processEnqueuedJob)
-      >>  (liftIO $ threadDelay 10000)
+    (liftIO $ threadDelay (1 * 1000 * 1000)) >> ask >>= \cfg ->
+      (liftIO $ MB.withConn (getRabbitMQConfig cfg) (getMessages cfg))
+        >> return ()
 
-processEnqueuedJob :: Either String (EnqueuedJob CodeRepository) -> App ()
-processEnqueuedJob (Left err) = liftIO $ putStrLn err
-processEnqueuedJob (Right (EnqueuedJob job deliveryReceipt)) = do
-  processJob (Job.getPayload job) job
-    >>= (liftIO . runExceptT)
-    >>= (\result -> processJobResult result deliveryReceipt)
+getMessages :: AppConfig -> MB.WithConn ()
+getMessages cfg =
+  MP.getProductsMessages (MB.MessageHandler (indexProductFeatures cfg))
 
-processJob :: CodeRepository -> Job a -> App (WithErr ())
-processJob (CodeRepository productID) _ =
-  (featureFiles productID)
-    >>= (liftIO . runExceptT)
-    >>= (\files -> indexFeatures files productID)
-processJob _ job =
-  return
-    $ throwError
-    $ "Unprocessable job type: " ++ (Text.unpack $ Job.getJobType job)
+indexProductFeatures :: AppConfig -> (AMQP.Message, AMQP.Envelope) -> IO ()
+indexProductFeatures cfg (message, envelope) =
+  (runExceptT $ indexProductFeatures' cfg (parseJob message))
+    >>= (resolveJob envelope)
+    >>= return
 
-processJobResult :: Either String () -> Text.Text -> App ()
-processJobResult (Left errStr) _ = liftIO $ putStrLn errStr
-processJobResult (Right _) deliveryReceipt =
-  reader getAWSConfig
-    >>= (liftIO . (deleteSQSMessage deliveryReceipt))
+indexProductFeatures' :: AppConfig -> Either String (Job CodeRepository) -> WithErr ()
+indexProductFeatures' _ (Left err) = throwError err
+indexProductFeatures' cfg (Right (Job IndexFeatures codeRepository)) =
+  let productID = getProductID codeRepository
+  in (liftIO $ putStrLn "Getting feature files...")
+       >> (liftIO $ runExceptT $ featureFiles productID cfg)
+       >>= (indexFeatures productID cfg)
 
-featureFiles :: ProductID -> App (WithErr [FeatureFile])
-featureFiles productID =
-  (reader getGitConfig)
-    >>= (\gitConfig -> return $ findFeatureFiles (codeRepositoryDir productID gitConfig))
+indexFeatures :: ProductID -> AppConfig -> Either String [FeatureFile] -> WithErr ()
+indexFeatures _ _ (Left err) = (liftIO $ putStrLn ("Error: " ++ err)) >> throwError err
+indexFeatures productID cfg (Right features) =
+  (liftIO $ putStrLn ("Indexing features: " ++ (show features)))
+    >> (liftIO $ Indexer.indexFeatures features productID (getGitConfig cfg) (getElasticSearchConfig cfg))
+    >>= return
 
-indexFeatures :: Either String [FeatureFile] -> ProductID -> App (WithErr ())
-indexFeatures (Left err) _ = return $ throwError err
-indexFeatures (Right features) productID =
-  ask
-    >>= (\cfg -> (liftIO $ Indexer.indexFeatures features productID (getGitConfig cfg) (getElasticSearchConfig cfg)))
-    >> return (return ())
+featureFiles :: ProductID -> AppConfig -> WithErr [FeatureFile]
+featureFiles productID cfg =
+  findFeatureFiles (codeRepositoryDir productID (getGitConfig cfg))
+
+resolveJob :: AMQP.Envelope -> Either String () -> IO ()
+resolveJob _ (Left err)       = putStrLn ("Job failed: " ++ err)
+resolveJob envelope (Right _) = (putStrLn "Resolving envelope...") >> MB.ackEnvelope envelope
+
+featureCreatureExchange :: RabbitMQConfig -> MB.WithConn ()
+featureCreatureExchange cfg =
+  let exch = MB.Exchange (Config.getExchangeName cfg) "topic" True
+  in MB.createExchange exch
+
+parseJob :: AMQP.Message -> Either String (Job CodeRepository)
+parseJob message = Aeson.eitherDecode (AMQP.msgBody message)
 

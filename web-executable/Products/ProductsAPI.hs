@@ -12,14 +12,17 @@ module Products.ProductsAPI
 ) where
 
 import App
-import AppConfig (getAWSConfig, getDBConfig, getGitConfig)
+import AppConfig (getDBConfig, getGitConfig, getRabbitMQConfig)
+import Messaging.Job (Job (..), JobType (..))
 import Control.Monad.Except (runExceptT)
 import Control.Monad.Reader
 import Control.Monad.Trans.Either (left)
 import Data.Aeson
 import qualified Data.Text                  as T
 import qualified Data.ByteString.Lazy.Char8 as BS
+import qualified Messaging.Products         as MP
 import Models
+import Network.AMQP.MessageBus              as MB
 import qualified Products.CodeRepository    as CR
 import qualified Products.DomainTermsAPI    as DT
 import qualified Products.FeaturesAPI       as F
@@ -27,7 +30,6 @@ import qualified Products.Product           as P
 import qualified Products.UserRolesAPI      as UR
 import Servant
 import qualified Servant.Docs               as SD
-import SQS                                  as SQS
 
 type ProductsAPI = "products" :> Get '[JSON] [APIProduct]
               :<|> "products" :> ReqBody '[JSON] APIProduct :> Post '[JSON] APIProduct
@@ -87,16 +89,17 @@ createProduct (APIProduct _ prodName prodRepoUrl) = do
   result <- reader getGitConfig >>= liftIO . runExceptT . (CR.updateRepo newProduct prodID)
   case result of
     Left err ->
-      -- In the case where the repo cannot be retrieved,
-      -- It's probably a good idea to rollback the Product creation here.
       lift $ left $ err503 { errBody = BS.pack err }
-    Right _ -> do
-      -- index for search
-      awsConfig <- reader getAWSConfig
-      let job = CR.indexProductFeaturesJob $ CR.CodeRepository prodID
+    Right _ ->
+      let job        = Job IndexFeatures (CR.CodeRepository prodID)
+          apiProduct = APIProduct { productID = Just prodID, name = prodName, repoUrl = prodRepoUrl }
+      in (reader getRabbitMQConfig) >>= \rabbitCfg ->
+           (liftIO $ MB.withConn rabbitCfg (enqueueMessage job)) >> (return apiProduct)
 
-      (liftIO (SQS.sendSQSMessage job awsConfig))
-      >> (return $ APIProduct { productID = Just prodID, name = prodName, repoUrl = prodRepoUrl })
+enqueueMessage :: Job CR.CodeRepository -> WithConn ()
+enqueueMessage job =
+  MP.subscribeToProductCreation
+    >> MB.produceTopicMessage (MP.productCreatedTopic MP.API) (MB.Message job)
 
 products :: App [APIProduct]
 products = do

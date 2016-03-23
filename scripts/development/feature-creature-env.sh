@@ -13,7 +13,12 @@ FC_SERVER_PROJECT_ROOT="$HOME/workspace/feature-creature"
 FC_WEB_PROJECT_ROOT="$HOME/workspace/feature-creature-client"
 FC_DATA_FILES_PATH="$FC_SERVER_PROJECT_ROOT/.app-data"
 
-FC_AWS_SQS_URL="https://sqs.us-east-1.amazonaws.com/675495447720/feature-creature-development"
+FC_RABBITMQ_HOST="127.0.0.1"
+FC_RABBITMQ_PATH="/"
+FC_RABBITMQ_USER="guest"
+FC_RABBITMQ_PASS="guest"
+FC_RABBITMQ_EXCHANGE_NAME="feature-creature"
+
 FC_SEARCH_SERVICE_ROOT="$HOME/workspace/search-service"
 FC_ELASTIC_SEARCH_URL="http://localhost:9200"
 FC_ELASTIC_SEARCH_INDEX_NAME="feature-creature"
@@ -44,9 +49,6 @@ export FC_SERVER_PROJECT_ROOT=$FC_SERVER_PROJECT_ROOT
 echo "Setting FC_WEB_PROJECT_ROOT environment variable..." $FC_WEB_PROJECT_ROOT
 export FC_WEB_PROJECT_ROOT=$FC_WEB_PROJECT_ROOT
 
-echo "Setting FC_AWS_SQS_URL environment variable:" $FC_AWS_SQS_URL
-export FC_AWS_SQS_URL=$FC_AWS_SQS_URL
-
 echo "Setting FC_SEARCH_SERVICE_ROOT environment variable:" $FC_SEARCH_SERVICE_ROOT
 export FC_SEARCH_SERVICE_ROOT=$FC_SEARCH_SERVICE_ROOT
 
@@ -61,6 +63,21 @@ export FC_ELASTIC_SEARCH_SHARD_COUNT=$FC_ELASTIC_SEARCH_SHARD_COUNT
 
 echo "Setting FC_ELASTIC_SEARCH_REPLICA_COUNT environment variable: " $FC_ELASTIC_SEARCH_INDEX_NAME
 export FC_ELASTIC_SEARCH_REPLICA_COUNT=$FC_ELASTIC_SEARCH_REPLICA_COUNT
+
+echo "Setting FC_RABBITMQ_HOST environment variable: " $FC_RABBITMQ_HOST
+export FC_RABBITMQ_HOST=$FC_RABBITMQ_HOST
+
+echo "Setting FC_RABBITMQ_PATH environment variable: " $FC_RABBITMQ_PATH
+export FC_RABBITMQ_PATH=$FC_RABBITMQ_PATH
+
+echo "Setting FC_RABBITMQ_USER environment variable: " $FC_RABBITMQ_USER
+export FC_RABBITMQ_USER=$FC_RABBITMQ_USER
+
+echo "Setting FC_RABBITMQ_PASS environment variable: " $FC_RABBITMQ_PASS
+export FC_RABBITMQ_PASS=$FC_RABBITMQ_PASS
+
+echo "Setting FC_RABBITMQ_EXCHANGE_NAME environment variable: " $FC_RABBITMQ_EXCHANGE_NAME
+export FC_RABBITMQ_EXCHANGE_NAME=$FC_RABBITMQ_EXCHANGE_NAME
 
 echo
 

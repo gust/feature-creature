@@ -1,9 +1,9 @@
 module AppConfig
 ( AppConfig (..)
-, Config.AWSConfig
 , Config.ElasticSearchConfig
 , Config.Environment (..)
 , Config.GitConfig (..)
+, Config.RabbitMQConfig (..)
 , getAppConfig
 ) where
 
@@ -13,27 +13,27 @@ import Network.Wai                          (Middleware)
 import System.Environment                   (lookupEnv)
 
 data AppConfig =
-  AppConfig { getAWSConfig           :: AWSConfig
-            , getEnv                 :: Environment
+  AppConfig { getEnv                 :: Environment
             , getDBConfig            :: DBConfig
             , getRequestLogger       :: Middleware
             , getElasticSearchConfig :: ElasticSearchConfig
             , getGitConfig           :: GitConfig
+            , getRabbitMQConfig      :: RabbitMQConfig
             }
 
 getAppConfig :: IO AppConfig
 getAppConfig = do
-  env          <- lookupSetting "ENV" Development
-  awsConfig    <- readAWSConfig
-  dbPool       <- makePool env
-  gitConfig    <- readGitConfig
-  searchConfig <- readElasticSearchConfig
-  return $ AppConfig { getAWSConfig           = awsConfig
-                     , getEnv                 = env
+  env            <- lookupSetting "ENV" Development
+  dbPool         <- makePool env
+  gitConfig      <- readGitConfig
+  searchConfig   <- readElasticSearchConfig
+  rabbitMQConfig <- readRabbitMQConfig
+  return $ AppConfig { getEnv                 = env
                      , getRequestLogger       = requestLogger env
                      , getDBConfig            = DBConfig dbPool
                      , getElasticSearchConfig = searchConfig
                      , getGitConfig           = gitConfig
+                     , getRabbitMQConfig      = rabbitMQConfig
                      }
 
 requestLogger :: Environment -> Middleware

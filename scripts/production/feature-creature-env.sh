@@ -14,7 +14,6 @@ FC_SERVER_PROJECT_ROOT="$HOME/feature-creature"
 FC_WEB_PROJECT_ROOT="$HOME/feature-creature-client"
 FC_DATA_FILES_PATH="$FC_SERVER_PROJECT_ROOT/.app-data"
 
-FC_AWS_SQS_URL="https://sqs.us-east-1.amazonaws.com/675495447720/feature-creature"
 FC_SEARCH_SERVICE_ROOT="$HOME/search-service"
 FC_ELASTIC_SEARCH_URL="http://localhost:9200"
 FC_ELASTIC_SEARCH_INDEX_NAME="feature-creature"
@@ -47,9 +46,6 @@ export FC_SERVER_PROJECT_ROOT=$FC_SERVER_PROJECT_ROOT
 
 echo "Setting FC_WEB_PROJECT_ROOT environment variable..." $FC_WEB_PROJECT_ROOT
 export FC_WEB_PROJECT_ROOT=$FC_WEB_PROJECT_ROOT
-
-echo "Setting FC_AWS_SQS_URL environment variable:" $FC_AWS_SQS_URL
-export FC_AWS_SQS_URL=$FC_AWS_SQS_URL
 
 echo "Setting FC_SEARCH_SERVICE_ROOT environment variable:" $FC_SEARCH_SERVICE_ROOT
 export FC_SEARCH_SERVICE_ROOT=$FC_SEARCH_SERVICE_ROOT
