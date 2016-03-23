@@ -10,7 +10,6 @@ module Network.AMQP.Internal.Types
 , QueueName (..)
 , QueueStatus (..)
 , TopicName (..)
-{- , WithAMQP (..) -}
 , WithConn (..)
 ) where
 
@@ -18,9 +17,6 @@ import Config.Config as Config (RabbitMQConfig (..))
 import Control.Monad.Reader
 import Data.Text (Text)
 import qualified Network.AMQP as AMQP
-
-{- newtype WithAMQP a = WithAMQP { runAMQP :: ReaderT RabbitMQConfig IO a } -}
-                       {- deriving (Functor, Applicative, Monad, MonadReader RabbitMQConfig, MonadIO) -}
 
 newtype WithConn a = WithConn { runConn :: ReaderT Connection IO a }
                        deriving (Functor, Applicative, Monad, MonadReader Connection, MonadIO)

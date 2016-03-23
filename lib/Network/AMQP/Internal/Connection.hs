@@ -10,18 +10,23 @@ module Network.AMQP.Internal.Connection
 ) where
 
 import Config.Config (RabbitMQConfig (..))
+import Control.Concurrent (threadDelay)
 import Control.Exception (bracket)
 import Control.Monad.Reader
+import Data.Map as M
 import qualified Data.Text as Text
 import Data.Word (Word32)
-import qualified Network.AMQP as AMQP
+import qualified Network.AMQP       as AMQP
+import qualified Network.AMQP.Types as AMQP
 import Network.AMQP.Internal.Types
 
 withConn :: RabbitMQConfig -> WithConn a -> IO a
 withConn cfg f =
   bracket (openConnection cfg) closeConnection $ \conn ->
-    (openChannel conn) >>= \ch ->
-      runReaderT (runConn f) (Connection conn ch cfg)
+    (openChannel conn)
+      >>= \ch -> runReaderT (runConn f) (Connection conn ch cfg)
+      >>= \a  -> threadDelay (100 * 1000) -- the connection closes prematurely without this pause. not sure why yet.
+      >> return a
 
 createExchange :: Exchange -> WithConn ()
 createExchange (Exchange exchName exchType exchIsDurable) =
@@ -40,10 +45,13 @@ deleteExchange (ExchangeName exchName) =
 createQueue :: Queue -> WithConn QueueStatus
 createQueue (Queue qName qAutoDelete qIsDurable) =
   (reader getChannel) >>= \ch ->
-    let queue = AMQP.newQueue { AMQP.queueName = qName
-                              , AMQP.queueAutoDelete = qAutoDelete
-                              , AMQP.queueDurable = qIsDurable
-                              }
+    let queue = AMQP.QueueOpts { AMQP.queueName = qName
+                               , AMQP.queueAutoDelete = qAutoDelete
+                               , AMQP.queueDurable = qIsDurable
+                               , AMQP.queuePassive = False
+                               , AMQP.queueExclusive = False
+                               , AMQP.queueHeaders = (AMQP.FieldTable M.empty)
+                               }
     in QueueStatus <$> (liftIO $ AMQP.declareQueue ch queue)
 
 deleteQueue :: QueueName -> WithConn Word32
@@ -56,7 +64,8 @@ openChannel = AMQP.openChannel
 
 openConnection :: RabbitMQConfig -> IO AMQP.Connection
 openConnection cfg =
-  (putStrLn "Opening AMQP connection...") >>
+  (putStrLn "") >>
+  (putStrLn "--------------------- Opening AMQP connection... ---------------------") >>
   AMQP.openConnection
     (Text.unpack $ getHost cfg)
     (getPath cfg)
@@ -64,4 +73,7 @@ openConnection cfg =
     (getPass cfg)
 
 closeConnection :: AMQP.Connection -> IO ()
-closeConnection conn = (putStrLn "Closing AMQP connection...") >> (AMQP.closeConnection conn)
+closeConnection conn =
+  (putStrLn "--------------------- Closing AMQP connection... ---------------------") >>
+    (putStrLn "") >>
+    (AMQP.closeConnection conn)

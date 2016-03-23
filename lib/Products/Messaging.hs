@@ -3,12 +3,12 @@
 module Products.Messaging
 ( MessageSource (..)
 , createProductsQueue
+, getProductsMessages
 , productCreatedTopic
 , productsQueue
 , subscribeToProductCreation
 ) where
 
-import Async.Job as Job
 import Control.Monad.Reader
 import Network.AMQP.MessageBus as MB
 
@@ -20,6 +20,9 @@ createProductsQueue :: MB.WithConn MB.QueueStatus
 createProductsQueue =
   let queue = MB.Queue "products" False True
   in MB.createQueue queue
+
+getProductsMessages :: MB.MessageHandler -> MB.WithConn ()
+getProductsMessages handler = MB.getTopicMessages productsQueue handler
 
 productsQueue :: MB.QueueName
 productsQueue = MB.QueueName "products"
