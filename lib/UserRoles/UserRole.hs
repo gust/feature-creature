@@ -3,69 +3,56 @@ module UserRoles.UserRole
 , createUserRole
 , updateUserRole
 , removeUserRole
-, findUserRoles
 , findUserRole
 , toUserRoleID
 , toUserRole
 , UserRole(..)
 ) where
 
-import Config.Config (DBConfig, getPool)
+import Control.Monad.Reader (ask, liftIO)
 import Data.Int (Int64)
 import qualified Database.Persist.Postgresql as DB
+import Database.Types (WithDBPool (..))
 import Models
 
--- rewrite this using a WithDBConn monad
-createUserRole :: DBConfig -> UserRole -> IO Int64
-createUserRole dbConfig userRole =
-  let query = DB.insert userRole
-      pool = getPool dbConfig
-  in
-    DB.runSqlPool query pool >>= return . DB.fromSqlKey
+createUserRole :: UserRole -> WithDBPool Int64
+createUserRole userRole = ask
+  >>= liftIO . (DB.runSqlPool (DB.insert userRole))
+  >>= return . DB.fromSqlKey
 
-updateUserRole :: DBConfig -> UserRoleId -> UserRole -> IO UserRole
-updateUserRole dbConfig urId userRole@(UserRole _ title description _) =
-  let pool = getPool dbConfig
-      query = DB.update
-                urId
-                [ UserRoleTitle DB.=. title
-                , UserRoleDescription DB.=. description
-                ]
-  in
-    DB.runSqlPool query pool >> return userRole
+updateUserRole :: UserRoleId -> UserRole -> WithDBPool UserRole
+updateUserRole urId ur@(UserRole _ title description _) = ask
+  >>= liftIO . (DB.runSqlPool updateUserRoleCommand)
+  >> return ur
+  where
+    updateUserRoleCommand =
+      DB.update urId [ UserRoleTitle DB.=. title
+                     , UserRoleDescription DB.=. description
+                     ]
 
--- rewrite this using a WithDBConn monad
-removeUserRole :: DBConfig -> ProductId -> UserRoleId -> IO ()
-removeUserRole dbConfig productID userRoleID =
-  let pool = getPool dbConfig
-      query = DB.deleteWhere [ UserRoleProductId DB.==. productID
-                             , UserRoleId DB.==. userRoleID
-                             ]
-  in
-    DB.runSqlPool query pool >>= return
+removeUserRole :: ProductId -> UserRoleId -> WithDBPool ()
+removeUserRole pID urID = ask
+  >>= liftIO . (DB.runSqlPool deleteUserRoleQuery)
+  >>= return
+  where
+    deleteUserRoleQuery =
+      DB.deleteWhere [ UserRoleProductId DB.==. pID
+                     , UserRoleId DB.==. urID
+                     ]
 
--- rewrite this using a WithDBConn monad
-findUserRoles :: DBConfig -> IO [DB.Entity UserRole]
-findUserRoles dbConfig =
-  let query = DB.selectList ([] :: [DB.Filter UserRole]) [ DB.Asc UserRoleTitle ]
-      pool = getPool dbConfig
-  in
-    DB.runSqlPool query pool
 
-findUserRole :: DBConfig -> UserRoleId -> IO (Maybe UserRole)
-findUserRole dbConfig urID =
-  let pool = getPool dbConfig
-      query = DB.get urID
-  in
-    DB.runSqlPool query pool
+findUserRole :: UserRoleId -> WithDBPool (Maybe UserRole)
+findUserRole urID = ask
+  >>= liftIO . (DB.runSqlPool (DB.get urID))
 
--- rewrite this using a WithDBConn monad
-findByProductId :: DBConfig -> ProductId -> IO [DB.Entity UserRole]
-findByProductId dbConfig productId =
-  let query = DB.selectList [UserRoleProductId DB.==. productId] [ DB.Asc UserRoleTitle ]
-      pool = getPool dbConfig
-  in
-    DB.runSqlPool query pool
+findByProductId :: ProductId -> WithDBPool [DB.Entity UserRole]
+findByProductId productId = ask
+  >>= liftIO . (DB.runSqlPool findByProductIdQuery)
+  where
+    findByProductIdQuery =
+      DB.selectList
+        [UserRoleProductId DB.==. productId]
+        [ DB.Asc UserRoleTitle ]
 
 toUserRoleID :: DB.Entity UserRole -> Int64
 toUserRoleID dbEntity = DB.fromSqlKey . DB.entityKey $ dbEntity

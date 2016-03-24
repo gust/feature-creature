@@ -18,13 +18,14 @@ module Products.UserRolesAPI
 ) where
 
 import App
-import AppConfig (getDBConfig)
+import AppConfig (DBConfig (..), getDBConfig)
 import Control.Monad.Reader
 import Control.Monad.Trans.Either (left)
 import Data.Aeson
 import Data.Int (Int64)
 import qualified Data.Text          as T
 import Data.Time.Clock as Clock
+import Database.Types (runPool)
 import Models
 import qualified Products.Product   as P
 import Servant
@@ -62,7 +63,7 @@ createUserRole :: P.ProductID -> APIUserRole -> App APIUserRole
 createUserRole pID (APIUserRole _ _ t d) = do
   dbConfig <- reader getDBConfig
   utcTime  <- liftIO $ Clock.getCurrentTime
-  roleID   <- liftIO $ UR.createUserRole dbConfig (UserRole (toKey pID) t d utcTime)
+  roleID   <- liftIO $ runReaderT (runPool (UR.createUserRole (UserRole (toKey pID) t d utcTime))) (getPool dbConfig)
   return $ APIUserRole { userRoleID  = Just roleID
                        , productID   = Just (toKey pID)
                        , title       = t
@@ -72,25 +73,26 @@ createUserRole pID (APIUserRole _ _ t d) = do
 editUserRole :: P.ProductID -> Int64 -> APIUserRole -> App APIUserRole
 editUserRole pID urID (APIUserRole _ _ t d) = do
   dbConfig <- reader getDBConfig
-  userRole <- liftIO $ UR.findUserRole dbConfig (toKey urID)
+  userRole <- liftIO $ runReaderT (runPool (UR.findUserRole (toKey urID))) (getPool dbConfig)
   case userRole of
     Nothing -> lift $ left $ err404
-    (Just ur) -> (liftIO $ UR.updateUserRole dbConfig (toKey urID) ur)
-                   >> (return $ APIUserRole { userRoleID = Just (urID)
-                                            , productID    = Just (toKey pID)
-                                            , title        = t
-                                            , description  = d
-                                            })
+    (Just ur) ->
+      (liftIO $ runReaderT (runPool (UR.updateUserRole (toKey urID) ur)) (getPool dbConfig))
+        >> (return $ APIUserRole { userRoleID = Just (urID)
+                                 , productID    = Just (toKey pID)
+                                 , title        = t
+                                 , description  = d
+                                 })
 
 removeUserRole :: P.ProductID -> Int64 -> App ()
 removeUserRole pID urID = do
   dbConfig <- reader getDBConfig
-  liftIO $ UR.removeUserRole dbConfig (toKey pID) (toKey urID)
+  liftIO $ runReaderT (runPool (UR.removeUserRole (toKey pID) (toKey urID))) (getPool dbConfig)
 
 productsUserRoles :: P.ProductID -> App [APIUserRole]
 productsUserRoles prodID = do
   dbConfig <- reader getDBConfig
-  userRoles <- liftIO $ UR.findByProductId dbConfig (toKey prodID)
+  userRoles <- liftIO $ runReaderT (runPool (UR.findByProductId (toKey prodID))) (getPool dbConfig)
   return $ map toUserRole userRoles
     where
       toUserRole dbUserRole = do
