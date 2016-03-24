@@ -32,10 +32,10 @@ updateUserRole urId ur@(UserRole _ title description _) = ask
 
 removeUserRole :: ProductId -> UserRoleId -> WithDBPool ()
 removeUserRole pID urID = ask
-  >>= liftIO . (DB.runSqlPool deleteUserRoleQuery)
+  >>= liftIO . (DB.runSqlPool deleteUserRoleCommand)
   >>= return
   where
-    deleteUserRoleQuery =
+    deleteUserRoleCommand =
       DB.deleteWhere [ UserRoleProductId DB.==. pID
                      , UserRoleId DB.==. urID
                      ]

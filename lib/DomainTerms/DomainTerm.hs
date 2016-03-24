@@ -3,69 +3,55 @@ module DomainTerms.DomainTerm
 , createDomainTerm
 , updateDomainTerm
 , removeDomainTerm
-, findDomainTerms
 , findDomainTerm
 , toDomainTermID
 , toDomainTerm
 , DomainTerm(..)
 ) where
 
-import Config.Config (DBConfig, getPool)
+import Control.Monad.Reader (ask, liftIO)
 import Data.Int (Int64)
 import qualified Database.Persist.Postgresql as DB
+import Database.Types (WithDBPool (..))
 import Models
 
--- rewrite this using a WithDBConn monad
-createDomainTerm :: DBConfig -> DomainTerm -> IO Int64
-createDomainTerm dbConfig domainTerm =
-  let query = DB.insert domainTerm
-      pool = getPool dbConfig
-  in
-    DB.runSqlPool query pool >>= return . DB.fromSqlKey
+createDomainTerm :: DomainTerm -> WithDBPool Int64
+createDomainTerm domainTerm = ask
+  >>= liftIO . (DB.runSqlPool (DB.insert domainTerm))
+  >>= return . DB.fromSqlKey
 
-updateDomainTerm :: DBConfig -> DomainTermId -> DomainTerm -> IO DomainTerm
-updateDomainTerm dbConfig dtId domainTerm@(DomainTerm _ title description _) =
-  let pool = getPool dbConfig
-      query = DB.update
-                dtId
-                [ DomainTermTitle DB.=. title
-                , DomainTermDescription DB.=. description
-                ]
-  in
-    DB.runSqlPool query pool >> return domainTerm
+updateDomainTerm :: DomainTermId -> DomainTerm -> WithDBPool DomainTerm
+updateDomainTerm dtId domainTerm@(DomainTerm _ title description _) = ask
+  >>= liftIO . (DB.runSqlPool updateDomainTermCommand)
+  >> return domainTerm
+  where
+    updateDomainTermCommand =
+      DB.update dtId [ DomainTermTitle DB.=. title
+                     , DomainTermDescription DB.=. description
+                     ]
 
--- rewrite this using a WithDBConn monad
-removeDomainTerm :: DBConfig -> ProductId -> DomainTermId -> IO ()
-removeDomainTerm dbConfig productID domainTermID =
-  let pool = getPool dbConfig
-      query = DB.deleteWhere [ DomainTermProductId DB.==. productID
-                             , DomainTermId DB.==. domainTermID
-                             ]
-  in
-    DB.runSqlPool query pool >>= return
+removeDomainTerm :: ProductId -> DomainTermId -> WithDBPool ()
+removeDomainTerm productID domainTermID = ask
+  >>= liftIO . (DB.runSqlPool deleteDomainTermCommand)
+  >>= return
+  where
+    deleteDomainTermCommand =
+      DB.deleteWhere [ DomainTermProductId DB.==. productID
+                     , DomainTermId DB.==. domainTermID
+                     ]
 
-findDomainTerm :: DBConfig -> DomainTermId -> IO (Maybe DomainTerm)
-findDomainTerm dbConfig dtID =
-  let pool = getPool dbConfig
-      query = DB.get dtID
-  in
-    DB.runSqlPool query pool >>= return
+findDomainTerm :: DomainTermId -> WithDBPool (Maybe DomainTerm)
+findDomainTerm dtID = ask
+  >>= liftIO . (DB.runSqlPool (DB.get dtID))
 
--- rewrite this using a WithDBConn monad
-findDomainTerms :: DBConfig -> IO [DB.Entity DomainTerm]
-findDomainTerms dbConfig =
-  let query = DB.selectList ([] :: [DB.Filter DomainTerm]) [ DB.Asc DomainTermTitle ]
-      pool = getPool dbConfig
-  in
-    DB.runSqlPool query pool
-
--- rewrite this using a WithDBConn monad
-findByProductId :: DBConfig -> ProductId -> IO [DB.Entity DomainTerm]
-findByProductId dbConfig productId =
-  let query = DB.selectList [DomainTermProductId DB.==. productId] [ DB.Asc DomainTermTitle ]
-      pool = getPool dbConfig
-  in
-    DB.runSqlPool query pool
+findByProductId :: ProductId -> WithDBPool [DB.Entity DomainTerm]
+findByProductId productId = ask
+  >>= liftIO . (DB.runSqlPool findByProductIdQuery)
+  where
+    findByProductIdQuery =
+      DB.selectList
+        [DomainTermProductId DB.==. productId]
+        [ DB.Asc DomainTermTitle ]
 
 toDomainTermID :: DB.Entity DomainTerm -> Int64
 toDomainTermID dbEntity = DB.fromSqlKey . DB.entityKey $ dbEntity
