@@ -5,6 +5,7 @@ import AppConfig as Cfg
 import Control.Monad.Except (runExceptT)
 import Control.Monad.Reader
 import qualified Database.Persist.Postgresql as DB
+import Database.Types (runPool)
 import Features.Feature (FeatureFile (..))
 import qualified Git.Git as Git
 import qualified Indexer
@@ -18,19 +19,16 @@ main = do
   runReaderT refreshRepos appConfig
 
 refreshRepos :: App ()
-refreshRepos =
-  getProductIDs
-    >>= (\productIDs -> mapM_ refreshRepo productIDs)
+refreshRepos = getProductIDs >>= \productIDs ->
+  mapM_ refreshRepo productIDs
 
 getProductIDs :: App [ProductID]
-getProductIDs =
-  (withRetry getProductEntities)
-    >>= (\entities -> return $ map P.toProductID entities)
+getProductIDs = (withRetry getProductEntities) >>= \entities ->
+  return $ map P.toProductID entities
 
 getProductEntities :: App [DB.Entity Product]
-getProductEntities = do
-  (reader getDBConfig)
-    >>= (\cfg -> liftIO $ P.findProducts cfg)
+getProductEntities = (reader getDBConfig) >>= \cfg ->
+  liftIO $ runReaderT (runPool P.findProducts) (getPool cfg)
 
 refreshRepo :: ProductID -> App ()
 refreshRepo prodID =
@@ -54,9 +52,8 @@ fetchRepoChanges prodID = do
     Right _  -> liftIO $ putStrLn $ "Successfully fetched prodID: " ++ (show prodID)
 
 getRepoDiff :: ProductID -> App (Either String String)
-getRepoDiff prodID = do
-  gitConfig <- reader getGitConfig
-  liftIO $ runExceptT $ Repo.getStatusDiff prodID gitConfig
+getRepoDiff prodID = (reader getGitConfig) >>= \gitCfg ->
+  liftIO . runExceptT $ Repo.getStatusDiff prodID gitCfg
 
 -- FIXME:
 -- We don't need App here, this is a pure function.

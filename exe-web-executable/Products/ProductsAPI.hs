@@ -13,12 +13,14 @@ module Products.ProductsAPI
 ) where
 
 import App
-import AppConfig (getDBConfig, getRabbitMQConfig)
+import AppConfig (DBConfig (..), getDBConfig, getRabbitMQConfig)
 import Messaging.Job as Job (Job (..), JobType (..))
 import Control.Monad.Reader
 import Data.Aeson
 import qualified Data.Text                  as T
 import Data.Time.Clock as Clock
+import qualified Database.Persist.Postgresql as DB
+import Database.Types (runPool)
 import qualified Messaging.Products         as MP
 import Models
 import Network.AMQP.MessageBus              as MB
@@ -63,7 +65,7 @@ instance FromJSON APIProduct where
   parseJSON _          = mzero
 
 productsServer :: ServerT ProductsAPI App
-productsServer = products
+productsServer = getProducts
             :<|> createProduct
             :<|> F.productsFeatures
             :<|> F.productsFeature
@@ -81,28 +83,35 @@ productsAPI = Proxy
 
 createProduct :: APIProduct -> App APIProduct
 createProduct (APIProduct _ prodName prodRepoUrl) = ask
-  >>= \cfg     -> liftIO $ Clock.getCurrentTime
-  >>= \utcTime -> liftIO $ P.createProduct (P.Product prodName prodRepoUrl utcTime) (getDBConfig cfg)
+  >>= \cfg     -> (liftIO Clock.getCurrentTime)
+  >>= \utcTime -> saveProduct (P.Product prodName prodRepoUrl utcTime)
   >>= \prodID  ->
-        let apiProduct = APIProduct (Just prodID) prodName prodRepoUrl
-            job        = Job Job.ProductCreated apiProduct
-        in (liftIO $ MB.withConn (getRabbitMQConfig cfg) (enqueueMessage job))
+        let apiProduct = (APIProduct (Just prodID) prodName prodRepoUrl)
+            job = Job Job.ProductCreated apiProduct
+        in (liftIO $ MB.withConn (getRabbitMQConfig cfg) (sendProductCreatedMessage job))
             >> return apiProduct
 
-enqueueMessage :: ToJSON a => Job a -> WithConn ()
-enqueueMessage job =
+saveProduct :: P.Product -> App P.ProductID
+saveProduct p = (reader getDBConfig) >>= \cfg ->
+  liftIO $ runReaderT (runPool (P.createProduct p)) (getPool cfg)
+
+getProducts :: App [APIProduct]
+getProducts = fetchProducts >>= return . (map toProduct)
+
+toProduct :: DB.Entity Product -> APIProduct
+toProduct dbProduct =
+  let dbProd   = P.toProduct dbProduct
+      dbProdID = P.toProductID dbProduct
+  in APIProduct { productID = Just dbProdID
+                , name      = productName dbProd
+                , repoUrl   = productRepoUrl dbProd
+                }
+
+fetchProducts :: App [DB.Entity Product]
+fetchProducts = (reader getDBConfig) >>= \cfg ->
+  liftIO $ runReaderT (runPool P.findProducts) (getPool cfg)
+
+sendProductCreatedMessage :: ToJSON a => Job a -> WithConn ()
+sendProductCreatedMessage job =
   MP.subscribeToProductCreation -- we may not need to do this here
     >> MB.produceTopicMessage (MP.productCreatedTopic MP.API) (MB.Message job)
-
-products :: App [APIProduct]
-products = do
-  prods <- reader getDBConfig >>= liftIO . P.findProducts
-  return $ map toProduct prods
-    where
-      toProduct dbProduct = do
-        let dbProd   = P.toProduct dbProduct
-        let dbProdID = P.toProductID dbProduct
-        APIProduct { productID = Just dbProdID
-                   , name      = productName dbProd
-                   , repoUrl   = productRepoUrl dbProd }
-

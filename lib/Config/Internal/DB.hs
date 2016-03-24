@@ -1,3 +1,4 @@
+
 module Config.Internal.DB
 ( DBConfig (..)
 , makePool

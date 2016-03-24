@@ -19,7 +19,7 @@ import Data.Text (Text)
 import qualified Network.AMQP as AMQP
 
 newtype WithConn a = WithConn { runConn :: ReaderT Connection IO a }
-                       deriving (Functor, Applicative, Monad, MonadReader Connection, MonadIO)
+  deriving (Functor, Applicative, Monad, MonadReader Connection, MonadIO)
 
 data Connection =
   Connection { getConnection :: AMQP.Connection

@@ -17,6 +17,7 @@ library
   exposed-modules:   Config.Config
                    , CommonCreatures
                    , Data.DirectoryTree
+                   , Database.Types
                    , DomainTerms.DomainTerm
                    , Features.Feature
                    , Features.SearchableFeature

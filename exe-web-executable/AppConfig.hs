@@ -1,5 +1,6 @@
 module AppConfig
 ( AppConfig (..)
+, Config.DBConfig (..)
 , Config.ElasticSearchConfig
 , Config.Environment (..)
 , Config.GitConfig (..)
