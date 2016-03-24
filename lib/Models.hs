@@ -27,10 +27,9 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 
   RepositoryStatus json sql=repository_status
     productId ProductId
-    state RepositoryState
-    error Text Maybe default=Nothing sqltype=text
+    state RepositoryState sqltype=text
+    error Text Maybe default=NULL sqltype=text
     created UTCTime default=now()
-    UniqueProductID productId
     deriving Show
 
   UserRole json sql=user_roles

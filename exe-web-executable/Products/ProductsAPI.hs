@@ -23,6 +23,7 @@ import qualified Database.Persist.Postgresql as DB
 import Database.Types (runPool)
 import qualified Messaging.Products         as MP
 import Models
+import ModelTypes (RepositoryState (..))
 import Network.AMQP.MessageBus              as MB
 import qualified Products.DomainTermsAPI    as DT
 import qualified Products.FeaturesAPI       as F
@@ -84,16 +85,16 @@ productsAPI = Proxy
 createProduct :: APIProduct -> App APIProduct
 createProduct (APIProduct _ prodName prodRepoUrl) = ask
   >>= \cfg     -> (liftIO Clock.getCurrentTime)
-  >>= \utcTime -> saveProduct (P.Product prodName prodRepoUrl utcTime)
+  >>= \utcTime -> saveNewProduct (P.Product prodName prodRepoUrl utcTime)
   >>= \prodID  ->
         let apiProduct = (APIProduct (Just prodID) prodName prodRepoUrl)
             job = Job Job.ProductCreated apiProduct
         in (liftIO $ MB.withConn (getRabbitMQConfig cfg) (sendProductCreatedMessage job))
             >> return apiProduct
 
-saveProduct :: P.Product -> App P.ProductID
-saveProduct p = (reader getDBConfig) >>= \cfg ->
-  liftIO $ runReaderT (runPool (P.createProduct p)) (getPool cfg)
+saveNewProduct :: P.Product -> App P.ProductID
+saveNewProduct p = (reader getDBConfig) >>= \cfg ->
+  liftIO $ runReaderT (runPool (P.createProductWithRepoStatus p Unready)) (getPool cfg)
 
 getProducts :: App [APIProduct]
 getProducts = fetchProducts >>= return . (map toProduct)

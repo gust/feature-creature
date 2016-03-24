@@ -1,25 +1,36 @@
 module Products.Product
 ( Product(..)
 , ProductID
-, createProduct
+, createProductWithRepoStatus
 , findProducts
 , toProduct
 , toProductID
 ) where
 
-import Config.Config (DBConfig, getPool)
 import Control.Monad.Reader (ask, liftIO)
+import Data.Time.Clock as Clock
 import qualified Database.Persist.Postgresql as DB
 import Database.Types (WithDBPool (..))
 import GHC.Int (Int64)
 import Models
+import ModelTypes (RepositoryState (..))
 
 type ProductID = Int64
 
-createProduct :: Product -> WithDBPool ProductID
-createProduct p = ask
-  >>= liftIO . (DB.runSqlPool (DB.insert p))
-  >>= return . DB.fromSqlKey
+createProductWithRepoStatus :: Product -> RepositoryState -> WithDBPool ProductID
+createProductWithRepoStatus p rs =
+  createProduct p
+    >>= \prodId -> createRepoStatus rs prodId
+    >> return (DB.fromSqlKey prodId)
+
+createProduct :: Product -> WithDBPool ProductId
+createProduct p = ask >>= liftIO . (DB.runSqlPool (DB.insert p))
+
+createRepoStatus :: RepositoryState -> ProductId -> WithDBPool RepositoryStatusId
+createRepoStatus rs pId =
+  (liftIO Clock.getCurrentTime) >>= \now ->
+    let repoStatus = RepositoryStatus pId rs Nothing now
+    in ask >>= liftIO . (DB.runSqlPool (DB.insert repoStatus))
 
 findProducts :: WithDBPool [DB.Entity Product]
 findProducts =
