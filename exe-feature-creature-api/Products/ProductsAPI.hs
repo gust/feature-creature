@@ -12,12 +12,12 @@ module Products.ProductsAPI
 , productsServer
 ) where
 
+import Api.Types (APIProduct (..), productToAPIProduct)
 import App
 import AppConfig (DBConfig (..), getDBConfig, getRabbitMQConfig)
 import Messaging.Job as Job (Job (..), JobType (..))
 import Control.Monad.Reader
 import Data.Aeson
-import qualified Data.Text                  as T
 import Data.Time.Clock as Clock
 import qualified Database.Persist.Postgresql as DB
 import Database.Types (runPool)
@@ -45,25 +45,6 @@ type ProductsAPI = "products" :> Get '[JSON] [APIProduct]
               :<|> "products" :> ProductIDCapture :> UR.RemoveUserRoleAPI
 
 type ProductIDCapture = Capture "id" P.ProductID
-
-data APIProduct = APIProduct { productID :: Maybe P.ProductID
-                             , name      :: T.Text
-                             , repoUrl   :: T.Text
-                             } deriving (Show)
-
-instance ToJSON APIProduct where
-  toJSON (APIProduct prodID prodName prodRepoUrl) =
-    object [ "id"      .= prodID
-           , "name"    .= prodName
-           , "repoUrl" .= prodRepoUrl
-           ]
-
-instance FromJSON APIProduct where
-  parseJSON (Object v) = APIProduct <$>
-                        v .:? "id" <*>
-                        v .: "name" <*>
-                        v .: "repoUrl"
-  parseJSON _          = mzero
 
 productsServer :: ServerT ProductsAPI App
 productsServer = getProducts
@@ -103,10 +84,7 @@ toProduct :: DB.Entity Product -> APIProduct
 toProduct dbProduct =
   let dbProd   = P.toProduct dbProduct
       dbProdID = P.toProductID dbProduct
-  in APIProduct { productID = Just dbProdID
-                , name      = productName dbProd
-                , repoUrl   = productRepoUrl dbProd
-                }
+  in productToAPIProduct (Just dbProdID) dbProd
 
 fetchProducts :: App [DB.Entity Product]
 fetchProducts = (reader getDBConfig) >>= \cfg ->
@@ -115,4 +93,4 @@ fetchProducts = (reader getDBConfig) >>= \cfg ->
 sendProductCreatedMessage :: ToJSON a => Job a -> WithConn ()
 sendProductCreatedMessage job =
   MP.subscribeToProductCreation -- we may not need to do this here
-    >> MB.produceTopicMessage (MP.productCreatedTopic MP.API) (MB.Message job)
+    >> MB.produceTopicMessage (MP.productCreatedTopic MP.FeatureCreatureAPI) (MB.Message job)

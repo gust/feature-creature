@@ -47,14 +47,12 @@ updateGitRepo gitUrl prodID gitConfig = do
 fetchRepo :: ProductID -> GitConfig -> WithErr String
 fetchRepo prodID gitConfig =
   let repositoryPath = codeRepositoryDir prodID gitConfig
-  in
-    Git.fetch repositoryPath
+  in Git.fetch repositoryPath
 
 getStatusDiff :: ProductID -> GitConfig -> WithErr String
 getStatusDiff prodID gitConfig =
   let repositoryPath = codeRepositoryDir prodID gitConfig
-  in
-    Git.statusDiff repositoryPath
+  in Git.statusDiff repositoryPath
 
 -- maybe the combination of a ProductID and GitConfig is a ProductRepository?
 productDir :: ProductID -> GitConfig -> FilePath

@@ -25,7 +25,7 @@ withConn cfg f =
   bracket (openConnection cfg) closeConnection $ \conn ->
     (openChannel conn)
       >>= \ch -> runReaderT (runConn f) (Connection conn ch cfg)
-      >>= \a  -> threadDelay (500 * 1000) -- the connection closes prematurely without this pause. not sure why yet.
+      >>= \a  -> threadDelay (1 * 1000 * 1000) -- the connection closes prematurely without this pause. not sure why yet.
       >> return a
 
 createExchange :: Exchange -> WithConn ()

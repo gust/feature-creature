@@ -14,7 +14,9 @@ data-files:          data/cli/*.txt
 cabal-version:       >=1.10
 
 library
-  exposed-modules:   Config.Config
+  exposed-modules:   Api.MimeTypes
+                   , Api.Types
+                   , Config.Config
                    , CommonCreatures
                    , Data.DirectoryTree
                    , Database.Types
@@ -43,14 +45,16 @@ library
                    , directory
                    , exceptions
                    , http-client
+                   , http-media
                    , process
                    , monad-logger
                    , mtl
                    , parsec
                    , persistent
                    , persistent-template
-                   , persistent-postgresql
+                   , persistent-postgresql >= 2.2.1.2 && < 2.2.2.0
                    , safe
+                   , servant-server
                    , text
                    , time
                    , transformers
@@ -87,11 +91,10 @@ executable feature-creature-web
                    , either
                    , feature-creature
                    , http-client
-                   , http-media
                    , http-types
                    , monad-logger
                    , mtl
-                   , persistent-postgresql
+                   , persistent-postgresql >= 2.2.1.2 && < 2.2.2.0
                    , retry
                    , servant
                    , servant-client
@@ -153,12 +156,39 @@ executable search-service
   other-modules:     App
                      AppConfig
 
+executable repo-puller
+  build-depends:   aeson
+                   , amqp >= 0.13.0 && < 0.14.0
+                   , base
+                   , bytestring
+                   , feature-creature
+                   , lens
+                   , mtl
+                   , retry
+                   , text
+                   , transformers
+
+  ghc-options:       -Wall
+                     -fwarn-unused-matches
+                     -fwarn-unused-binds
+                     -fwarn-unused-imports
+                     -threaded
+                     -rtsopts
+                     -with-rtsopts=-N
+
+  default-language:  Haskell2010
+  hs-source-dirs:    exe-repo-puller
+  main-is:           Main.hs
+  other-modules:     App
+                     AppConfig
+
+
 executable repo-refresher
   build-depends:     base
                    , feature-creature
                    , mtl
                    , parsec
-                   , persistent-postgresql
+                   , persistent-postgresql >= 2.2.1.2 && < 2.2.2.0
                    , retry
                    , text
 

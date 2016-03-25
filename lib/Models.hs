@@ -30,6 +30,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
     state RepositoryState sqltype=text
     error Text Maybe default=NULL sqltype=text
     created UTCTime default=now()
+    UniqProductId productId
     deriving Show
 
   UserRole json sql=user_roles
