@@ -16,7 +16,7 @@ import qualified Data.List as L
 import Data.Text (Text, pack)
 import Data.Tree (Tree(Node))
 import qualified Features.Feature as F
-import MimeTypes (Markdown)
+import Api.MimeTypes (Markdown)
 import Models
 import Products.DomainTermsAPI as DT (APIDomainTerm (..))
 import Products.FeaturesAPI as F (APIFeature (..))
