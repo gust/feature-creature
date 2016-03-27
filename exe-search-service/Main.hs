@@ -6,7 +6,6 @@ import App
 import AppConfig as Config (AppConfig(..), RabbitMQConfig (..), readConfig)
 import Messaging.Job as Job
 import CommonCreatures (WithErr)
-import Control.Concurrent (threadDelay)
 import Control.Monad.Except (runExceptT, throwError)
 import Control.Monad.Reader
 import qualified Data.Aeson as Aeson
@@ -24,24 +23,23 @@ main :: IO ()
 main = do
   appConfig <- readConfig
   withRetry (createFeaturesIndex (getElasticSearchConfig appConfig))
-    >> withRetry (MB.withConn (getRabbitMQConfig appConfig) (initMessageBroker appConfig))
-    >> runReaderT processJobs appConfig
+  withRetry (MB.withConn (getRabbitMQConfig appConfig) (initMessageBroker appConfig))
+  runReaderT processJobs appConfig
 
 initMessageBroker :: AppConfig -> MB.WithConn ()
 initMessageBroker cfg =
-  (liftIO $ putStrLn "Creating exchange...")
-    >> (featureCreatureExchange (getRabbitMQConfig cfg))
-    >> (liftIO $ putStrLn "Creating queue...")
+  featureCreatureExchange (getRabbitMQConfig cfg)
     >> MP.createProductsQueue
-    >>= (\queueStatus -> liftIO $ putStrLn ("Queue status: " ++ (show queueStatus)))
     >> MP.subscribeToProductCreation
 
 processJobs :: App ()
-processJobs =
-  forever $ do
-    (liftIO $ threadDelay (5 * 1000 * 1000)) >> ask >>= \cfg ->
-      (liftIO $ MB.withConn (getRabbitMQConfig cfg) (getMessages cfg))
-        >> return ()
+processJobs = do
+  cfg <- ask
+  liftIO $ MB.withConn (getRabbitMQConfig cfg) $ do
+    getMessages cfg
+    liftIO $ putStrLn "I'm gonna sit here and run forever."
+    liftIO $ putStrLn "Press any key to quit"
+    liftIO $ getChar >> return ()
 
 getMessages :: AppConfig -> MB.WithConn ()
 getMessages cfg =

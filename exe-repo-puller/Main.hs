@@ -7,7 +7,6 @@ import App
 import AppConfig as Config (AppConfig(..), DBConfig (..), RabbitMQConfig (..), getAppConfig)
 import Messaging.Job as Job
 import CommonCreatures (WithErr)
-import Control.Concurrent (threadDelay)
 import Control.Monad.Except (runExceptT, throwError)
 import Control.Monad.Reader
 import Data.Aeson (ToJSON)
@@ -27,15 +26,12 @@ import Retry (withRetry)
 main :: IO ()
 main = getAppConfig >>= \appConfig ->
   withRetry (MB.withConn (getRabbitMQConfig appConfig) (initMessageBroker appConfig))
-    >> runReaderT pullRepos appConfig
+    >> runReaderT listenForIncomingMessages appConfig
 
 initMessageBroker :: AppConfig -> MB.WithConn ()
 initMessageBroker cfg =
-  (liftIO $ putStrLn "Creating exchange...")
-    >> (featureCreatureExchange (getRabbitMQConfig cfg))
-    >> (liftIO $ putStrLn "Creating queue...")
+  featureCreatureExchange (getRabbitMQConfig cfg)
     >> MP.createProductsQueue
-    >>= (\queueStatus -> liftIO $ putStrLn ("Queue status: " ++ (show queueStatus)))
     >> MP.subscribeToProductCreation
 
 -- this is duplicated in search-service#Main
@@ -44,33 +40,34 @@ featureCreatureExchange cfg =
   let exch = MB.Exchange (Config.getExchangeName cfg) "topic" True
   in MB.createExchange exch
 
--- pull delay out into configuration
-pullRepos :: App ()
-pullRepos =
-  forever $ do
-    (liftIO $ threadDelay (5 * 1000 * 1000)) >> ask >>= \cfg ->
-      (liftIO $ MB.withConn (getRabbitMQConfig cfg) (processNewProductMessages cfg))
-        >> return ()
+listenForIncomingMessages :: App ()
+listenForIncomingMessages = do
+  cfg <- ask
+  liftIO $ MB.withConn (getRabbitMQConfig cfg) $ do
+    processNewProductMessages cfg
+    liftIO $ putStrLn "I'm gonna sit here and run forever."
+    liftIO $ putStrLn "Press any key to quit"
+    liftIO $ getChar >> return ()
 
 processNewProductMessages :: AppConfig -> MB.WithConn ()
-processNewProductMessages cfg = MP.getProductsMessages (MB.MessageHandler (pullRepo cfg))
+processNewProductMessages cfg = MP.getProductsMessages (MB.MessageHandler (messageReceivedCallback cfg))
 
-pullRepo :: AppConfig -> (AMQP.Message, AMQP.Envelope) -> IO ()
-pullRepo cfg (message, envelope) =
-  (runReaderT (pullRepo' (parseJob message)) cfg)
+messageReceivedCallback :: AppConfig -> (AMQP.Message, AMQP.Envelope) -> IO ()
+messageReceivedCallback cfg (message, envelope) =
+  runReaderT (pullRepo (parseJob message)) cfg
     >>= runExceptT
     >>= (resolveJob envelope)
     >> return ()
 
-pullRepo' :: Either String (Job APIProduct) -> App (WithErr ())
-pullRepo' (Left err) = return $ throwError err
-pullRepo' (Right (Job Job.ProductCreated apiProduct)) = ask >>= \cfg ->
+pullRepo :: Either String (Job APIProduct) -> App (WithErr ())
+pullRepo (Left err) = return $ throwError err
+pullRepo (Right (Job Job.ProductCreated apiProduct)) = ask >>= \cfg ->
   let prodId = maybe (-1) id (productID apiProduct)
   in (liftIO $ runReaderT (runPool (P.findProduct (toKey prodId))) (getPool . getDBConfig $ cfg)) >>= \prod ->
       case prod of
         Nothing  -> return $ throwError ("Product " ++ (show prodId) ++ " not found")
         (Just p) -> pullProductRepo p prodId
-pullRepo' (Right (Job jobType _)) = return $ throwError ("Ignoring job " ++ (show jobType))
+pullRepo (Right (Job jobType _)) = return $ throwError ("Ignoring job " ++ (show jobType))
 
 pullProductRepo :: Product -> ProductID -> App (WithErr ())
 pullProductRepo prod prodId = ask >>= \cfg ->

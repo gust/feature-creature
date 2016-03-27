@@ -23,10 +23,8 @@ import Network.AMQP.Internal.Types
 withConn :: RabbitMQConfig -> WithConn a -> IO a
 withConn cfg f =
   bracket (openConnection cfg) closeConnection $ \conn ->
-    (openChannel conn)
-      >>= \ch -> runReaderT (runConn f) (Connection conn ch cfg)
-      >>= \a  -> threadDelay (1 * 1000 * 1000) -- the connection closes prematurely without this pause. not sure why yet.
-      >> return a
+    openChannel conn >>= \ch ->
+    runReaderT (runConn f) (Connection conn ch cfg)
 
 createExchange :: Exchange -> WithConn ()
 createExchange (Exchange exchName exchType exchIsDurable) =
