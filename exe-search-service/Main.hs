@@ -3,7 +3,7 @@
 module Main where
 
 import App
-import AppConfig as Config (AppConfig(..), RabbitMQConfig (..), readConfig)
+import AppConfig as Config (AppConfig(..), readConfig)
 import Messaging.Job as Job
 import CommonCreatures (WithErr)
 import Control.Monad.Except (runExceptT, throwError)
@@ -12,7 +12,8 @@ import qualified Data.Aeson as Aeson
 import Features.Feature (FeatureFile, findFeatureFiles)
 import Features.SearchableFeature (createFeaturesIndex)
 import qualified Indexer
-import qualified Messaging.Products as MP
+import qualified Messaging.Exchanges as Msgs
+import qualified Messaging.Products as Msgs
 import qualified Network.AMQP as AMQP
 import qualified Network.AMQP.MessageBus as MB
 import Products.CodeRepository (CodeRepository(..), codeRepositoryDir)
@@ -28,9 +29,9 @@ main = do
 
 initMessageBroker :: AppConfig -> MB.WithConn ()
 initMessageBroker cfg =
-  featureCreatureExchange (getRabbitMQConfig cfg)
-    >> MP.createProductsQueue
-    >> MP.subscribeToProductCreation
+  Msgs.featureCreatureExchange (getRabbitMQConfig cfg)
+    >> Msgs.createProductsQueue
+    >> Msgs.subscribeToProductCreation
 
 processJobs :: App ()
 processJobs = do
@@ -43,7 +44,7 @@ processJobs = do
 
 getMessages :: AppConfig -> MB.WithConn ()
 getMessages cfg =
-  MP.getProductsMessages (MB.MessageHandler (indexProductFeatures cfg))
+  Msgs.getProductsMessages (MB.MessageHandler (indexProductFeatures cfg))
 
 indexProductFeatures :: AppConfig -> (AMQP.Message, AMQP.Envelope) -> IO ()
 indexProductFeatures cfg (message, envelope) =
@@ -74,11 +75,6 @@ featureFiles productID cfg =
 resolveJob :: AMQP.Envelope -> Either String () -> IO ()
 resolveJob _ (Left err)       = putStrLn ("Job failed: " ++ err)
 resolveJob envelope (Right _) = (putStrLn "Resolving envelope...") >> MB.ackEnvelope envelope
-
-featureCreatureExchange :: RabbitMQConfig -> MB.WithConn ()
-featureCreatureExchange cfg =
-  let exch = MB.Exchange (Config.getExchangeName cfg) "topic" True
-  in MB.createExchange exch
 
 parseJob :: AMQP.Message -> Either String (Job CodeRepository)
 parseJob message = Aeson.eitherDecode (AMQP.msgBody message)

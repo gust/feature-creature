@@ -26,6 +26,7 @@ library
                    , Git.Git
                    , Git.Diff
                    , Indexer
+                   , Messaging.Exchanges
                    , Messaging.Job
                    , Messaging.Products
                    , Models
