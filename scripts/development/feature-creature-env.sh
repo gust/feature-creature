@@ -4,6 +4,8 @@
 # source ./script/development/feature-creature-env.sh
 
 FC_API_PATH="http://localhost:8081"
+FC_FEATURES_API="http://localhost:8082"
+
 FC_DB_NAME="feature_creature"
 FC_DB_HOST="localhost"
 FC_DB_PORT="5432"
@@ -78,6 +80,9 @@ export FC_RABBITMQ_PASS=$FC_RABBITMQ_PASS
 
 echo "Setting FC_RABBITMQ_EXCHANGE_NAME environment variable: " $FC_RABBITMQ_EXCHANGE_NAME
 export FC_RABBITMQ_EXCHANGE_NAME=$FC_RABBITMQ_EXCHANGE_NAME
+
+echo "Setting FC_FEATURES_API environment variable: " $FC_FEATURES_API
+export FC_FEATURES_API=$FC_FEATURES_API
 
 echo
 

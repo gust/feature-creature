@@ -8,6 +8,7 @@ module Messaging.Products
 , productRepoCreatedTopic
 , productsQueue
 , subscribeToProductCreation
+, subscribeToProductRepoCreation
 ) where
 
 import Control.Monad.Reader

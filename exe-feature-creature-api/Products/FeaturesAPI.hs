@@ -13,65 +13,44 @@ module Products.FeaturesAPI
 , productsFeature
 ) where
 
+import Api.Types.Feature
 import App
-import AppConfig (ElasticSearchConfig, getGitConfig, getElasticSearchConfig)
-import Control.Monad.Except (runExceptT)
+import AppConfig
+import Control.Lens ((&), (.~), (^.))
+import Control.Monad.Trans.Either (left)
 import Control.Monad.Reader
-import Data.Aeson
+import qualified Data.Aeson as Aeson
 import Data.DirectoryTree
-import Data.Text (Text, pack, unpack)
+import Data.Text (pack, unpack)
 import qualified Features.Feature as F
-import qualified Features.SearchableFeature as SF
-import qualified Products.CodeRepository as CR
+import qualified Network.Wreq as Wreq
 import qualified Products.Product as P
 import Servant
-
-data APIFeature = APIFeature { featureID :: F.FeatureFile
-                             , description :: F.Feature
-                             } deriving (Show)
 
 type FeaturesAPI = "features" :> QueryParam "search" String :> Get '[JSON] DirectoryTree
 type FeatureAPI  = "feature"  :> QueryParam "path" F.FeatureFile
                               :> Get '[JSON] APIFeature
 
-instance FromText F.FeatureFile where
-  fromText path = Just $ F.FeatureFile (unpack path)
-
-instance ToJSON APIFeature where
-  toJSON (APIFeature (F.FeatureFile featID) (F.Feature desc)) =
-    object [ "featureID"   .= featID
-           , "description" .= desc
-           ]
 productsFeatures :: P.ProductID -> Maybe String -> App DirectoryTree
 productsFeatures prodID (Just searchTerm) = do
-  esConfig <- reader getElasticSearchConfig
-  liftIO $ searchFeatures prodID (pack searchTerm) esConfig
+  featuresUrl <- reader featuresAPI
+  resp <- liftIO $ Wreq.getWith (Wreq.defaults & Wreq.param "search" .~ [pack searchTerm]) ((unpack featuresUrl) ++ "/products/" ++ (show prodID) ++ "/features")
+  case Aeson.eitherDecode (resp ^. Wreq.responseBody) of
+    (Left _) -> lift $ left $ err404
+    (Right tree) -> return tree
 productsFeatures prodID Nothing = do
-  featuresPath <- CR.codeRepositoryDir prodID <$> reader getGitConfig
-  result       <- liftIO $ runExceptT (F.getFeatures featuresPath)
-  case result of
-    Left msg   -> error msg
-    Right tree -> return tree
-
-searchFeatures :: P.ProductID -> Text -> ElasticSearchConfig -> IO DirectoryTree
-searchFeatures prodID searchTerm esConfig =
-  (liftIO $ runExceptT (SF.searchFeatures prodID searchTerm esConfig))
-    >>= \fs -> case fs of
-                 (Left err) -> error err
-                 (Right features) -> return $ F.buildDirectoryTree . parseFeatureFiles $ features
-
-parseFeatureFiles :: [SF.SearchableFeature] -> [F.FeatureFile]
-parseFeatureFiles = map (F.FeatureFile . unpack . SF.getFeaturePath)
+  featuresUrl <- reader featuresAPI
+  resp <- liftIO $ Wreq.get ((unpack featuresUrl) ++ "/products/" ++ (show prodID) ++ "/features")
+  case Aeson.eitherDecode (resp ^. Wreq.responseBody) of
+    (Left _) -> lift $ left $ err404
+    (Right tree) -> return tree
 
 productsFeature :: P.ProductID -> Maybe F.FeatureFile -> App APIFeature
 productsFeature _ Nothing = error "Missing required query param 'path'"
 productsFeature prodID (Just (F.FeatureFile path)) = do
-  featuresPath <- CR.codeRepositoryDir prodID <$> reader getGitConfig
-  result       <- liftIO $ runExceptT (F.getFeature $ F.FeatureFile (featuresPath ++ path))
-  case result of
-    Left msg      -> error msg
-    Right feature ->
-      return $ APIFeature { featureID = F.FeatureFile path
-                          , description = feature
-                          }
+  featuresUrl <- reader featuresAPI
+  resp <- liftIO $ Wreq.getWith (Wreq.defaults & Wreq.param "path" .~ [pack path]) ((unpack featuresUrl) ++ "/products/" ++ (show prodID) ++ "/feature")
+  case Aeson.eitherDecode (resp ^. Wreq.responseBody) of
+    (Left _) -> lift $ left $ err404
+    (Right feature) -> return feature
 

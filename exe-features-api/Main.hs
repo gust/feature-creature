@@ -27,7 +27,7 @@ main :: IO ()
 main = getAppConfig >>= \appConfig ->
   let pool = getPool (getDBConfig appConfig)
   in withRetry (runSqlPool (runMigration migrateAll) pool)
-      >> Warp.run 8081 (app appConfig)
+      >> Warp.run 8082 (app appConfig)
 
 app :: AppConfig -> Wai.Application
 app cfg =

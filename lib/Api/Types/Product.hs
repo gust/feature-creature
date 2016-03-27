@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Api.Types
+module Api.Types.Product
 ( APIProduct (..)
 , productToAPIProduct
 ) where

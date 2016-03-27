@@ -10,17 +10,32 @@ module Features.Feature
 ) where
 
 import CommonCreatures (WithErr)
+import Data.Aeson as Aeson
 import Data.DirectoryTree (DirectoryTree, FileDescription (..), createNode, addToDirectoryTree)
 import Data.List (stripPrefix)
 import Data.Maybe (mapMaybe)
+import Data.Text (unpack)
+import Control.Applicative
 import Control.Monad.Except (throwError)
 import Control.Monad.IO.Class (liftIO)
 import System.Directory (doesFileExist)
 import System.Exit (ExitCode(ExitFailure, ExitSuccess))
 import System.Process (readProcessWithExitCode)
+import Servant (FromText (..))
 
 newtype Feature     = Feature String deriving (Show)
 newtype FeatureFile = FeatureFile String deriving (Show)
+
+instance FromJSON Feature where
+  parseJSON (String a) = pure (Feature (unpack a))
+  parseJSON _ = empty
+
+instance FromJSON FeatureFile where
+  parseJSON (String a) = pure (FeatureFile (unpack a))
+  parseJSON _ = empty
+
+instance FromText FeatureFile where
+  fromText path = Just $ FeatureFile (unpack path)
 
 getFeatures :: FilePath -> WithErr DirectoryTree
 getFeatures path = buildDirectoryTree <$> findFeatureFiles path

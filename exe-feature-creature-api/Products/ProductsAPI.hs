@@ -12,7 +12,7 @@ module Products.ProductsAPI
 , productsServer
 ) where
 
-import Api.Types (APIProduct (..), productToAPIProduct)
+import Api.Types.Product (APIProduct (..), productToAPIProduct)
 import App
 import AppConfig (DBConfig (..), getDBConfig, getRabbitMQConfig)
 import Messaging.Job as Job (Job (..), JobType (..))

@@ -12,11 +12,11 @@ module Features.FeaturesAPI
 , featuresServer
 ) where
 
+import Api.Types.Feature
 import App
 import AppConfig (ElasticSearchConfig, getGitConfig, getElasticSearchConfig)
 import Control.Monad.Except (runExceptT)
 import Control.Monad.Reader
-import Data.Aeson
 import Data.DirectoryTree
 import Data.Text (Text, pack, unpack)
 import qualified Features.Feature as F
@@ -25,26 +25,13 @@ import qualified Products.CodeRepository as CR
 import qualified Products.Product as P
 import Servant
 
-type FeaturesAPI =
-  "features" :> ProductIDCapture :> QueryParam "search" String :> Get '[JSON] DirectoryTree
+type FeaturesAPI = "products" :> ProductIDCapture :> "features" :> QueryParam "search" String :> Get '[JSON] DirectoryTree
+              :<|> "products" :> ProductIDCapture :> "feature"  :> QueryParam "path" F.FeatureFile :> Get '[JSON] APIFeature
 
 type ProductIDCapture = Capture "id" P.ProductID
 
-data APIFeature = APIFeature { featureID :: F.FeatureFile
-                             , description :: F.Feature
-                             } deriving (Show)
-
-instance FromText F.FeatureFile where
-  fromText path = Just $ F.FeatureFile (unpack path)
-
-instance ToJSON APIFeature where
-  toJSON (APIFeature (F.FeatureFile featID) (F.Feature desc)) =
-    object [ "featureID"   .= featID
-           , "description" .= desc
-           ]
-
 featuresServer :: ServerT FeaturesAPI App
-featuresServer = getProductFeatures
+featuresServer = getProductFeatures :<|> getProductFeature
 
 featuresAPI :: Proxy FeaturesAPI
 featuresAPI = Proxy
@@ -69,4 +56,16 @@ searchFeatures prodID searchTerm esConfig =
 
 parseFeatureFiles :: [SF.SearchableFeature] -> [F.FeatureFile]
 parseFeatureFiles = map (F.FeatureFile . unpack . SF.getFeaturePath)
+
+getProductFeature :: P.ProductID -> Maybe F.FeatureFile -> App APIFeature
+getProductFeature _ Nothing = error "Missing required query param 'path'"
+getProductFeature prodID (Just (F.FeatureFile path)) = do
+  featuresPath <- CR.codeRepositoryDir prodID <$> reader getGitConfig
+  result       <- liftIO $ runExceptT (F.getFeature $ F.FeatureFile (featuresPath ++ path))
+  case result of
+    Left msg      -> error msg
+    Right feature ->
+      return $ APIFeature { featureID = F.FeatureFile path
+                          , description = feature
+                          }
 

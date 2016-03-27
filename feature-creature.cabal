@@ -15,7 +15,8 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:   Api.MimeTypes
-                   , Api.Types
+                   , Api.Types.Feature
+                   , Api.Types.Product
                    , Config.Config
                    , CommonCreatures
                    , Data.DirectoryTree
@@ -93,6 +94,7 @@ executable feature-creature-web
                    , feature-creature
                    , http-client
                    , http-types
+                   , lens
                    , monad-logger
                    , mtl
                    , persistent-postgresql >= 2.2.1.2 && < 2.2.2.0
@@ -109,6 +111,7 @@ executable feature-creature-web
                    , wai-cors
                    , wai-extra
                    , warp
+                   , wreq
 
   ghc-options:       -Wall
                      -fwarn-unused-matches

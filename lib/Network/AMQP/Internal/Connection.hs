@@ -10,7 +10,6 @@ module Network.AMQP.Internal.Connection
 ) where
 
 import Config.Config (RabbitMQConfig (..))
-import Control.Concurrent (threadDelay)
 import Control.Exception (bracket)
 import Control.Monad.Reader
 import Data.Map as M

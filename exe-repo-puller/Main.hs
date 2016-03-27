@@ -2,7 +2,7 @@
 
 module Main where
 
-import Api.Types (APIProduct (..), productToAPIProduct)
+import Api.Types.Product (APIProduct (..), productToAPIProduct)
 import App (App, withAMQPConn, withDBPool)
 import AppConfig as Config (AppConfig(..), getAppConfig)
 import Messaging.Job as Job

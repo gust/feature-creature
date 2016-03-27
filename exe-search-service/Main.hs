@@ -31,7 +31,7 @@ initMessageBroker :: AppConfig -> MB.WithConn ()
 initMessageBroker cfg =
   Msgs.featureCreatureExchange (getRabbitMQConfig cfg)
     >> Msgs.createProductsQueue
-    >> Msgs.subscribeToProductCreation
+    >> Msgs.subscribeToProductRepoCreation
 
 processJobs :: App ()
 processJobs = do
