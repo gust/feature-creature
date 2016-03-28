@@ -29,6 +29,12 @@ instance ToJSON DirectoryTree where
            , "forest"          .= forest
            ]
 
+instance FromJSON DirectoryTree where
+  parseJSON (Object v) = Node <$>
+                        v .: "fileDescription" <*>
+                        v .: "forest"
+  parseJSON _          = mzero
+
 instance ToJSON FileDescription where
   toJSON (FileDescription fName fPath) =
     object [ "fileName" .= fName

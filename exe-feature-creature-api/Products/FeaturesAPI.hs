@@ -36,13 +36,13 @@ productsFeatures prodID (Just searchTerm) = do
   featuresUrl <- reader featuresAPI
   resp <- liftIO $ Wreq.getWith (Wreq.defaults & Wreq.param "search" .~ [pack searchTerm]) ((unpack featuresUrl) ++ "/products/" ++ (show prodID) ++ "/features")
   case Aeson.eitherDecode (resp ^. Wreq.responseBody) of
-    (Left _) -> lift $ left $ err404
+    (Left err) -> lift $ left $ err503 { errReasonPhrase = err }
     (Right tree) -> return tree
 productsFeatures prodID Nothing = do
   featuresUrl <- reader featuresAPI
   resp <- liftIO $ Wreq.get ((unpack featuresUrl) ++ "/products/" ++ (show prodID) ++ "/features")
   case Aeson.eitherDecode (resp ^. Wreq.responseBody) of
-    (Left _) -> lift $ left $ err404
+    (Left err) -> lift $ left $ err503 { errReasonPhrase = err }
     (Right tree) -> return tree
 
 productsFeature :: P.ProductID -> Maybe F.FeatureFile -> App APIFeature
@@ -51,6 +51,6 @@ productsFeature prodID (Just (F.FeatureFile path)) = do
   featuresUrl <- reader featuresAPI
   resp <- liftIO $ Wreq.getWith (Wreq.defaults & Wreq.param "path" .~ [pack path]) ((unpack featuresUrl) ++ "/products/" ++ (show prodID) ++ "/feature")
   case Aeson.eitherDecode (resp ^. Wreq.responseBody) of
-    (Left _) -> lift $ left $ err404
+    (Left err) -> lift $ left $ err503 { errReasonPhrase = err }
     (Right feature) -> return feature
 
