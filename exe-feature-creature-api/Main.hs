@@ -4,7 +4,7 @@
 module Main where
 
 import App
-import AppConfig (AppConfig, getAppConfig, getDBConfig)
+import AppConfig (AppConfig (..), getAppConfig)
 import Control.Monad.Reader       (runReaderT)
 import Control.Monad.Trans.Either (EitherT)
 import Config.Config (getPool)
@@ -24,18 +24,15 @@ type FeatureCreatureAPI = ProductsAPI
                      :<|> Docs.DocumentationAPI
 
 main :: IO ()
-main = do
-  appConfig <- getAppConfig
-
+main = getAppConfig >>= \appConfig -> do
   let pool = getPool (getDBConfig appConfig)
-
   withRetry (runSqlPool (runMigration migrateAll) pool)
-
   Warp.run 8081 (app appConfig)
 
 app :: AppConfig -> Wai.Application
 app cfg =
-  cors (const $ Just corsPolicy)
+  (getRequestLogger cfg)
+  $ cors (const $ Just corsPolicy)
   $ serve api (readerServer cfg)
 
 api :: Proxy FeatureCreatureAPI

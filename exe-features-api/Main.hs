@@ -4,7 +4,7 @@
 module Main where
 
 import App
-import AppConfig (AppConfig, getAppConfig, getDBConfig)
+import AppConfig (AppConfig (..), getAppConfig)
 import Control.Monad.Reader       (runReaderT)
 import Control.Monad.Trans.Either (EitherT)
 import Config.Config (getPool)
@@ -31,7 +31,8 @@ main = getAppConfig >>= \appConfig ->
 
 app :: AppConfig -> Wai.Application
 app cfg =
-  cors (const $ Just corsPolicy)
+  (getRequestLogger cfg)
+  $ cors (const $ Just corsPolicy)
   $ serve api (readerServer cfg)
 
 api :: Proxy FeaturesServiceAPI
