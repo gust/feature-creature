@@ -2,6 +2,7 @@
 
 module Main where
 
+import Api.Types.Product (APIProduct (..))
 import App
 import AppConfig as Config (AppConfig(..), readConfig)
 import Messaging.Job as Job
@@ -9,14 +10,14 @@ import CommonCreatures (WithErr)
 import Control.Monad.Except (runExceptT, throwError)
 import Control.Monad.Reader
 import qualified Data.Aeson as Aeson
-import Features.Feature (FeatureFile, findFeatureFiles)
+import Features.Feature as F (findFeatureFiles)
 import Features.SearchableFeature (createFeaturesIndex)
 import qualified Indexer
 import qualified Messaging.Exchanges as Msgs
 import qualified Messaging.Products as Msgs
 import qualified Network.AMQP as AMQP
 import qualified Network.AMQP.MessageBus as MB
-import Products.CodeRepository (CodeRepository(..), codeRepositoryDir)
+import qualified Products.CodeRepository as CR
 import Products.Product (ProductID)
 import Retry (withRetry)
 
@@ -37,45 +38,48 @@ processJobs :: App ()
 processJobs = do
   cfg <- ask
   liftIO $ MB.withConn (getRabbitMQConfig cfg) $ do
-    getMessages cfg
+    Msgs.getProductsMessages (MB.MessageHandler (messageReceivedCallback cfg))
     liftIO $ putStrLn "I'm gonna sit here and run forever."
     liftIO $ putStrLn "Press any key to quit"
     liftIO $ getChar >> return ()
 
-getMessages :: AppConfig -> MB.WithConn ()
-getMessages cfg =
-  Msgs.getProductsMessages (MB.MessageHandler (indexProductFeatures cfg))
+messageReceivedCallback :: AppConfig -> (AMQP.Message, AMQP.Envelope) -> IO ()
+messageReceivedCallback cfg (message, envelope) =
+  case parseRepoCreatedJob message of
+    (Left err) -> putStrLn err
+    (Right (Job _ apiProduct)) ->
+      runReaderT (indexProductFeatures apiProduct) cfg
+        >>= runExceptT
+        >>= (resolveJob envelope)
+        >>= return
 
-indexProductFeatures :: AppConfig -> (AMQP.Message, AMQP.Envelope) -> IO ()
-indexProductFeatures cfg (message, envelope) =
-  (runExceptT $ indexProductFeatures' cfg (parseJob message))
-    >>= (resolveJob envelope)
-    >>= return
+indexProductFeatures :: APIProduct -> App (WithErr ())
+indexProductFeatures prod =
+  case productID prod of
+    Nothing -> return $ throwError $ "Missing productID: " ++ (show prod)
+    (Just prodID) -> indexFeatures prodID
 
-indexProductFeatures' :: AppConfig -> Either String (Job CodeRepository) -> WithErr ()
-indexProductFeatures' _ (Left err) = throwError err
-indexProductFeatures' cfg (Right (Job RepositoryCreated codeRepository)) =
-  let productID = getProductID codeRepository
-  in (liftIO $ putStrLn "Getting feature files...")
-       >> (liftIO $ runExceptT $ featureFiles productID cfg)
-       >>= (indexFeatures productID cfg)
-indexProductFeatures' _ (Right (Job _ _)) = return ()
-
-indexFeatures :: ProductID -> AppConfig -> Either String [FeatureFile] -> WithErr ()
-indexFeatures _ _ (Left err) = (liftIO $ putStrLn ("Error: " ++ err)) >> throwError err
-indexFeatures productID cfg (Right features) =
-  (liftIO $ putStrLn ("Indexing features: " ++ (show features)))
-    >> (liftIO $ Indexer.indexFeatures features productID (getGitConfig cfg) (getElasticSearchConfig cfg))
-    >>= return
-
-featureFiles :: ProductID -> AppConfig -> WithErr [FeatureFile]
-featureFiles productID cfg =
-  findFeatureFiles (codeRepositoryDir productID (getGitConfig cfg))
+indexFeatures :: ProductID -> App (WithErr ())
+indexFeatures prodID = ask >>= \cfg -> do
+  let gitConfig = getGitConfig cfg
+  let esConfig  = getElasticSearchConfig cfg
+  featureFiles <- liftIO $ runExceptT $ F.findFeatureFiles (CR.codeRepositoryDir prodID gitConfig)
+  case featureFiles of
+    (Left err) -> return $ throwError err
+    (Right features) ->
+      (liftIO $ putStrLn ("Indexing features: " ++ (show features)))
+        >> (liftIO $ Indexer.indexFeatures features prodID gitConfig esConfig)
+        >>= return . return
 
 resolveJob :: AMQP.Envelope -> Either String () -> IO ()
 resolveJob _ (Left err)       = putStrLn ("Job failed: " ++ err)
 resolveJob envelope (Right _) = (putStrLn "Resolving envelope...") >> MB.ackEnvelope envelope
 
-parseJob :: AMQP.Message -> Either String (Job CodeRepository)
-parseJob message = Aeson.eitherDecode (AMQP.msgBody message)
+parseRepoCreatedJob :: AMQP.Message -> Either String (Job APIProduct)
+parseRepoCreatedJob message =
+  Aeson.eitherDecode (AMQP.msgBody message)
+    >>= filterJob
 
+filterJob :: Job APIProduct -> Either String (Job APIProduct)
+filterJob processableJob@(Job Job.RepositoryCreated _) = Right processableJob
+filterJob (Job jobType _) = Left $ "Ignoring job " ++ (show jobType)
