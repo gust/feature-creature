@@ -1,0 +1,29 @@
+FROM toddmohney/feature-creature-dev-build:v1
+
+RUN apt-get install -y \
+    git \
+    tmux \
+    gpm \
+    ctags \
+    python-dev \
+    vim \
+    vim-doc \
+    vim-scripts
+
+# vim setup
+COPY docker/dot-vim /root/.vim
+COPY docker/dot-vimrc /root/.vimrc
+
+RUN vim +PluginInstall! +qall
+
+# tmux setup
+COPY docker/dot-tmux.conf /root/.tmux.conf
+
+# git setup
+COPY docker/dot-gitconfig /root/.gitconfig
+
+# add source files
+COPY . /usr/share/feature-creature
+
+CMD /bin/echo "Done building dev image!"
+
