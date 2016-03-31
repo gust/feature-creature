@@ -23,6 +23,10 @@ COPY docker/dot-tmux.conf /root/.tmux.conf
 COPY docker/dot-gitconfig /root/.gitconfig
 COPY docker/dot-ssh /root/.ssh
 
+# bash setup
+COPY docker/dot-bash/.bash_profile /root/.bash_profile
+COPY docker/dot-bash/bash_includes /root/bash_includes
+
 # add source files
 COPY . /usr/share/feature-creature
 
