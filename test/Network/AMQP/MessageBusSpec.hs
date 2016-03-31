@@ -65,7 +65,7 @@ resetBroker =
     >> return ()
 
 testConfig :: RabbitMQConfig
-testConfig = RabbitMQConfig "localhost" "/" "guest" "guest" "test.exchange"
+testConfig = RabbitMQConfig "message_bus.local" "/" "guest" "guest" "test.exchange"
 
 messageHandler :: MessageHandler
 messageHandler = MessageHandler messageHandlerFn

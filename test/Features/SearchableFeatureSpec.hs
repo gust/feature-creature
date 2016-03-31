@@ -15,7 +15,7 @@ main :: IO ()
 main = hspec spec
 
 testFeature = SearchableFeature "some/path" "Hot Doggin" 1
-esConfig    = ElasticSearchConfig "http://localhost:9200" "feature-creature-test" 1 0
+esConfig    = ElasticSearchConfig "http://search.local:9200" "feature-creature-test" 1 0
 
 cleanTestFeatures :: IO ()
 cleanTestFeatures = withRetryStatus resetFeaturesIndex
