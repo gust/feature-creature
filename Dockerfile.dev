@@ -21,6 +21,7 @@ COPY docker/dot-tmux.conf /root/.tmux.conf
 
 # git setup
 COPY docker/dot-gitconfig /root/.gitconfig
+COPY docker/dot-ssh /root/.ssh
 
 # add source files
 COPY . /usr/share/feature-creature
