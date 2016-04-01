@@ -2,6 +2,7 @@ module Main where
 
 import App
 import AppConfig as Cfg
+import Control.Concurrent (threadDelay)
 import Control.Monad.Except (runExceptT)
 import Control.Monad.Reader
 import qualified Database.Persist.Postgresql as DB
@@ -14,13 +15,16 @@ import Products.Product as P
 import Retry (withRetry)
 
 main :: IO ()
-main = do
-  appConfig <- Cfg.readConfig
+main = Cfg.readConfig >>= \appConfig ->
   runReaderT refreshRepos appConfig
+    >> threadDelay (60 * 1000 * 1000)
+    >> main
 
 refreshRepos :: App ()
-refreshRepos = getProductIDs >>= \productIDs ->
-  mapM_ refreshRepo productIDs
+refreshRepos =
+  (liftIO $ putStrLn "Refreshing repos...") >>
+  getProductIDs >>= \productIDs ->
+    mapM_ refreshRepo productIDs
 
 getProductIDs :: App [ProductID]
 getProductIDs = (withRetry getProductEntities) >>= \entities ->
