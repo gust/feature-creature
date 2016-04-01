@@ -34,6 +34,7 @@ library
                    , ModelTypes
                    , Network.AMQP.MessageBus
                    , Products.Product
+                   , Products.ProductRepo
                    , Products.CodeRepository
                    , Retry
                    , UserRoles.UserRole
@@ -46,6 +47,7 @@ library
                    , containers
                    , directory
                    , exceptions
+                   , esqueleto >= 2.4.2 && < 2.5.0
                    , http-client
                    , http-media
                    , process
