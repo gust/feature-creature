@@ -18,10 +18,12 @@ import Data.Tree (Tree(Node))
 import qualified Features.Feature as F
 import Api.MimeTypes (Markdown)
 import Models
+import ModelTypes
 import Products.DomainTermsAPI as DT (APIDomainTerm (..))
 import Products.FeaturesAPI as F (APIFeature (..))
 import Products.ProductsAPI as P (APIProduct (..), productsAPI)
 import Products.UserRolesAPI as U (APIUserRole (..))
+import Products.ProductRepo as PR (ProductRepo (..))
 import Servant
 import qualified Servant.Docs as SD
 
@@ -38,6 +40,12 @@ instance SD.ToSample [APIProduct] [APIProduct] where
 
 instance SD.ToSample APIProduct APIProduct where
   toSample _ = Just sampleCreatureProduct
+
+instance SD.ToSample [ProductRepo] [ProductRepo] where
+  toSample _ = Just $ [ sampleMonsterProductRepo, sampleCreatureProductRepo, sampleCreatureProductRepoWithError ]
+
+instance SD.ToSample ProductRepo ProductRepo where
+  toSample _ = Just sampleCreatureProductRepo
 
 instance SD.ToSample APIFeature APIFeature where
   toSample _ =
@@ -96,6 +104,30 @@ sampleCreatureProduct = APIProduct { P.productID = Just 2
                                    , name      = "creatures"
                                    , repoUrl   = "ssh://creatures.com/repo.git"
                                    }
+
+sampleMonsterProductRepo :: ProductRepo
+sampleMonsterProductRepo = ProductRepo { PR.getProductId        = Just 1
+                                       , PR.getProductName      = "monsters"
+                                       , PR.getProductRepoUrl   = "http://monsters.com/repo.git"
+                                       , PR.getProductRepoState = Unready
+                                       , PR.getProductRepoError = Nothing
+                                       }
+
+sampleCreatureProductRepo :: ProductRepo
+sampleCreatureProductRepo = ProductRepo { PR.getProductId        = Just 2
+                                        , PR.getProductName      = "creatures"
+                                        , PR.getProductRepoUrl   = "ssh://creatures.com/repo.git"
+                                        , PR.getProductRepoState = Ready
+                                        , PR.getProductRepoError = Nothing
+                                        }
+
+sampleCreatureProductRepoWithError :: ProductRepo
+sampleCreatureProductRepoWithError = ProductRepo { PR.getProductId        = Just 3
+                                                 , PR.getProductName      = "chuds"
+                                                 , PR.getProductRepoUrl   = "ssh://chuds.com/repo.git"
+                                                 , PR.getProductRepoState = Error
+                                                 , PR.getProductRepoError = Just "I'm an error message"
+                                                 }
 
 featureFileSample :: F.Feature
 featureFileSample =

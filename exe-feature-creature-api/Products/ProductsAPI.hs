@@ -28,10 +28,11 @@ import Network.AMQP.MessageBus              as MB
 import qualified Products.DomainTermsAPI    as DT
 import qualified Products.FeaturesAPI       as F
 import qualified Products.Product           as P
+import qualified Products.ProductRepo       as PR
 import qualified Products.UserRolesAPI      as UR
 import Servant
 
-type ProductsAPI = "products" :> Get '[JSON] [APIProduct]
+type ProductsAPI = "products" :> Get '[JSON] [PR.ProductRepo]
               :<|> "products" :> ReqBody '[JSON] APIProduct :> Post '[JSON] APIProduct
               :<|> "products" :> ProductIDCapture :> F.FeaturesAPI
               :<|> "products" :> ProductIDCapture :> F.FeatureAPI
@@ -77,18 +78,9 @@ saveNewProduct :: P.Product -> App P.ProductID
 saveNewProduct p = (reader getDBConfig) >>= \cfg ->
   liftIO $ runReaderT (runPool (P.createProductWithRepoStatus p Unready)) (getPool cfg)
 
-getProducts :: App [APIProduct]
-getProducts = fetchProducts >>= return . (map toProduct)
-
-toProduct :: DB.Entity Product -> APIProduct
-toProduct dbProduct =
-  let dbProd   = P.toProduct dbProduct
-      dbProdID = P.toProductID dbProduct
-  in productToAPIProduct (Just dbProdID) dbProd
-
-fetchProducts :: App [DB.Entity Product]
-fetchProducts = (reader getDBConfig) >>= \cfg ->
-  liftIO $ runReaderT (runPool P.findProducts) (getPool cfg)
+getProducts :: App [PR.ProductRepo]
+getProducts = (getPool <$> reader getDBConfig) >>=
+  liftIO . (runReaderT (runPool PR.findProductRepos))
 
 sendProductCreatedMessage :: ToJSON a => Job a -> WithConn ()
 sendProductCreatedMessage job =
