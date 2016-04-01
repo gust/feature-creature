@@ -16,15 +16,13 @@ import Retry (withRetry)
 
 main :: IO ()
 main = Cfg.readConfig >>= \appConfig ->
-  runReaderT refreshRepos appConfig
-    >> threadDelay (60 * 1000 * 1000)
-    >> main
+  let interval = (Cfg.refreshInterval (getGitConfig appConfig))
+  in runReaderT refreshRepos appConfig
+      >> threadDelay (interval * 1000 * 1000)
+      >> main
 
 refreshRepos :: App ()
-refreshRepos =
-  (liftIO $ putStrLn "Refreshing repos...") >>
-  getProductIDs >>= \productIDs ->
-    mapM_ refreshRepo productIDs
+refreshRepos = getProductIDs >>= (mapM_ refreshRepo)
 
 getProductIDs :: App [ProductID]
 getProductIDs = (withRetry getProductEntities) >>= \entities ->
