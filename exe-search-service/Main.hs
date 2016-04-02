@@ -16,7 +16,6 @@ import qualified Messaging.Exchanges as Msgs
 import qualified Messaging.Products as Msgs
 import qualified Network.AMQP as AMQP
 import qualified Network.AMQP.MessageBus as MB
-import qualified Products.CodeRepository as CR
 import qualified Products.ProductRepo as PR
 import Products.Product (ProductID)
 import Retry (withRetry)
@@ -63,7 +62,7 @@ indexFeatures :: ProductID -> App (WithErr ())
 indexFeatures prodID = ask >>= \cfg -> do
   let gitConfig = getGitConfig cfg
   let esConfig  = getElasticSearchConfig cfg
-  featureFiles <- liftIO $ runExceptT $ F.findFeatureFiles (CR.codeRepositoryDir prodID gitConfig)
+  featureFiles <- liftIO $ runExceptT $ F.findFeatureFiles (PR.codeRepositoryDir prodID gitConfig)
   case featureFiles of
     (Left err) -> return $ throwError err
     (Right features) ->

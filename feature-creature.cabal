@@ -34,7 +34,6 @@ library
                    , Network.AMQP.MessageBus
                    , Products.Product
                    , Products.ProductRepo
-                   , Products.CodeRepository
                    , Retry
                    , UserRoles.UserRole
 

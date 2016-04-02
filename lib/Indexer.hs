@@ -9,8 +9,8 @@ import Control.Monad.Except (runExceptT)
 import Data.Text (pack)
 import qualified Features.Feature as F
 import qualified Features.SearchableFeature as SF
-import Products.CodeRepository (codeRepositoryDir)
 import Products.Product (ProductID)
+import Products.ProductRepo (codeRepositoryDir)
 import System.Directory (doesFileExist)
 import System.IO (IOMode (ReadMode), openFile, hClose, hGetContents)
 

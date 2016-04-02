@@ -16,7 +16,6 @@ import Models
 import ModelTypes (RepositoryState (Ready, Error))
 import qualified Network.AMQP as AMQP
 import Network.AMQP.MessageBus as MB
-import qualified Products.CodeRepository as CR
 import Products.Product (ProductID)
 import qualified Products.Product as P
 import qualified Products.ProductRepo as PR
@@ -73,7 +72,7 @@ updateRepoStatus (Right _) prodRepo =
 
 pullProductRepo :: Product -> ProductID -> App (WithErr String)
 pullProductRepo prod prodId = reader getGitConfig >>= \cfg ->
-  return $ CR.updateRepo prod prodId cfg
+  return $ PR.updateRepo prod prodId cfg
 
 saveProductRepoStatus :: ProductId -> RepositoryState -> Maybe Text -> App (WithErr ())
 saveProductRepoStatus prodId repoStatus errMsg =
