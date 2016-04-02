@@ -16,7 +16,6 @@ cabal-version:       >=1.10
 library
   exposed-modules:   Api.MimeTypes
                    , Api.Types.Feature
-                   , Api.Types.Product
                    , Config.Config
                    , CommonCreatures
                    , Data.DirectoryTree
