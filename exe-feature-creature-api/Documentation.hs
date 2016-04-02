@@ -21,7 +21,7 @@ import Models
 import ModelTypes
 import Products.DomainTermsAPI as DT (APIDomainTerm (..))
 import Products.FeaturesAPI as F (APIFeature (..))
-import Products.ProductsAPI as P (APIProduct (..), productsAPI)
+import Products.ProductsAPI as P (productsAPI)
 import Products.UserRolesAPI as U (APIUserRole (..))
 import Products.ProductRepo as PR (ProductRepo (..))
 import Servant
@@ -34,12 +34,6 @@ instance SD.ToSample () () where
 
 instance SD.ToCapture (Capture "id" Int64) where
   toCapture _ = SD.DocCapture "id" "A database entity ID"
-
-instance SD.ToSample [APIProduct] [APIProduct] where
-  toSample _ = Just $ [ sampleMonsterProduct, sampleCreatureProduct ]
-
-instance SD.ToSample APIProduct APIProduct where
-  toSample _ = Just sampleCreatureProduct
 
 instance SD.ToSample [ProductRepo] [ProductRepo] where
   toSample _ = Just $ [ sampleMonsterProductRepo, sampleCreatureProductRepo, sampleCreatureProductRepoWithError ]
@@ -92,18 +86,6 @@ documentation = SD.markdown (SD.docsWithIntros [intro] productsAPI)
 
 intro :: SD.DocIntro
 intro = SD.DocIntro "feature-creature" ["![](http://www.homecinemachoice.com/sites/18/images/article_images_month/2012-07/universal%20monsters%20news%2001.jpg)", "Welcome to our API", "Feel free to dig around"]
-
-sampleMonsterProduct :: APIProduct
-sampleMonsterProduct = APIProduct { P.productID = Just 1
-                                  , name      = "monsters"
-                                  , repoUrl   = "http://monsters.com/repo.git"
-                                  }
-
-sampleCreatureProduct :: APIProduct
-sampleCreatureProduct = APIProduct { P.productID = Just 2
-                                   , name      = "creatures"
-                                   , repoUrl   = "ssh://creatures.com/repo.git"
-                                   }
 
 sampleMonsterProductRepo :: ProductRepo
 sampleMonsterProductRepo = ProductRepo { PR.getProductId        = Just 1
