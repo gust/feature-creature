@@ -15,4 +15,3 @@ withAMQPConn :: AMQP.WithConn a -> App a
 withAMQPConn fn = reader getRabbitMQConfig >>= \cfg ->
   liftIO $ AMQP.withConn cfg fn
 
-
