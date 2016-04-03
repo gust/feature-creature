@@ -9,6 +9,7 @@ module Products.ProductRepo
 , codeRepositoryDir
 , fetchRepo
 , findProductRepos
+, findProductRepo
 , updateRepo
 ) where
 
@@ -63,6 +64,19 @@ findProductRepos = ask >>= \pool ->
     findProductReposQuery =
       E.select $ E.from $ \(repoStatus `E.InnerJoin` prod) -> do
         E.on $ repoStatus ^. RepositoryStatusProductId E.==. prod ^. ProductId
+        return (repoStatus, prod)
+
+findProductRepo :: P.ProductID -> WithDBPool (Maybe ProductRepo)
+findProductRepo prodID = ask >>= \pool ->
+  (liftIO (DB.runSqlPool findProductRepoQuery pool)) >>= \result ->
+    case result of
+      [] -> return Nothing
+      (x:_) -> return $ Just (toProductRepo x)
+  where
+    findProductRepoQuery =
+      E.select $ E.from $ \(repoStatus `E.InnerJoin` prod) -> do
+        E.on $ repoStatus ^. RepositoryStatusProductId E.==. prod ^. ProductId
+        E.on $ prod ^. ProductId E.==. (E.val (toKey prodID))
         return (repoStatus, prod)
 
 toProductRepo :: (E.Entity RepositoryStatus, E.Entity P.Product) -> ProductRepo

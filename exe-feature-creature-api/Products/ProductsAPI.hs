@@ -15,6 +15,7 @@ import App
 import AppConfig (DBConfig (..), getDBConfig, getRabbitMQConfig)
 import Messaging.Job as Job (Job (..), JobType (..))
 import Control.Monad.Reader
+import Control.Monad.Trans.Either (left)
 import Data.Aeson
 import Data.Time.Clock as Clock
 import Database.Types (runPool)
@@ -29,6 +30,7 @@ import qualified Products.UserRolesAPI      as UR
 import Servant
 
 type ProductsAPI = "products" :> Get '[JSON] [PR.ProductRepo]
+              :<|> "products" :> ProductIDCapture :> Get '[JSON] PR.ProductRepo
               :<|> "products" :> ReqBody '[JSON] PR.ProductRepo :> Post '[JSON] PR.ProductRepo
               :<|> "products" :> ProductIDCapture :> F.FeaturesAPI
               :<|> "products" :> ProductIDCapture :> F.FeatureAPI
@@ -45,6 +47,7 @@ type ProductIDCapture = Capture "id" P.ProductID
 
 productsServer :: ServerT ProductsAPI App
 productsServer = getProducts
+            :<|> getProduct
             :<|> createProduct
             :<|> F.productsFeatures
             :<|> F.productsFeature
@@ -73,6 +76,13 @@ createProduct (PR.ProductRepo _ pName pRepoUrl _ _) = ask
 getProducts :: App [PR.ProductRepo]
 getProducts = (getPool <$> reader getDBConfig) >>=
   liftIO . (runReaderT (runPool PR.findProductRepos))
+
+getProduct :: P.ProductID -> App PR.ProductRepo
+getProduct prodID = (getPool <$> reader getDBConfig) >>=
+  liftIO . (runReaderT (runPool (PR.findProductRepo prodID))) >>= \result ->
+    case result of
+      Nothing -> lift $ left $ err404
+      Just prodRepo -> return prodRepo
 
 saveNewProduct :: P.Product -> App P.ProductID
 saveNewProduct p = (reader getDBConfig) >>= \cfg ->
