@@ -10,8 +10,8 @@ import Database.Types (runPool)
 import Features.Feature (FeatureFile (..))
 import qualified Git.Git as Git
 import qualified Indexer
-import qualified Products.CodeRepository as Repo
 import Products.Product as P
+import qualified Products.ProductRepo as PR
 import Retry (withRetry)
 
 main :: IO ()
@@ -48,23 +48,23 @@ printResults (Right msg) prodID = liftIO $ putStrLn ("Successfully updated repo 
 fetchRepoChanges :: ProductID -> App ()
 fetchRepoChanges prodID = do
   gitConfig <- reader getGitConfig
-  result    <- liftIO $ runExceptT $ Repo.fetchRepo prodID gitConfig
+  result    <- liftIO $ runExceptT $ PR.fetchRepo prodID gitConfig
   case result of
     Left err -> liftIO $ putStrLn err
     Right _  -> liftIO $ putStrLn $ "Successfully fetched prodID: " ++ (show prodID)
 
 getRepoDiff :: ProductID -> App (Either String String)
 getRepoDiff prodID = (reader getGitConfig) >>= \gitCfg ->
-  liftIO . runExceptT $ Repo.getStatusDiff prodID gitCfg
+  liftIO . runExceptT $ PR.getStatusDiff prodID gitCfg
 
 -- FIXME:
 -- We don't need App here, this is a pure function.
 -- App exists to keep the chain in `refreshRepo` moving along, but should definitely be removed.
-parseStatusDiff :: Either String String -> App (Either String [Repo.ParseResult])
+parseStatusDiff :: Either String String -> App (Either String [PR.ParseResult])
 parseStatusDiff (Left err)   = return $ Left err
-parseStatusDiff (Right diff) = return $ Right (Repo.parseStatusDiff (lines diff))
+parseStatusDiff (Right diff) = return $ Right (PR.parseStatusDiff (lines diff))
 
-updateSearchIndex :: (Either String [Repo.ParseResult]) -> ProductID -> App (Either String ())
+updateSearchIndex :: (Either String [PR.ParseResult]) -> ProductID -> App (Either String ())
 updateSearchIndex (Left err) _ = return $ Left err
 updateSearchIndex (Right fileMods) prodID =
   (mapM ((flip updateSearchIndex') prodID) fileMods)
@@ -75,32 +75,32 @@ printSearchIndexResults :: Either String () -> IO ()
 printSearchIndexResults (Left err) = putStrLn err
 printSearchIndexResults (Right _ ) = putStrLn "Successful index!"
 
-updateSearchIndex' :: Repo.ParseResult -> ProductID -> App (Either String ())
+updateSearchIndex' :: PR.ParseResult -> ProductID -> App (Either String ())
 updateSearchIndex' (Left err) _ = return $ Left $ show err
 updateSearchIndex' (Right fileMod) prodID =
   (updateSearchIndex'' fileMod prodID) >>= (\result -> return $ Right result)
 
-updateSearchIndex'' :: Repo.FileModification -> ProductID -> App ()
+updateSearchIndex'' :: PR.FileModification -> ProductID -> App ()
 updateSearchIndex'' fileMod pID = do
   gCfg <- reader getGitConfig
   esCfg <- reader getElasticSearchConfig
   case fileMod of
-    (Repo.Added path)    -> liftIO $ Indexer.indexFeatures [FeatureFile path] pID gCfg esCfg
-    (Repo.Modified path) -> liftIO $ Indexer.indexFeatures [FeatureFile path] pID gCfg esCfg
-    (Repo.Deleted path)  -> liftIO $ Indexer.deleteFeatures [FeatureFile path] esCfg
+    (PR.Added path)    -> liftIO $ Indexer.indexFeatures [FeatureFile path] pID gCfg esCfg
+    (PR.Modified path) -> liftIO $ Indexer.indexFeatures [FeatureFile path] pID gCfg esCfg
+    (PR.Deleted path)  -> liftIO $ Indexer.deleteFeatures [FeatureFile path] esCfg
     _                    -> return ()
-    {- (Repo.Copied _)      -> undefined -}
-    {- (Repo.Renamed _)     -> undefined -}
-    {- (Repo.TypeChanged _) -> undefined -}
-    {- (Repo.Unmerged _)    -> undefined -}
-    {- (Repo.Unknown _)     -> undefined -}
-    {- (Repo.Broken _)      -> undefined -}
-    {- (Repo.Unrecognized _ _) -> undefined -}
+    {- (PR.Copied _)      -> undefined -}
+    {- (PR.Renamed _)     -> undefined -}
+    {- (PR.TypeChanged _) -> undefined -}
+    {- (PR.Unmerged _)    -> undefined -}
+    {- (PR.Unknown _)     -> undefined -}
+    {- (PR.Broken _)      -> undefined -}
+    {- (PR.Unrecognized _ _) -> undefined -}
 
 updateGitRepo :: Either String () -> ProductID -> App (Either String String)
 updateGitRepo (Left err) _     = return $ Left err
 updateGitRepo (Right _) prodID = do
   reader getGitConfig
-    >>= (\gitConfig -> liftIO $ runExceptT $ Git.pull $ Repo.codeRepositoryDir prodID gitConfig)
+    >>= (\gitConfig -> liftIO $ runExceptT $ Git.pull $ PR.codeRepositoryDir prodID gitConfig)
     >>= (\result -> return result)
 

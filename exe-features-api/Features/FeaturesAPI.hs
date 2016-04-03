@@ -21,8 +21,8 @@ import Data.DirectoryTree
 import Data.Text (Text, pack, unpack)
 import qualified Features.Feature as F
 import qualified Features.SearchableFeature as SF
-import qualified Products.CodeRepository as CR
 import qualified Products.Product as P
+import qualified Products.ProductRepo as PR
 import Servant
 
 type FeaturesAPI = "products" :> ProductIDCapture :> "features" :> QueryParam "search" String :> Get '[JSON] DirectoryTree
@@ -41,7 +41,7 @@ getProductFeatures prodID (Just searchTerm) = do
   esConfig <- reader getElasticSearchConfig
   liftIO $ searchFeatures prodID (pack searchTerm) esConfig
 getProductFeatures prodID Nothing = do
-  featuresPath <- CR.codeRepositoryDir prodID <$> reader getGitConfig
+  featuresPath <- PR.codeRepositoryDir prodID <$> reader getGitConfig
   result       <- liftIO $ runExceptT (F.getFeatures featuresPath)
   case result of
     Left msg   -> error msg
@@ -60,7 +60,7 @@ parseFeatureFiles = map (F.FeatureFile . unpack . SF.getFeaturePath)
 getProductFeature :: P.ProductID -> Maybe F.FeatureFile -> App APIFeature
 getProductFeature _ Nothing = error "Missing required query param 'path'"
 getProductFeature prodID (Just (F.FeatureFile path)) = do
-  featuresPath <- CR.codeRepositoryDir prodID <$> reader getGitConfig
+  featuresPath <- PR.codeRepositoryDir prodID <$> reader getGitConfig
   result       <- liftIO $ runExceptT (F.getFeature $ F.FeatureFile (featuresPath ++ path))
   case result of
     Left msg      -> error msg

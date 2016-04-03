@@ -16,7 +16,6 @@ cabal-version:       >=1.10
 library
   exposed-modules:   Api.MimeTypes
                    , Api.Types.Feature
-                   , Api.Types.Product
                    , Config.Config
                    , CommonCreatures
                    , Data.DirectoryTree
@@ -34,7 +33,7 @@ library
                    , ModelTypes
                    , Network.AMQP.MessageBus
                    , Products.Product
-                   , Products.CodeRepository
+                   , Products.ProductRepo
                    , Retry
                    , UserRoles.UserRole
 
@@ -46,6 +45,7 @@ library
                    , containers
                    , directory
                    , exceptions
+                   , esqueleto >= 2.4.2 && < 2.5.0
                    , http-client
                    , http-media
                    , process

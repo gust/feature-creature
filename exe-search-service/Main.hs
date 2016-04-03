@@ -2,7 +2,6 @@
 
 module Main where
 
-import Api.Types.Product (APIProduct (..))
 import App
 import AppConfig as Config (AppConfig(..), readConfig)
 import Messaging.Job as Job
@@ -17,7 +16,7 @@ import qualified Messaging.Exchanges as Msgs
 import qualified Messaging.Products as Msgs
 import qualified Network.AMQP as AMQP
 import qualified Network.AMQP.MessageBus as MB
-import qualified Products.CodeRepository as CR
+import qualified Products.ProductRepo as PR
 import Products.Product (ProductID)
 import Retry (withRetry)
 
@@ -53,17 +52,17 @@ messageReceivedCallback cfg (message, envelope) =
         >>= (resolveJob envelope)
         >>= return
 
-indexProductFeatures :: APIProduct -> App (WithErr ())
-indexProductFeatures prod =
-  case productID prod of
-    Nothing -> return $ throwError $ "Missing productID: " ++ (show prod)
+indexProductFeatures :: PR.ProductRepo -> App (WithErr ())
+indexProductFeatures prodRepo =
+  case PR.getProductId prodRepo of
+    Nothing -> return $ throwError $ "Missing productID: " ++ (show prodRepo)
     (Just prodID) -> indexFeatures prodID
 
 indexFeatures :: ProductID -> App (WithErr ())
 indexFeatures prodID = ask >>= \cfg -> do
   let gitConfig = getGitConfig cfg
   let esConfig  = getElasticSearchConfig cfg
-  featureFiles <- liftIO $ runExceptT $ F.findFeatureFiles (CR.codeRepositoryDir prodID gitConfig)
+  featureFiles <- liftIO $ runExceptT $ F.findFeatureFiles (PR.codeRepositoryDir prodID gitConfig)
   case featureFiles of
     (Left err) -> return $ throwError err
     (Right features) ->
@@ -75,11 +74,12 @@ resolveJob :: AMQP.Envelope -> Either String () -> IO ()
 resolveJob _ (Left err)       = putStrLn ("Job failed: " ++ err)
 resolveJob envelope (Right _) = (putStrLn "Resolving envelope...") >> MB.ackEnvelope envelope
 
-parseRepoCreatedJob :: AMQP.Message -> Either String (Job APIProduct)
+parseRepoCreatedJob :: AMQP.Message -> Either String (Job PR.ProductRepo)
 parseRepoCreatedJob message =
   Aeson.eitherDecode (AMQP.msgBody message)
     >>= filterJob
 
-filterJob :: Job APIProduct -> Either String (Job APIProduct)
+filterJob :: Job a -> Either String (Job a)
 filterJob processableJob@(Job Job.RepositoryCreated _) = Right processableJob
 filterJob (Job jobType _) = Left $ "Ignoring job " ++ (show jobType)
+

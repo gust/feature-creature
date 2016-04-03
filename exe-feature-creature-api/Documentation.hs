@@ -18,10 +18,12 @@ import Data.Tree (Tree(Node))
 import qualified Features.Feature as F
 import Api.MimeTypes (Markdown)
 import Models
+import ModelTypes
 import Products.DomainTermsAPI as DT (APIDomainTerm (..))
 import Products.FeaturesAPI as F (APIFeature (..))
-import Products.ProductsAPI as P (APIProduct (..), productsAPI)
+import Products.ProductsAPI as P (productsAPI)
 import Products.UserRolesAPI as U (APIUserRole (..))
+import Products.ProductRepo as PR (ProductRepo (..))
 import Servant
 import qualified Servant.Docs as SD
 
@@ -33,11 +35,11 @@ instance SD.ToSample () () where
 instance SD.ToCapture (Capture "id" Int64) where
   toCapture _ = SD.DocCapture "id" "A database entity ID"
 
-instance SD.ToSample [APIProduct] [APIProduct] where
-  toSample _ = Just $ [ sampleMonsterProduct, sampleCreatureProduct ]
+instance SD.ToSample [ProductRepo] [ProductRepo] where
+  toSample _ = Just $ [ sampleMonsterProductRepo, sampleCreatureProductRepo, sampleCreatureProductRepoWithError ]
 
-instance SD.ToSample APIProduct APIProduct where
-  toSample _ = Just sampleCreatureProduct
+instance SD.ToSample ProductRepo ProductRepo where
+  toSample _ = Just sampleCreatureProductRepo
 
 instance SD.ToSample APIFeature APIFeature where
   toSample _ =
@@ -85,17 +87,29 @@ documentation = SD.markdown (SD.docsWithIntros [intro] productsAPI)
 intro :: SD.DocIntro
 intro = SD.DocIntro "feature-creature" ["![](http://www.homecinemachoice.com/sites/18/images/article_images_month/2012-07/universal%20monsters%20news%2001.jpg)", "Welcome to our API", "Feel free to dig around"]
 
-sampleMonsterProduct :: APIProduct
-sampleMonsterProduct = APIProduct { P.productID = Just 1
-                                  , name      = "monsters"
-                                  , repoUrl   = "http://monsters.com/repo.git"
-                                  }
+sampleMonsterProductRepo :: ProductRepo
+sampleMonsterProductRepo = ProductRepo { PR.getProductId        = Just 1
+                                       , PR.getProductName      = "monsters"
+                                       , PR.getProductRepoUrl   = "http://monsters.com/repo.git"
+                                       , PR.getProductRepoState = Unready
+                                       , PR.getProductRepoError = Nothing
+                                       }
 
-sampleCreatureProduct :: APIProduct
-sampleCreatureProduct = APIProduct { P.productID = Just 2
-                                   , name      = "creatures"
-                                   , repoUrl   = "ssh://creatures.com/repo.git"
-                                   }
+sampleCreatureProductRepo :: ProductRepo
+sampleCreatureProductRepo = ProductRepo { PR.getProductId        = Just 2
+                                        , PR.getProductName      = "creatures"
+                                        , PR.getProductRepoUrl   = "ssh://creatures.com/repo.git"
+                                        , PR.getProductRepoState = Ready
+                                        , PR.getProductRepoError = Nothing
+                                        }
+
+sampleCreatureProductRepoWithError :: ProductRepo
+sampleCreatureProductRepoWithError = ProductRepo { PR.getProductId        = Just 3
+                                                 , PR.getProductName      = "chuds"
+                                                 , PR.getProductRepoUrl   = "ssh://chuds.com/repo.git"
+                                                 , PR.getProductRepoState = Error
+                                                 , PR.getProductRepoError = Just "I'm an error message"
+                                                 }
 
 featureFileSample :: F.Feature
 featureFileSample =
