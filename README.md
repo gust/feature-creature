@@ -1,3 +1,5 @@
+[![Stories in Ready](https://badge.waffle.io/gust/feature-creature.svg?label=ready&title=Ready)](http://waffle.io/gust/feature-creature)
+
 # feature-creature
 A live editor for Cucumber features
 
@@ -88,3 +90,6 @@ Once started, `http://localhost:8000/main.html` should now be available
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create a new Pull Request
+
+
+[![Throughput Graph](https://graphs.waffle.io/gust/feature-creature/throughput.svg)](https://waffle.io/gust/feature-creature/metrics)
