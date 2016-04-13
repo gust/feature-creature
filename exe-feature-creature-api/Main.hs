@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 
@@ -20,8 +21,8 @@ import Servant
 import Database.Persist.Postgresql (runSqlPool, runMigration)
 import Models (migrateAll)
 
-type FeatureCreatureAPI = ProductsAPI
-                     :<|> Docs.DocumentationAPI
+type FeatureCreatureAPI = "api" :> ProductsAPI
+                     :<|> "api" :> Docs.DocumentationAPI
 
 main :: IO ()
 main = getAppConfig >>= \appConfig -> do
