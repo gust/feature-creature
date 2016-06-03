@@ -29,19 +29,19 @@ import qualified Products.ProductRepo       as PR
 import qualified Products.UserRolesAPI      as UR
 import Servant
 
-type ProductsAPI = "products" :> Get '[JSON] [PR.ProductRepo]
-              :<|> "products" :> ProductIDCapture :> Get '[JSON] PR.ProductRepo
-              :<|> "products" :> ReqBody '[JSON] PR.ProductRepo :> Post '[JSON] PR.ProductRepo
-              :<|> "products" :> ProductIDCapture :> F.FeaturesAPI
-              :<|> "products" :> ProductIDCapture :> F.FeatureAPI
-              :<|> "products" :> ProductIDCapture :> DT.DomainTermsAPI
-              :<|> "products" :> ProductIDCapture :> DT.CreateDomainTermsAPI
-              :<|> "products" :> ProductIDCapture :> DT.EditDomainTermsAPI
-              :<|> "products" :> ProductIDCapture :> DT.RemoveDomainTermAPI
-              :<|> "products" :> ProductIDCapture :> UR.UserRolesAPI
-              :<|> "products" :> ProductIDCapture :> UR.CreateUserRolesAPI
-              :<|> "products" :> ProductIDCapture :> UR.EditUserRolesAPI
-              :<|> "products" :> ProductIDCapture :> UR.RemoveUserRoleAPI
+type ProductsAPI = Get '[JSON] [PR.ProductRepo]
+              :<|> ProductIDCapture :> Get '[JSON] PR.ProductRepo
+              :<|> ReqBody '[JSON] PR.ProductRepo :> Post '[JSON] PR.ProductRepo
+              :<|> ProductIDCapture :> F.FeaturesAPI
+              :<|> ProductIDCapture :> F.FeatureAPI
+              :<|> ProductIDCapture :> DT.DomainTermsAPI
+              :<|> ProductIDCapture :> DT.CreateDomainTermsAPI
+              :<|> ProductIDCapture :> DT.EditDomainTermsAPI
+              :<|> ProductIDCapture :> DT.RemoveDomainTermAPI
+              :<|> ProductIDCapture :> UR.UserRolesAPI
+              :<|> ProductIDCapture :> UR.CreateUserRolesAPI
+              :<|> ProductIDCapture :> UR.EditUserRolesAPI
+              :<|> ProductIDCapture :> UR.RemoveUserRoleAPI
 
 type ProductIDCapture = Capture "id" P.ProductID
 

@@ -3,6 +3,7 @@ FROM toddmohney/feature-creature-dev:v4
 # add source files
 COPY . /usr/share/feature-creature
 
+RUN stack clean
 RUN stack build
 
 CMD /bin/echo "Done building dev image!"

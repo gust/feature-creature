@@ -17,11 +17,13 @@ import Network.Wai.Handler.Warp as Warp
 import Network.Wai.Middleware.Cors
 import Retry (withRetry)
 import Servant
+import Users.UsersAPI (UsersAPI, usersAPI, usersServer)
 
 import Database.Persist.Postgresql (runSqlPool, runMigration)
 import Models (migrateAll)
 
-type FeatureCreatureAPI = "api" :> ProductsAPI
+type FeatureCreatureAPI = "api" :> "products" :> ProductsAPI
+                     :<|> "api" :> "users" :> UsersAPI
                      :<|> "api" :> Docs.DocumentationAPI
 
 main :: IO ()
@@ -45,6 +47,7 @@ readerServer cfg =
 
 server :: ServerT FeatureCreatureAPI App
 server = productsServer
+    :<|> usersServer
     :<|> Docs.documentationServer
 
 readerToEither :: AppConfig -> App :~> EitherT ServantErr IO
