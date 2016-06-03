@@ -6,7 +6,13 @@ resolver: lts-4.2
 
 # Local packages, usually specified by relative directory name
 packages:
-- '.'
+- './lib'
+- './exe-feature-creature-api'
+- './exe-features-api'
+- './exe-repo-puller'
+- './exe-repo-refresher'
+- './exe-search-service'
+
 # Packages to be pulled from upstream that are not in the resolver (e.g., acme-missiles-0.3)
 extra-deps: []
 

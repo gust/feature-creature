@@ -1,8 +1,0 @@
-DESCRIPTION:
-  A list of commands executable against the 'user role' domain
-
-COMMANDS: 
-  list <product_id> - Displays a list of all user roles for the given product
-  add  - Displays an interactive form guiding the user through user role creation
-  help - displays this help file
-

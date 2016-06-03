@@ -1,34 +1,9 @@
 FROM toddmohney/feature-creature-dev:v4
 
-RUN apt-get install -y \
-    git \
-    tmux \
-    gpm \
-    ctags \
-    python-dev \
-    vim \
-    vim-doc \
-    vim-scripts
-
-# vim setup
-COPY docker/dot-vim /root/.vim
-COPY docker/dot-vimrc /root/.vimrc
-
-RUN vim +PluginInstall! +qall
-
-# tmux setup
-COPY docker/dot-tmux.conf /root/.tmux.conf
-
-# git setup
-COPY docker/dot-gitconfig /root/.gitconfig
-COPY docker/dot-ssh /root/.ssh
-
-# bash setup
-COPY docker/dot-bash/.bash_profile /root/.bash_profile
-COPY docker/dot-bash/bash_includes /root/bash_includes
-
 # add source files
 COPY . /usr/share/feature-creature
+
+RUN stack build
 
 CMD /bin/echo "Done building dev image!"
 
