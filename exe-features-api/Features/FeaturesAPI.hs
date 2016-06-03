@@ -15,7 +15,7 @@ module Features.FeaturesAPI
 import Api.Types.Feature
 import App
 import AppConfig (ElasticSearchConfig, getGitConfig, getElasticSearchConfig)
-import Control.Monad.Except (runExceptT)
+import Control.Monad.Except (runExceptT, throwError)
 import Control.Monad.Reader
 import Data.DirectoryTree
 import Data.Text (Text, pack, unpack)
@@ -63,7 +63,7 @@ getProductFeature prodID (Just (F.FeatureFile path)) = do
   featuresPath <- PR.codeRepositoryDir prodID <$> reader getGitConfig
   result       <- liftIO $ runExceptT (F.getFeature $ F.FeatureFile (featuresPath ++ path))
   case result of
-    Left msg      -> error msg
+    Left msg      -> lift $ throwError $ err503 { errReasonPhrase = msg }
     Right feature ->
       return $ APIFeature { featureID = F.FeatureFile path
                           , description = feature

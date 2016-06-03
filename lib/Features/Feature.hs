@@ -11,7 +11,7 @@ module Features.Feature
 
 import CommonCreatures (WithErr)
 import Data.Aeson as Aeson
-import Data.DirectoryTree (DirectoryTree, FileDescription (..), createNode, addToDirectoryTree)
+import Data.DirectoryTree (DirectoryTree, createEmptyTree, addToDirectoryTree)
 import Data.List (stripPrefix)
 import Data.Maybe (mapMaybe)
 import Data.Text (unpack)
@@ -21,7 +21,7 @@ import Control.Monad.IO.Class (liftIO)
 import System.Directory (doesFileExist)
 import System.Exit (ExitCode(ExitFailure, ExitSuccess))
 import System.Process (readProcessWithExitCode)
-import Servant (FromText (..))
+import Servant (FromHttpApiData (..))
 
 newtype Feature     = Feature String deriving (Show)
 newtype FeatureFile = FeatureFile String deriving (Show)
@@ -34,8 +34,8 @@ instance FromJSON FeatureFile where
   parseJSON (String a) = pure (FeatureFile (unpack a))
   parseJSON _ = empty
 
-instance FromText FeatureFile where
-  fromText path = Just $ FeatureFile (unpack path)
+instance FromHttpApiData FeatureFile where
+  parseUrlPiece path = Right $ FeatureFile (unpack path)
 
 getFeatures :: FilePath -> WithErr DirectoryTree
 getFeatures path = buildDirectoryTree <$> findFeatureFiles path
@@ -54,7 +54,7 @@ buildDirectoryTree =
   foldr (\(FeatureFile featureFile) dirTree -> addToDirectoryTree dirTree featureFile) rootNode
   where
     rootNode :: DirectoryTree
-    rootNode = createNode $ FileDescription "/" "/"
+    rootNode = createEmptyTree
 
 findFeatureFiles :: FilePath -> WithErr [FeatureFile]
 findFeatureFiles path = do

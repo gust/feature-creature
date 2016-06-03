@@ -17,7 +17,6 @@ import Api.Types.Feature
 import App
 import AppConfig
 import Control.Lens ((&), (.~), (^.))
-import Control.Monad.Trans.Either (left)
 import Control.Monad.Reader
 import qualified Data.Aeson as Aeson
 import qualified Data.ByteString.Lazy as L
@@ -61,7 +60,7 @@ searchFeatures prodID searchTerm =
 parseProductsResponse :: Aeson.FromJSON a => HTTP.Response L.ByteString -> App a
 parseProductsResponse resp =
   case Aeson.eitherDecode (resp ^. Wreq.responseBody) of
-    (Left err) -> lift $ left $ err503 { errReasonPhrase = err }
+    (Left err) -> lift $ throwError $ err503 { errReasonPhrase = err }
     (Right tree) -> return tree
 
 searchParams :: String -> Wreq.Options

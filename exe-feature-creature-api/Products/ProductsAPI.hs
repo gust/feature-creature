@@ -15,7 +15,6 @@ import App
 import AppConfig (DBConfig (..), getDBConfig, getRabbitMQConfig)
 import Messaging.Job as Job (Job (..), JobType (..))
 import Control.Monad.Reader
-import Control.Monad.Trans.Either (left)
 import Data.Aeson
 import Data.Time.Clock as Clock
 import Database.Types (runPool)
@@ -81,7 +80,7 @@ getProduct :: P.ProductID -> App PR.ProductRepo
 getProduct prodID = (getPool <$> reader getDBConfig) >>=
   liftIO . (runReaderT (runPool (PR.findProductRepo prodID))) >>= \result ->
     case result of
-      Nothing -> lift $ left $ err404
+      Nothing -> lift $ throwError $ err404
       Just prodRepo -> return prodRepo
 
 saveNewProduct :: P.Product -> App P.ProductID

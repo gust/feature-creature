@@ -20,7 +20,7 @@ module Products.DomainTermsAPI
 import App
 import AppConfig (DBConfig (..), getDBConfig)
 import Control.Monad.Reader
-import Control.Monad.Trans.Either (left)
+import Control.Monad.Except (throwError)
 import Data.Aeson
 import Data.Int (Int64)
 import qualified Data.Text              as T
@@ -74,7 +74,7 @@ editDomainTerm pID dtID (APIDomainTerm _ _ t d) = do
   dbConfig          <- reader getDBConfig
   domainTerm        <- liftIO $ runReaderT (runPool (DT.findDomainTerm (toKey dtID))) (getPool dbConfig)
   case domainTerm of
-    Nothing   -> lift $ left $ err404
+    Nothing   -> lift $ throwError $ err404
     (Just dt) ->
       (liftIO $ runReaderT (runPool (DT.updateDomainTerm (toKey dtID) dt)) (getPool dbConfig))
         >> (return $ APIDomainTerm { domainTermID = Just (dtID)

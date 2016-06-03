@@ -4,8 +4,8 @@ module App
 
 import AppConfig
 import Control.Monad.Reader       (ReaderT)
-import Control.Monad.Trans.Either (EitherT)
+import Control.Monad.Trans.Except (ExceptT)
 import Servant                    (ServantErr (..))
 
 type App =
-  ReaderT AppConfig (EitherT ServantErr IO)
+  ReaderT AppConfig (ExceptT ServantErr IO)

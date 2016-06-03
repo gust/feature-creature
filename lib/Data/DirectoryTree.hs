@@ -1,12 +1,13 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Data.DirectoryTree
-( DirectoryTree
+( DirectoryTree (..)
 , FileDescription (..)
 , addToDirectoryTree
-, createNode
+, createEmptyTree
 ) where
 
 import Control.Monad (mzero)
@@ -18,22 +19,24 @@ import Data.Tree (Tree(Node))
 data FileDescription =
   FileDescription { fileName :: String
                   , filePath :: FilePath
-                  } deriving (Show)
+                  } deriving (Show, Eq)
 
-type DirectoryTree = Tree FileDescription
 type Breadcrumb = FilePath
 
+newtype DirectoryTree = DirectoryTree { unTree :: Tree FileDescription }
+  deriving (Show, Eq)
+
 instance ToJSON DirectoryTree where
-  toJSON (Node fileDescription forest) =
+  toJSON (DirectoryTree (Node fileDescription forest)) =
     object [ "fileDescription" .= fileDescription
-           , "forest"          .= forest
+           , "forest"          .= fmap DirectoryTree forest
            ]
 
 instance FromJSON DirectoryTree where
-  parseJSON (Object v) = Node <$>
-                        v .: "fileDescription" <*>
-                        v .: "forest"
-  parseJSON _          = mzero
+  parseJSON = withObject "directoryTree" $ \o -> do
+    fileDescription <- o .: "fileDescription"
+    forest          <- o .: "forest"
+    return $ DirectoryTree $ Node fileDescription (fmap unTree forest)
 
 instance ToJSON FileDescription where
   toJSON (FileDescription fName fPath) =
@@ -47,12 +50,15 @@ instance FromJSON FileDescription where
                         v .: "filePath"
   parseJSON _          = mzero
 
-createNode :: FileDescription -> DirectoryTree
+createEmptyTree :: DirectoryTree
+createEmptyTree = DirectoryTree $ createNode $ FileDescription "/" "/"
+
+createNode :: FileDescription -> Tree FileDescription
 createNode fd = Node fd []
 
 addToDirectoryTree :: DirectoryTree -> FilePath -> DirectoryTree
-addToDirectoryTree featureTree path =
-  addToDirectoryTree' featureTree filePathParts initialBreadcrumb
+addToDirectoryTree (DirectoryTree featureTree) path =
+  DirectoryTree $ addToDirectoryTree' featureTree filePathParts initialBreadcrumb
     where
       filePathParts :: [T.Text]
       filePathParts = (splitFileName $ T.pack path)
@@ -68,7 +74,7 @@ addToDirectoryTree featureTree path =
       initialBreadcrumb :: Breadcrumb
       initialBreadcrumb = ""
 
-addToDirectoryTree' :: DirectoryTree -> [T.Text] -> Breadcrumb -> DirectoryTree
+addToDirectoryTree' :: Tree FileDescription -> [T.Text] -> Breadcrumb -> Tree FileDescription
 addToDirectoryTree' featureTree [] _ = featureTree
 addToDirectoryTree' (Node label forest) (directory:rest) path =
   let (matches, nonMatches) = partition (matchesLabel directory) forest
@@ -84,6 +90,6 @@ addToDirectoryTree' (Node label forest) (directory:rest) path =
         Node label $ (addToDirectoryTree' node rest newBreadcrumb):nonMatches
       (_:_) -> error "There should be a maximum of 1 match in the forest"
 
-matchesLabel :: T.Text -> DirectoryTree -> Bool
+matchesLabel :: T.Text -> Tree FileDescription -> Bool
 matchesLabel file (Node fileDescription _) = (T.unpack file) == (fileName fileDescription)
 

@@ -20,7 +20,7 @@ module Products.UserRolesAPI
 import App
 import AppConfig (DBConfig (..), getDBConfig)
 import Control.Monad.Reader
-import Control.Monad.Trans.Either (left)
+import Control.Monad.Except (throwError)
 import Data.Aeson
 import Data.Int (Int64)
 import qualified Data.Text          as T
@@ -75,7 +75,7 @@ editUserRole pID urID (APIUserRole _ _ t d) = do
   dbConfig <- reader getDBConfig
   userRole <- liftIO $ runReaderT (runPool (UR.findUserRole (toKey urID))) (getPool dbConfig)
   case userRole of
-    Nothing -> lift $ left $ err404
+    Nothing -> lift $ throwError $ err404
     (Just ur) ->
       (liftIO $ runReaderT (runPool (UR.updateUserRole (toKey urID) ur)) (getPool dbConfig))
         >> (return $ APIUserRole { userRoleID = Just (urID)

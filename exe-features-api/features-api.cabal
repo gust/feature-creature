@@ -27,6 +27,7 @@ executable features-api
                    , servant-docs
                    , servant-server
                    , text
+                   , transformers >= 0.4.2.0 && < 0.4.3.0
                    , wai
                    , wai-cors
                    , wai-extra

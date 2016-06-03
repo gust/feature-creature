@@ -25,91 +25,86 @@ import Products.ProductsAPI as P (productsAPI)
 import Products.UserRolesAPI as U (APIUserRole (..))
 import Products.ProductRepo as PR (ProductRepo (..))
 import Servant
-import qualified Servant.Docs as SD
+import Servant.Docs
 
 type DocumentationAPI = "docs" :> Get '[Markdown] Text
 
-instance SD.ToSample () () where
-  toSample _ = Just ()
+instance ToCapture (Capture "id" Int64) where
+  toCapture _ = DocCapture "id" "A database entity ID"
 
-instance SD.ToCapture (Capture "id" Int64) where
-  toCapture _ = SD.DocCapture "id" "A database entity ID"
+instance ToSample ProductRepo where
+  toSamples _ = singleSample sampleCreatureProductRepo
 
-instance SD.ToSample [ProductRepo] [ProductRepo] where
-  toSample _ = Just $ [ sampleMonsterProductRepo, sampleCreatureProductRepo, sampleCreatureProductRepoWithError ]
+instance ToSample APIFeature where
+  toSamples _ = singleSample $
+    APIFeature { featureID = F.FeatureFile "/features/werewolves/hunting.feature"
+               , F.description = featureFileSample
+               }
 
-instance SD.ToSample ProductRepo ProductRepo where
-  toSample _ = Just sampleCreatureProductRepo
-
-instance SD.ToSample APIFeature APIFeature where
-  toSample _ =
-    Just $ APIFeature { featureID = F.FeatureFile "/features/werewolves/hunting.feature"
-                      , F.description = featureFileSample
-                      }
-
-instance SD.ToParam (QueryParam "path" F.FeatureFile) where
+instance ToParam (QueryParam "path" F.FeatureFile) where
   toParam _ =
-    SD.DocQueryParam
+    DocQueryParam
     "path"
     [ "/features/werewolf/transformation.feature",
       "/features/swampthing/regeneration.feature"
     ]
     "FeatureFile id (relative file path)"
-    SD.Normal
+    Normal
 
-instance SD.ToSample DirectoryTree DirectoryTree where
-  toSample _ = Just featureDirectoryExample
+instance ToSample DirectoryTree where
+  toSamples _ = singleSample featureDirectoryExample
 
-instance SD.ToParam (QueryParam "search" String) where
-  toParam _ = SD.DocQueryParam "search"
+instance ToParam (QueryParam "search" String) where
+  toParam _ = DocQueryParam "search"
                             ["Wolfman", "Creature+From+The+Black+Lagoon", "Creature+Repelent"]
                             "A search term"
-                            SD.Normal
+                            Normal
 
-instance SD.ToSample [APIDomainTerm] [APIDomainTerm] where
-  toSample _ = Just $ [ sampleAPIDomainTerm, sampleAPIDomainTerm2 ]
+instance ToSample APIDomainTerm where
+  toSamples _ = singleSample sampleDomainTermPostBody
 
-instance SD.ToSample APIDomainTerm APIDomainTerm where
-  toSample _ = Just $ sampleDomainTermPostBody
-
-instance SD.ToSample [APIUserRole] [APIUserRole] where
-  toSample _ = Just $ [ sampleMonsterMaker, sampleMonsterHunter ]
-
-instance SD.ToSample APIUserRole APIUserRole where
-  toSample _ = Just $ sampleUserRolePostBody
+instance ToSample APIUserRole where
+  toSamples _ = singleSample sampleUserRolePostBody
 
 documentationServer :: App Text
 documentationServer = return (pack documentation)
 
 documentation :: String
-documentation = SD.markdown (SD.docsWithIntros [intro] productsAPI)
+documentation = markdown (docsWithIntros [intro] productsAPI)
 
-intro :: SD.DocIntro
-intro = SD.DocIntro "feature-creature" ["![](http://www.homecinemachoice.com/sites/18/images/article_images_month/2012-07/universal%20monsters%20news%2001.jpg)", "Welcome to our API", "Feel free to dig around"]
+intro :: DocIntro
+intro = DocIntro "feature-creature"
+  ["![](http://www.homecinemachoice.com/sites/18/images/article_images_month/2012-07/universal%20monsters%20news%2001.jpg)"
+  , "Welcome to our API"
+  , "Feel free to dig around"
+  ]
 
 sampleMonsterProductRepo :: ProductRepo
-sampleMonsterProductRepo = ProductRepo { PR.getProductId        = Just 1
-                                       , PR.getProductName      = "monsters"
-                                       , PR.getProductRepoUrl   = "http://monsters.com/repo.git"
-                                       , PR.getProductRepoState = Unready
-                                       , PR.getProductRepoError = Nothing
-                                       }
+sampleMonsterProductRepo =
+  ProductRepo { PR.getProductId        = Just 1
+              , PR.getProductName      = "monsters"
+              , PR.getProductRepoUrl   = "http://monsters.com/repo.git"
+              , PR.getProductRepoState = Unready
+              , PR.getProductRepoError = Nothing
+              }
 
 sampleCreatureProductRepo :: ProductRepo
-sampleCreatureProductRepo = ProductRepo { PR.getProductId        = Just 2
-                                        , PR.getProductName      = "creatures"
-                                        , PR.getProductRepoUrl   = "ssh://creatures.com/repo.git"
-                                        , PR.getProductRepoState = Ready
-                                        , PR.getProductRepoError = Nothing
-                                        }
+sampleCreatureProductRepo =
+  ProductRepo { PR.getProductId        = Just 2
+              , PR.getProductName      = "creatures"
+              , PR.getProductRepoUrl   = "ssh://creatures.com/repo.git"
+              , PR.getProductRepoState = Ready
+              , PR.getProductRepoError = Nothing
+              }
 
 sampleCreatureProductRepoWithError :: ProductRepo
-sampleCreatureProductRepoWithError = ProductRepo { PR.getProductId        = Just 3
-                                                 , PR.getProductName      = "chuds"
-                                                 , PR.getProductRepoUrl   = "ssh://chuds.com/repo.git"
-                                                 , PR.getProductRepoState = Error
-                                                 , PR.getProductRepoError = Just "I'm an error message"
-                                                 }
+sampleCreatureProductRepoWithError =
+  ProductRepo { PR.getProductId        = Just 3
+              , PR.getProductName      = "chuds"
+              , PR.getProductRepoUrl   = "ssh://chuds.com/repo.git"
+              , PR.getProductRepoState = Error
+              , PR.getProductRepoError = Just "I'm an error message"
+              }
 
 featureFileSample :: F.Feature
 featureFileSample =
@@ -133,7 +128,7 @@ featureFileSample =
     ]
 
 featureDirectoryExample :: DirectoryTree
-featureDirectoryExample = rootNode
+featureDirectoryExample = DirectoryTree rootNode
   where
     rootNode   = Node (FileDescription "features" "features") [creatures]
     creatures  = Node (FileDescription "creatures" "features/creatures") [swampThing, wolfman]

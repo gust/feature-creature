@@ -7,7 +7,7 @@ module Main where
 import App
 import AppConfig (AppConfig (..), getAppConfig)
 import Control.Monad.Reader       (runReaderT)
-import Control.Monad.Trans.Either (EitherT)
+import Control.Monad.Trans.Except (ExceptT)
 import Config.Config (getPool)
 import Data.Monoid ((<>))
 import Documentation as Docs
@@ -46,7 +46,7 @@ server :: ServerT FeaturesServiceAPI App
 server = featuresServer
     :<|> Docs.documentationServer
 
-readerToEither :: AppConfig -> App :~> EitherT ServantErr IO
+readerToEither :: AppConfig -> App :~> ExceptT ServantErr IO
 readerToEither cfg = Nat $ \x -> runReaderT x cfg
 
 corsPolicy :: CorsResourcePolicy

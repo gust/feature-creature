@@ -81,3 +81,26 @@ library
                    , Network.AMQP.Internal.Consumer
                    , Network.AMQP.Internal.Producer
                    , Network.AMQP.Internal.Types
+
+test-suite feature-creature-test
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  main-is:             Spec.hs
+  build-depends:       aeson
+                     , aeson-pretty >= 0.7.2 && < 0.8.0
+                     , base
+                     , bytestring >= 0.10.6.0 && < 0.10.7.0
+                     , containers >= 0.5.6.2 && < 0.5.7.0
+                     , feature-creature
+                     , hspec >= 2.2.2 && < 2.3.0
+                     , mtl
+                     , text
+                     , transformers
+
+  ghc-options:         -threaded
+                       -rtsopts
+                       -with-rtsopts=-N
+
+  default-language:    Haskell2010
+  other-modules:       Data.DirectoryTreeSpec
+                     , Git.DiffSpec
