@@ -13,11 +13,11 @@ import Data.Monoid ((<>))
 import Documentation as Docs
 import Products.ProductsAPI (ProductsAPI, productsServer)
 import Network.Wai as Wai
-import Network.Wai.Handler.Warp as Warp
+import qualified Network.Wai.Handler.Warp as Warp
 import Network.Wai.Middleware.Cors
 import Retry (withRetry)
 import Servant
-import Users.UsersAPI (UsersAPI, usersAPI, usersServer)
+import Users.UsersAPI (UsersAPI, usersServer)
 
 import Database.Persist.Postgresql (runSqlPool, runMigration)
 import Models (migrateAll)
@@ -30,7 +30,10 @@ main :: IO ()
 main = getAppConfig >>= \appConfig -> do
   let pool = getPool (getDBConfig appConfig)
   withRetry (runSqlPool (runMigration migrateAll) pool)
-  Warp.run 8081 (app appConfig)
+
+  let port = getPort appConfig
+  putStrLn $ "Running web server on port:" <> (show port)
+  Warp.run port (app appConfig)
 
 app :: AppConfig -> Wai.Application
 app cfg =

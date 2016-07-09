@@ -8,27 +8,22 @@ import App
 import AppConfig (AppConfig (..), getAppConfig)
 import Control.Monad.Reader       (runReaderT)
 import Control.Monad.Trans.Except (ExceptT)
-import Config.Config (getPool)
 import Data.Monoid ((<>))
 import Documentation as Docs
 import Features.FeaturesAPI (FeaturesAPI, featuresServer)
 import Network.Wai as Wai
-import Network.Wai.Handler.Warp as Warp
+import qualified Network.Wai.Handler.Warp as Warp
 import Network.Wai.Middleware.Cors
-import Retry (withRetry)
 import Servant
-
-import Database.Persist.Postgresql (runSqlPool, runMigration)
-import Models (migrateAll)
 
 type FeaturesServiceAPI = "api" :> FeaturesAPI
                      :<|> "api" :>  Docs.DocumentationAPI
 
 main :: IO ()
-main = getAppConfig >>= \appConfig ->
-  let pool = getPool (getDBConfig appConfig)
-  in withRetry (runSqlPool (runMigration migrateAll) pool)
-      >> Warp.run 8082 (app appConfig)
+main = getAppConfig >>= \appConfig -> do
+  let port = getPort appConfig
+  putStrLn $ "Running web server on port:" <> (show port)
+  Warp.run port (app appConfig)
 
 app :: AppConfig -> Wai.Application
 app cfg =

@@ -1,6 +1,5 @@
 module AppConfig
 ( AppConfig (..)
-, Config.DBConfig (..)
 , Config.ElasticSearchConfig
 , Config.Environment (..)
 , Config.GitConfig (..)
@@ -11,29 +10,29 @@ module AppConfig
 import Config.Config as Config
 import Network.Wai.Middleware.RequestLogger (logStdoutDev, logStdout)
 import Network.Wai                          (Middleware)
-import System.Environment                   (lookupEnv)
+import qualified System.Environment as Env
 
 data AppConfig =
   AppConfig { getEnv                 :: Environment
-            , getDBConfig            :: DBConfig
             , getRequestLogger       :: Middleware
             , getElasticSearchConfig :: ElasticSearchConfig
             , getGitConfig           :: GitConfig
+            , getPort                :: Int
             , getRabbitMQConfig      :: RabbitMQConfig
             }
 
 getAppConfig :: IO AppConfig
 getAppConfig = do
   env            <- lookupSetting "ENV" Development
-  dbPool         <- makePool env
   gitConfig      <- readGitConfig
   searchConfig   <- readElasticSearchConfig
   rabbitMQConfig <- readRabbitMQConfig
+  port           <- read <$> Env.getEnv "PORT"
   return $ AppConfig { getEnv                 = env
                      , getRequestLogger       = requestLogger env
-                     , getDBConfig            = DBConfig dbPool
                      , getElasticSearchConfig = searchConfig
                      , getGitConfig           = gitConfig
+                     , getPort                = port
                      , getRabbitMQConfig      = rabbitMQConfig
                      }
 
@@ -44,6 +43,6 @@ requestLogger Production  = logStdout
 
 lookupSetting :: Read a => String -> a -> IO a
 lookupSetting env def = do
-    p <- lookupEnv env
+    p <- Env.lookupEnv env
     return $ case p of Nothing -> def
                        Just a  -> read a

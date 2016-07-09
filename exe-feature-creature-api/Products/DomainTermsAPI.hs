@@ -20,7 +20,6 @@ module Products.DomainTermsAPI
 import App
 import AppConfig (DBConfig (..), getDBConfig)
 import Control.Monad.Reader
-import Control.Monad.Except (throwError)
 import Data.Aeson
 import Data.Int (Int64)
 import qualified Data.Text              as T

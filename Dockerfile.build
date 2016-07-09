@@ -1,3 +1,0 @@
-FROM toddmohney/feature-creature-base:v1
-
-CMD /bin/echo "Done building feature-creature services"

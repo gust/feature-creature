@@ -3,8 +3,8 @@
 # USAGE:
 # source ./script/development/feature-creature-env.sh
 
-FC_API_PATH="http://localhost:8081"
-FC_FEATURES_API="http://localhost:8082"
+FC_API_PATH="http://localhost:8180/api"
+FC_FEATURES_API="http://localhost:8181/api"
 
 FC_DB_NAME="feature_creature"
 FC_DB_HOST="localhost"
@@ -12,7 +12,6 @@ FC_DB_PORT="5432"
 FC_DB_USER=$(whoami)
 FC_DB_POOL_SIZE=1
 FC_SERVER_PROJECT_ROOT="$HOME/workspace/feature-creature"
-FC_WEB_PROJECT_ROOT="$HOME/workspace/feature-creature-client"
 FC_DATA_FILES_PATH="$FC_SERVER_PROJECT_ROOT/.app-data"
 
 FC_RABBITMQ_HOST="127.0.0.1"
@@ -47,9 +46,6 @@ export FC_DATA_FILES_PATH=$FC_DATA_FILES_PATH
 
 echo "Setting FC_SERVER_PROJECT_ROOT environment variable..." $FC_SERVER_PROJECT_ROOT
 export FC_SERVER_PROJECT_ROOT=$FC_SERVER_PROJECT_ROOT
-
-echo "Setting FC_WEB_PROJECT_ROOT environment variable..." $FC_WEB_PROJECT_ROOT
-export FC_WEB_PROJECT_ROOT=$FC_WEB_PROJECT_ROOT
 
 echo "Setting FC_SEARCH_SERVICE_ROOT environment variable:" $FC_SEARCH_SERVICE_ROOT
 export FC_SEARCH_SERVICE_ROOT=$FC_SEARCH_SERVICE_ROOT

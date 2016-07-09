@@ -15,7 +15,7 @@ module Features.FeaturesAPI
 import Api.Types.Feature
 import App
 import AppConfig (ElasticSearchConfig, getGitConfig, getElasticSearchConfig)
-import Control.Monad.Except (runExceptT, throwError)
+import Control.Monad.Except (runExceptT)
 import Control.Monad.Reader
 import Data.DirectoryTree
 import Data.Text (Text, pack, unpack)

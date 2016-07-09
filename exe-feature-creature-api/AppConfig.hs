@@ -20,6 +20,7 @@ data AppConfig =
             , getRequestLogger       :: Middleware
             , getElasticSearchConfig :: ElasticSearchConfig
             , getGitConfig           :: GitConfig
+            , getPort                :: Int
             , getRabbitMQConfig      :: RabbitMQConfig
             , featuresAPI            :: Text
             }
@@ -32,11 +33,13 @@ getAppConfig = do
   searchConfig   <- readElasticSearchConfig
   rabbitMQConfig <- readRabbitMQConfig
   featuresAPIUrl <- Env.getEnv "FC_FEATURES_API"
+  port           <- read <$> Env.getEnv "PORT"
   return $ AppConfig { getEnv                 = env
                      , getRequestLogger       = requestLogger env
                      , getDBConfig            = DBConfig dbPool
                      , getElasticSearchConfig = searchConfig
                      , getGitConfig           = gitConfig
+                     , getPort                = port
                      , getRabbitMQConfig      = rabbitMQConfig
                      , featuresAPI            = (pack featuresAPIUrl)
                      }

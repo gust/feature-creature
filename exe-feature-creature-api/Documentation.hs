@@ -79,15 +79,6 @@ intro = DocIntro "feature-creature"
   , "Feel free to dig around"
   ]
 
-sampleMonsterProductRepo :: ProductRepo
-sampleMonsterProductRepo =
-  ProductRepo { PR.getProductId        = Just 1
-              , PR.getProductName      = "monsters"
-              , PR.getProductRepoUrl   = "http://monsters.com/repo.git"
-              , PR.getProductRepoState = Unready
-              , PR.getProductRepoError = Nothing
-              }
-
 sampleCreatureProductRepo :: ProductRepo
 sampleCreatureProductRepo =
   ProductRepo { PR.getProductId        = Just 2
@@ -95,15 +86,6 @@ sampleCreatureProductRepo =
               , PR.getProductRepoUrl   = "ssh://creatures.com/repo.git"
               , PR.getProductRepoState = Ready
               , PR.getProductRepoError = Nothing
-              }
-
-sampleCreatureProductRepoWithError :: ProductRepo
-sampleCreatureProductRepoWithError =
-  ProductRepo { PR.getProductId        = Just 3
-              , PR.getProductName      = "chuds"
-              , PR.getProductRepoUrl   = "ssh://chuds.com/repo.git"
-              , PR.getProductRepoState = Error
-              , PR.getProductRepoError = Just "I'm an error message"
               }
 
 featureFileSample :: F.Feature
@@ -141,28 +123,8 @@ featureDirectoryExample = DirectoryTree rootNode
       Node (FileDescription "animal-instincts.feature" "features/creatures/wolfman/animal-instincts.feature") []
       ]
 
-sampleAPIDomainTerm :: APIDomainTerm
-sampleAPIDomainTerm = APIDomainTerm (Just 1) (Just (toKey (10::Integer))) "mutation" "The genetic alteration granting monster powers"
-
-sampleAPIDomainTerm2 :: APIDomainTerm
-sampleAPIDomainTerm2 = APIDomainTerm (Just 2) (Just (toKey (10::Integer))) "vampirism" "The disease affecting Vampires"
-
 sampleDomainTermPostBody :: APIDomainTerm
 sampleDomainTermPostBody = APIDomainTerm (Just 2) (Just (toKey (10::Integer))) "monsterism" "The quality of being a monster"
-
-sampleMonsterMaker :: APIUserRole
-sampleMonsterMaker = APIUserRole { U.userRoleID  = Just 1
-                                 , U.productID   = Just (toKey (10::Integer))
-                                 , U.title       = "monster maker"
-                                 , U.description = "A scientist responsible for creating abominable life forms."
-                                 }
-
-sampleMonsterHunter :: APIUserRole
-sampleMonsterHunter = APIUserRole { U.userRoleID  = Just 2
-                                  , U.productID   = Just (toKey (10::Integer))
-                                  , U.title       = "monster hunter"
-                                  , U.description = "A hunter specializing in the elimination of monsters."
-                                  }
 
 sampleUserRolePostBody :: APIUserRole
 sampleUserRolePostBody = APIUserRole { U.userRoleID  = Nothing
