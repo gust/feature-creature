@@ -24,6 +24,7 @@ data AppConfig = AppConfig
   , getLogEntriesConfig   :: LE.Config
   , getAuthConfig         :: Auth0.Config
   , getUsersApiConfig     :: UsersApi.Config
+  , getMarketingSiteUrl   :: Text
   } deriving (Show)
 
 getAppConfig :: AppName -> Environment -> IO AppConfig
@@ -33,6 +34,7 @@ getAppConfig appName env = do
   leConfig    <- logEntriesConfig
   authConfig  <- auth0Config
   usersConfig <- usersApiConfig
+  marketingSiteUrl <- T.pack <$> Env.getEnv "APP_MARKETING_BASE_PATH"
   let webServerPort = maybe 8080 id (liftM read port)
 
   return $ AppConfig
@@ -42,6 +44,7 @@ getAppConfig appName env = do
     , getLogEntriesConfig = leConfig
     , getAuthConfig       = authConfig
     , getUsersApiConfig   = usersConfig
+    , getMarketingSiteUrl = marketingSiteUrl
     }
 
 usersApiConfig :: IO UsersApi.Config

@@ -78,11 +78,9 @@ executable fc-auth-service
 
   other-modules:
     AccessCode.Controller
-    AccessCode.View
     App
     Errors
     Routing
-    RouteTypes
     Home.Controller
     Home.View
     Layouts.Default
@@ -165,13 +163,17 @@ test-suite fc-auth-service-test
                , wai-extra        >= 3.0.15.1 && < 3.0.16.0
 
   other-modules:
+    AccessCode.Controller
     App
     Errors
     Helpers.RequestSpecHelpers
     Helpers.TestWebServer
-    Routing
     Home.Controller
     Home.RequestSpec
+    Home.View
+    Layouts.Default
+    Routing
+    StringQuoter
 
   ghc-options:
     -Wall

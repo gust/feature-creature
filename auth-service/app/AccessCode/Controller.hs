@@ -2,24 +2,20 @@ module AccessCode.Controller
   ( showA
   ) where
 
-import qualified AccessCode.View as V
 import App (AppT, AppConfig (..))
 import Auth0.Access (AccessCode, AccessToken (..), exchangeAccessCode)
 import Auth0.User (User (..), getUser)
 import Control.Monad.Reader
 import Control.Monad.Except (ExceptT, runExceptT)
-import Data.ByteString.Lazy (ByteString)
+import Data.ByteString (ByteString)
 import Data.Monoid ((<>))
 import Data.Text (Text, pack)
+import qualified Data.Text.Encoding as TE
 import Errors
-import Text.Blaze.Html5 (Html)
-import qualified Data.Text.Lazy as TL
-import qualified Data.Text.Lazy.Encoding as TLE
-import RouteTypes (WithAuthCookie)
 import Servant
 import qualified Users.Api as UsersAPI
 
-showA :: Maybe AccessCode -> AppT (WithAuthCookie Html)
+showA :: Maybe AccessCode -> AppT ()
 showA Nothing     = raiseAppError $ BadRequest "Missing access code"
 showA (Just code) = ask >>= \AppConfig{..} -> do
   eToken <- fetchToken code
@@ -31,7 +27,10 @@ showA (Just code) = ask >>= \AppConfig{..} -> do
         (Left err)   -> raiseAppError $ BadRequest (pack . show $ err)
         (Right user) -> do
           _ <- findOrCreateNewUser user
-          return $ addHeader (authCookie token) (V.renderShowA user)
+          let headers = [ ("Location", TE.encodeUtf8 getMarketingSiteUrl)
+                        , ("Set-Cookie", authCookie token)
+                        ]
+          throwError $ err301 { errHeaders = headers }
 
 findOrCreateNewUser :: User -> AppT (Either Text UsersAPI.User)
 findOrCreateNewUser auth0User = ask >>= \AppConfig{..} -> do
@@ -55,9 +54,7 @@ fetchUser token = ask >>= \AppConfig{..} ->
   runAppIO $ getUser token getAuthConfig
 
 authCookie :: AccessToken -> ByteString
-authCookie AccessToken{..} = "token=" <> encode getIdToken
-  where
-    encode = TLE.encodeUtf8 . TL.fromStrict
+authCookie AccessToken{..} = "token=" <> TE.encodeUtf8 getIdToken
 
 runAppIO :: MonadIO m => ExceptT e IO a -> m (Either e a)
 runAppIO f = liftIO $ runExceptT f
