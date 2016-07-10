@@ -1,7 +1,9 @@
-FC_USERS_SERVICE_USER=fc_users_service
-FC_USERS_SERVICE_DB_NAME=fc_users_service
-FC_USERS_SERVICE_TEST_DB_NAME=fc_users_service_test
+#!/bin/bash
 
-createuser -e $FC_USERS_SERVICE_USER
-createdb -e --owner=$FC_USERS_SERVICE_USER $FC_USERS_SERVICE_DB_NAME
-createdb -e --owner=$FC_USERS_SERVICE_USER $FC_USERS_SERVICE_TEST_DB_NAME
+# This is a convienience script to proxy through
+# to all of the sub-applications in this repo.
+#
+# Please add application-specific commands to the
+# application itself and then call the script from here.
+
+./users-service/scripts/setup-database.sh

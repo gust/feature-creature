@@ -146,11 +146,12 @@ test-suite fc-auth-service-test
                , auth0            >= 0.1.0.0 && < 0.1.1.0
                , blaze-html       >= 0.8.1.1 &&  < 0.8.2.0
                , bytestring       >= 0.10.6.0 && < 0.10.7.0
+               , fc-auth-service
+               , fc-users-service-client >= 0.1.0.0 && < 0.1.1.0
                , hspec            >= 2.2.3 && < 2.3.0
                , hspec-wai        >= 0.6 && < 1
                , hspec-wai-json   >= 0.6.1 && < 1
                , http-types       >= 0.9 && < 1
-               , fc-auth-service
                , mtl              >= 2.2.1 && < 2.3.0
                , lens             >= 4.13 && < 5.0
                , load-env         >= 0.1.1 && < 0.2.0
