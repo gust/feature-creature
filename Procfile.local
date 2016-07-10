@@ -1,7 +1,3 @@
-
-repo-puller:          APP_NAME=repo-puller PORT=8184 repo-puller
-repo-refresher:       APP_NAME=repo-refresher PORT=8183 repo-refresher
-search-service:       APP_NAME=search-service PORT=8182 search-service
-features-api:         APP_NAME=features-api PORT=8181 features-api
-feature-creature-api: APP_NAME=feature-creature-api PORT=8180 feature-creature-web
-feature-creature-app: APP_NAME=feature-creature-app PORT=9292 rackup --host 0.0.0.0 --port 9292
+marketing-site: APP_NAME=fc-marketing-site PORT=8080 fc-marketing-site
+auth-service:   APP_NAME=fc-auth-service PORT=8081 fc-auth-service
+users-service:  APP_NAME=fc-users-service PORT=8082 fc-users-service
