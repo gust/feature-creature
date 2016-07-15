@@ -1,6 +1,6 @@
 {-# LANGUAGE QuasiQuotes #-}
 
-module Products.View
+module App.View
   ( showA
   ) where
 

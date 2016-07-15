@@ -74,11 +74,12 @@ executable fc-feature-creature
 
   other-modules:
     App
+    App.Controller
+    App.View
     Errors
-    Routing
-    Products.Controller
-    Products.View
     Layouts.Default
+    Products.Controller
+    Routing
 
   ghc-options:
     -Wall
@@ -161,13 +162,14 @@ test-suite fc-feature-creature-test
 
   other-modules:
     App
+    App.Controller
+    App.View
     Errors
     Helpers.RequestSpecHelpers
     Helpers.TestWebServer
-    Routing
     Layouts.Default
     Products.Controller
-    Products.View
+    Routing
 
   ghc-options:
     -Wall

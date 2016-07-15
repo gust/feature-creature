@@ -9,6 +9,7 @@ module Routing
 
 
 import App (AppT, AppConfig (..))
+import qualified App.Controller as App
 import Control.Monad.Except (runExceptT, liftIO)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as C
@@ -26,9 +27,11 @@ import Servant.Server.Experimental.Auth()
 import Users.Api (User (..))
 import qualified Users.Api as Users
 
-type API = MarketingAPI
+type API = AuthProtect "auth-token-req" :> WebAppAPI
+      :<|> AuthProtect "auth-token-req" :> ProductsAPI
 
-type MarketingAPI = "products" :> AuthProtect "auth-token-req" :> Products.ProductsAPI
+type WebAppAPI   = "products" :> App.AppAPI
+type ProductsAPI = "api" :> "products" :> Products.ProductsAPI
 
 type instance AuthServerData (AuthProtect "auth-token-req") = User
 
@@ -37,7 +40,8 @@ genAuthServerContext :: AppConfig
 genAuthServerContext cfg = (authReqHandler cfg) :. EmptyContext
 
 server :: ServerT API AppT
-server = Products.showA
+server = App.showA
+    :<|> Products.indexA
 
 featureCreatureApi :: Proxy API
 featureCreatureApi = Proxy

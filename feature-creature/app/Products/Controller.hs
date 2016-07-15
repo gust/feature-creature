@@ -1,19 +1,40 @@
 module Products.Controller
   ( ProductsAPI
-  , showA
+  , indexA
   ) where
 
 import App (AppT)
-import Config.AppConfig
-import Control.Monad.Reader
-import qualified Products.View as V
+import Data.Aeson
+  ( ToJSON
+  , FromJSON
+  , (.=)
+  , (.:)
+  )
+import qualified Data.Aeson as AE
+import Data.Text (Text)
 import Servant
-import Servant.HTML.Blaze (HTML)
-import Text.Blaze.Html5 (Html)
 import Users.Api
 
-type ProductsAPI = Get '[HTML] Html
+type ProductsAPI = Get '[JSON] [Product]
 
-showA :: User -> AppT Html
-showA user = ask >>= \cfg ->
-  return $ V.showA user (getAppBasePath cfg)
+data Product =
+  Product { getID :: Int
+          , getName :: Text
+          }
+  deriving (Show, Eq, Ord)
+
+instance ToJSON Product where
+  toJSON Product{..} =
+    AE.object [ "id"   .= getID
+              , "name" .= getName
+              ]
+
+instance FromJSON Product where
+  parseJSON = AE.withObject "product" $ \v -> do
+    pID   <- v .:  "id"
+    pName <- v .: "name"
+    return (Product pID pName)
+
+indexA :: User -> AppT [Product]
+indexA _ = return []
+
