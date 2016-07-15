@@ -1,3 +1,4 @@
-marketing-site: APP_NAME=fc-marketing-site PORT=8080 fc-marketing-site
-auth-service:   APP_NAME=fc-auth-service PORT=8081 fc-auth-service
-users-service:  APP_NAME=fc-users-service PORT=8082 fc-users-service
+marketing-site:   APP_NAME=fc-marketing-site PORT=8080 fc-marketing-site
+auth-service:     APP_NAME=fc-auth-service PORT=8081 fc-auth-service
+users-service:    APP_NAME=fc-users-service PORT=8082 fc-users-service
+feature-creature: APP_NAME=fc-feature-creature PORT=8083 fc-feature-creature
