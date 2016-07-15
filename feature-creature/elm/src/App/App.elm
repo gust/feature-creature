@@ -11,7 +11,6 @@ import App.Products.Requests as P
 import Data.External exposing (..)
 import Html exposing (Html)
 import UI.Layout exposing (withLayout)
-import Debug
 
 type alias App =
   { appConfig : AppConfig
@@ -20,9 +19,10 @@ type alias App =
 
 type AppMsg = ProductMsg P.ProductMsg
 
-init : AppConfig -> (App, Cmd AppMsg)
-init appConfig =
-  let initialState = { appConfig = appConfig, products  = NotLoaded }
+init : InitialConfig -> (App, Cmd AppMsg)
+init initialConfig =
+  let appConfig = toAppConfig initialConfig
+      initialState = { appConfig = appConfig, products = NotLoaded }
   in ( initialState
      , Cmd.map ProductMsg (P.getProducts appConfig)
      )
@@ -31,7 +31,10 @@ update : AppMsg -> App -> (App, Cmd AppMsg)
 update msg app =
   case msg of
     ProductMsg (P.FetchProductsSucceeded products) -> ({ app | products = Loaded products }, Cmd.none)
-    ProductMsg (P.FetchProductsFailed err) -> Debug.log ("Error: " ++ toString err) ({ app | products = LoadedWithError "Failed to load products!" }, Cmd.none)
+    ProductMsg (P.FetchProductsFailed err) ->
+      let products = LoadedWithError "Failed to load products!"
+          result = ({ app | products = products }, Cmd.none)
+      in logMsg' app.appConfig ("Error: " ++ toString err) result
 
 view : App -> Html a
 view app = case app.products of

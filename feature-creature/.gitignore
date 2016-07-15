@@ -1,3 +1,4 @@
 .stack-work
 env
 elm/elm-stuff
+public/elm.js

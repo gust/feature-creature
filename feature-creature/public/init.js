@@ -1,6 +1,7 @@
-function init(productsApiPath, userName) {
+function init(env, productsApiPath, userName) {
   $(document).ready(function() {
     initialState = {
+      environment: env,
       productsApiPath: productsApiPath,
       user: userName
     };

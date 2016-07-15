@@ -4,8 +4,6 @@ module App.Controller
   ) where
 
 import App (AppT)
-import Config.AppConfig
-import Control.Monad.Reader
 import qualified App.View as V
 import Servant
 import Servant.HTML.Blaze (HTML)
@@ -15,5 +13,4 @@ import Users.Api
 type AppAPI = Get '[HTML] Html
 
 showA :: User -> AppT Html
-showA user = ask >>= \cfg ->
-  return $ V.showA user (getAppBasePath cfg)
+showA user = V.showA user

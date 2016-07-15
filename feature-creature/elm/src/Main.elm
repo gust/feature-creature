@@ -4,7 +4,7 @@ import App.App  as App
 import App.AppConfig exposing (..)
 import Html.App as Html
 
-main : Program AppConfig
+main : Program InitialConfig
 main = Html.programWithFlags
   { init   = App.init
   , update = App.update
