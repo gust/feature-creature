@@ -8468,8 +8468,8 @@ var _gust$feature_creature$App_Products_Requests$productsUrl = function (appConf
 var _gust$feature_creature$App_Products_Requests$parseProduct = A3(
 	_elm_lang$core$Json_Decode$object2,
 	_gust$feature_creature$App_Products_Product$init,
-	A2(_elm_lang$core$Json_Decode_ops[':='], 'productId', _elm_lang$core$Json_Decode$int),
-	A2(_elm_lang$core$Json_Decode_ops[':='], 'productName', _elm_lang$core$Json_Decode$string));
+	A2(_elm_lang$core$Json_Decode_ops[':='], 'id', _elm_lang$core$Json_Decode$int),
+	A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string));
 var _gust$feature_creature$App_Products_Requests$parseProducts = _elm_lang$core$Json_Decode$list(_gust$feature_creature$App_Products_Requests$parseProduct);
 var _gust$feature_creature$App_Products_Requests$getProducts = function (appConfig) {
 	return A3(
@@ -8490,7 +8490,7 @@ var _gust$feature_creature$Data_External$Loaded = function (a) {
 };
 var _gust$feature_creature$Data_External$NotLoaded = {ctor: 'NotLoaded'};
 
-var _gust$feature_creature$App_App$view = function (app) {
+var _gust$feature_creature$UI_Layout$withLayout = function (content) {
 	return A2(
 		_elm_lang$html$Html$div,
 		_elm_lang$core$Native_List.fromArray(
@@ -8502,6 +8502,66 @@ var _gust$feature_creature$App_App$view = function (app) {
 						{ctor: '_Tuple2', _0: 'container-fluid', _1: true}
 					]))
 			]),
+		content);
+};
+
+var _gust$feature_creature$App_App$errorView = function (error) {
+	return _gust$feature_creature$UI_Layout$withLayout(
+		_elm_lang$core$Native_List.fromArray(
+			[
+				A2(
+				_elm_lang$html$Html$div,
+				_elm_lang$core$Native_List.fromArray(
+					[]),
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html$text(
+						A2(_elm_lang$core$Basics_ops['++'], 'Oh no! ', error))
+					]))
+			]));
+};
+var _gust$feature_creature$App_App$productsView = function (products) {
+	return _gust$feature_creature$UI_Layout$withLayout(
+		_elm_lang$core$Native_List.fromArray(
+			[
+				A2(
+				_elm_lang$html$Html$div,
+				_elm_lang$core$Native_List.fromArray(
+					[]),
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html$text(
+						A2(
+							_elm_lang$core$Basics_ops['++'],
+							'You have ',
+							A2(
+								_elm_lang$core$Basics_ops['++'],
+								_elm_lang$core$Basics$toString(
+									_elm_lang$core$List$length(products)),
+								' products!')))
+					])),
+				A2(
+				_elm_lang$html$Html$ul,
+				_elm_lang$core$Native_List.fromArray(
+					[]),
+				A2(
+					_elm_lang$core$List$map,
+					function (product) {
+						return A2(
+							_elm_lang$html$Html$li,
+							_elm_lang$core$Native_List.fromArray(
+								[]),
+							_elm_lang$core$Native_List.fromArray(
+								[
+									_elm_lang$html$Html$text(
+									_elm_lang$core$Basics$toString(product))
+								]));
+					},
+					products))
+			]));
+};
+var _gust$feature_creature$App_App$loadingView = function (app) {
+	return _gust$feature_creature$UI_Layout$withLayout(
 		_elm_lang$core$Native_List.fromArray(
 			[
 				A2(
@@ -8515,9 +8575,47 @@ var _gust$feature_creature$App_App$view = function (app) {
 					]))
 			]));
 };
+var _gust$feature_creature$App_App$view = function (app) {
+	var _p0 = app.products;
+	switch (_p0.ctor) {
+		case 'NotLoaded':
+			return _gust$feature_creature$App_App$loadingView(app);
+		case 'Loaded':
+			return _gust$feature_creature$App_App$productsView(_p0._0);
+		default:
+			return _gust$feature_creature$App_App$errorView(_p0._0);
+	}
+};
 var _gust$feature_creature$App_App$update = F2(
 	function (msg, app) {
-		return {ctor: '_Tuple2', _0: app, _1: _elm_lang$core$Platform_Cmd$none};
+		var _p1 = msg;
+		if (_p1._0.ctor === 'FetchProductsSucceeded') {
+			return {
+				ctor: '_Tuple2',
+				_0: _elm_lang$core$Native_Utils.update(
+					app,
+					{
+						products: _gust$feature_creature$Data_External$Loaded(_p1._0._0)
+					}),
+				_1: _elm_lang$core$Platform_Cmd$none
+			};
+		} else {
+			return A2(
+				_elm_lang$core$Debug$log,
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					'Error: ',
+					_elm_lang$core$Basics$toString(_p1._0._0)),
+				{
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						app,
+						{
+							products: _gust$feature_creature$Data_External$LoadedWithError('Failed to load products!')
+						}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				});
+		}
 	});
 var _gust$feature_creature$App_App$App = F2(
 	function (a, b) {

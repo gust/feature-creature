@@ -18,8 +18,8 @@ parseProduct : Json.Decoder Product
 parseProduct =
   Json.object2
     init
-    ("productId"   := Json.int)
-    ("productName" := Json.string)
+    ("id"   := Json.int)
+    ("name" := Json.string)
 
 productsUrl : AppConfig -> String
 productsUrl appConfig = appConfig.productsApiPath ++ "/api/products"

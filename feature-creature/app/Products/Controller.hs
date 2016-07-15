@@ -36,5 +36,7 @@ instance FromJSON Product where
     return (Product pID pName)
 
 indexA :: User -> AppT [Product]
-indexA _ = return []
+indexA _ = return [ Product 1 "feature-creature"
+                  , Product 2 "furious-typist"
+                  ]
 
