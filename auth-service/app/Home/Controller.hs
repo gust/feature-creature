@@ -9,4 +9,4 @@ import qualified Home.View as V
 import Text.Blaze.Html5 (Html)
 
 showA :: AppT Html
-showA = return V.renderShowA
+showA = V.renderShowA

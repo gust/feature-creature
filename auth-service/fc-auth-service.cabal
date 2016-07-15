@@ -84,7 +84,6 @@ executable fc-auth-service
     Home.Controller
     Home.View
     Layouts.Default
-    StringQuoter
 
   ghc-options:
     -Wall
@@ -102,15 +101,16 @@ executable fc-auth-service
                , base
                , blaze-html           >= 0.8.1.1 &&  < 0.8.2.0
                , bytestring           >= 0.10.6.0 && < 0.10.7.0
+               , fc-users-service-client >= 0.1.0.0 && < 0.1.1.0
                , logentries            >= 0.1.0.0 && < 0.1.1.0
                , mtl                  >= 2.2.1 && < 2.3.0
                , monad-logger         >= 0.3.18 && < 0.4.0
+               , QuasiText            >= 0.1.2.6 && < 0.1.3.0
                , servant-blaze        >= 0.7.1 && < 0.8.0
                , servant-server       >= 0.7.1 && < 0.8.0
                , template-haskell     >= 2.10.0.0 && < 2.10.1.0
                , text                 >= 1.2.2.1 && < 1.2.3.0
                , transformers         >= 0.4.2.0 && < 0.4.3.0
-               , fc-users-service-client >= 0.1.0.0 && < 0.1.1.0
                , wai                  >= 3.2.1.1 && < 3.2.2.0
                , warp
                , wai-cors
@@ -173,7 +173,6 @@ test-suite fc-auth-service-test
     Home.View
     Layouts.Default
     Routing
-    StringQuoter
 
   ghc-options:
     -Wall

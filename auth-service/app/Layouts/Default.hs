@@ -4,21 +4,25 @@ module Layouts.Default
   ( withDefaultLayout
   ) where
 
-import StringQuoter (str)
+import qualified Auth0.Config as Auth0
+import Config.AppConfig
+import Data.Monoid ((<>))
+import Data.Text (Text)
 import Text.Blaze.Html5 (Html, (!))
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
+import Text.QuasiText
 
-withDefaultLayout :: Html -> Html
-withDefaultLayout content = H.docTypeHtml $ do
-  header
+withDefaultLayout :: AppConfig -> Html -> Html
+withDefaultLayout cfg content = H.docTypeHtml $ do
+  header cfg
   body content
 
-header :: Html
-header =
+header :: AppConfig -> Html
+header cfg =
   H.head $ do
     bootstrapCSS
-    authZeroJS
+    (authZeroJS cfg)
     meta
     H.title "This is a sample authentication service"
 
@@ -34,15 +38,23 @@ bootstrapCSS =
     ! A.rel "stylesheet"
     ! A.href "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"
 
-authZeroJS :: Html
-authZeroJS = do
+authZeroJS :: AppConfig -> Html
+authZeroJS cfg = do
   H.script ! A.src "https://cdn.auth0.com/js/lock-9.1.min.js" $ ""
-  H.script [str|
-    var lock = new Auth0Lock('kzpSZe2uqnRnXozoFruBxEjP5FjWhNVC', 'feature-creature.auth0.com');
+  H.script $ H.text $ authZeroConfig cfg
+
+authZeroConfig :: AppConfig -> Text
+authZeroConfig cfg = do
+  let (Auth0.Config clientID _ _ _ basePath) = getAuthConfig cfg
+  let auth0ApiKey = clientID
+  let auth0ApiHostname = basePath
+  let accessCodeUrl = (getBasePath cfg) <> "/access-code"
+  [embed|
+    var lock = new Auth0Lock('$auth0ApiKey', '$auth0ApiHostname');
 
     function signin() {
       lock.show({
-          callbackURL: 'http://localhost:8081/access-code'
+          callbackURL: '$accessCodeUrl'
         , responseType: 'code'
         , authParams: {
           scope: 'openid email'
