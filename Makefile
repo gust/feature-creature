@@ -25,6 +25,7 @@ setupdb:
 server:
 	mkdir -p $(HOME)/.fc-marketing-site
 	cp marketing-site/env/development.env $(HOME)/.fc-marketing-site
+	cp -R marketing-site/public $(HOME)/.fc-marketing-site
 	
 	mkdir -p $(HOME)/.fc-auth-service
 	cp auth-service/env/development.env $(HOME)/.fc-auth-service

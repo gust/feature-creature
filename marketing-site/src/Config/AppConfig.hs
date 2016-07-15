@@ -22,6 +22,7 @@ type AppName = Text
 
 data AppConfig = AppConfig
   { getAppName            :: AppName
+  , getAppDataDirectory   :: FilePath
   , getPort               :: Int
   , getEnv                :: Environment
   , getLogEntriesConfig   :: LE.Config
@@ -36,15 +37,16 @@ instance Exception ConfigException
 
 getAppConfig :: AppName -> Environment -> IO AppConfig
 getAppConfig appName env = do
-  loadEnvVars appName env
-  port     <- Env.lookupEnv "PORT"
-  leConfig <- logEntriesConfig
-  loginUrl <- loadLoginUrl
-  usersConfig <- usersApiConfig
+  dataDirectory <- loadEnvVars appName env
+  port          <- Env.lookupEnv "PORT"
+  leConfig      <- logEntriesConfig
+  loginUrl      <- loadLoginUrl
+  usersConfig   <- usersApiConfig
   let webServerPort = maybe 8080 id (liftM read port)
 
   return $ AppConfig
     { getAppName          = appName
+    , getAppDataDirectory = dataDirectory
     , getPort             = webServerPort
     , getEnv              = env
     , getLogEntriesConfig = leConfig
@@ -84,10 +86,10 @@ logEntriesConfig = do
 -- Ex. if the app name is 'cool-app' and the environment is Production,
 --     the env vars will be loaded from ~/.cool-app/production.env
 -- loadEnvVars will NOT raise an exception if the environment file is not found
-loadEnvVars :: AppName -> Environment -> IO ()
-loadEnvVars appName env = dataDirectory appName >>= \dataDir -> do
+loadEnvVars :: AppName -> Environment -> IO FilePath
+loadEnvVars appName env = dataDirectory appName >>= \dataDir ->
   let filePath = dataDir </> envName env <.> "env"
-  loadEnvFrom $ filePath
+  in loadEnvFrom filePath >> return dataDir
   where
     envName :: Environment -> FilePath
     envName = T.unpack . toLower . T.pack . show

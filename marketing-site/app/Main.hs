@@ -14,6 +14,12 @@ import Routing
 import Servant
 import qualified System.Environment as Env
 
+type WholeAPI = API
+           :<|> "public" :> Raw
+
+api :: Proxy WholeAPI
+api = Proxy
+
 main :: IO ()
 main = do
   env      <- getCurrentEnvironment
@@ -29,10 +35,12 @@ app :: AppConfig -> Wai.Application
 app cfg = logEntriesLogger (App.getLogEntriesConfig cfg)
   $ stdOutLogger (App.getEnv cfg)
   $ cors (const $ Just corsPolicy)
-  $ serveWithContext api (genAuthServerContext cfg) (readerServer cfg) 
+  $ serveWithContext api (genAuthServerContext cfg) (readerServer cfg)
 
-readerServer :: AppConfig -> Server API
-readerServer cfg = enter (readerToEither cfg) server
+readerServer :: AppConfig -> Server WholeAPI
+readerServer cfg =
+  enter (readerToEither cfg) server
+    :<|> serveDirectory (App.getAppDataDirectory cfg <> "/public")
 
 readerToEither :: AppConfig -> AppT :~> Handler
 readerToEither cfg = Nat $ \appT -> App.runAppT cfg appT
