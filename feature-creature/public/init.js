@@ -1,7 +1,7 @@
-function init(userName) {
+function init(productsApiPath, userName) {
   $(document).ready(function() {
     initialState = {
-      apiPath: "",
+      productsApiPath: productsApiPath,
       user: userName
     };
 

@@ -22,6 +22,7 @@ type AppName = Text
 
 data AppConfig = AppConfig
   { getAppName            :: AppName
+  , getAppBasePath        :: Text
   , getAppDataDirectory   :: FilePath
   , getPort               :: Int
   , getEnv                :: Environment
@@ -39,6 +40,7 @@ getAppConfig :: AppName -> Environment -> IO AppConfig
 getAppConfig appName env = do
   dataDirectory <- loadEnvVars appName env
   port          <- Env.lookupEnv "PORT"
+  basePath      <- T.pack <$> Env.getEnv "BASEPATH"
   leConfig      <- logEntriesConfig
   loginUrl      <- loadLoginUrl
   usersConfig   <- usersApiConfig
@@ -46,6 +48,7 @@ getAppConfig appName env = do
 
   return $ AppConfig
     { getAppName          = appName
+    , getAppBasePath      = basePath
     , getAppDataDirectory = dataDirectory
     , getPort             = webServerPort
     , getEnv              = env
