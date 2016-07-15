@@ -24,7 +24,7 @@ header cfg =
     bootstrapCSS
     (authZeroJS cfg)
     meta
-    H.title "This is a sample authentication service"
+    H.title "Feature Creature"
 
 meta :: Html
 meta =

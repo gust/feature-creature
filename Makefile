@@ -38,5 +38,6 @@ server:
 	
 	mkdir -p $(HOME)/.fc-feature-creature
 	cp feature-creature/env/development.env $(HOME)/.fc-feature-creature
+	cp -R feature-creature/public $(HOME)/.fc-feature-creature
 	
 	foreman start -f Procfile.local

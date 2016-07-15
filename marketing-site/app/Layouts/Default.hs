@@ -16,7 +16,7 @@ header =
   H.head $ do
     bootstrapCSS
     meta
-    H.title "This is a sample marketing site"
+    H.title "Feature Creature"
 
 meta :: Html
 meta =

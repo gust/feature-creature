@@ -15,8 +15,11 @@ header :: Html
 header =
   H.head $ do
     bootstrapCSS
+    jQuery
+    bootstrapJS
+    appJS
     meta
-    H.title "This is a sample marketing site"
+    H.title "Feature Creature"
 
 meta :: Html
 meta =
@@ -25,10 +28,13 @@ meta =
     ! A.content "width=device-width, initial-scale=1"
 
 bootstrapCSS :: Html
-bootstrapCSS =
+bootstrapCSS = do
   H.link
     ! A.rel "stylesheet"
     ! A.href "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"
+  H.link
+    ! A.rel "stylesheet"
+    ! A.href "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css"
 
 bootstrapJS :: Html
 bootstrapJS =
@@ -36,13 +42,20 @@ bootstrapJS =
     ! A.src "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"
     $ ""
 
+appJS :: Html
+appJS = do
+  H.script
+    ! A.src "public/elm.js"
+    $ ""
+  H.script
+    ! A.src "public/init.js"
+    $ ""
+
 body :: Html -> Html
 body content =
   H.body $ do
     H.div ! A.class_ "container" $ do
       content
-    jQuery
-    bootstrapJS
 
 jQuery :: Html
 jQuery =
