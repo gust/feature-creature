@@ -11,7 +11,7 @@ import Config.Environment (Environment (Test))
 import Helpers.RequestSpecHelpers
 import LoadEnv
 import Network.Wai (Application)
-import Routing (API, server, api, genAuthServerContext)
+import Routing (API, server, marketingApi, genAuthServerContext)
 import Servant
 import Test.Hspec.Wai (with)
 
@@ -24,7 +24,7 @@ testAppConfig =
 
 app :: AppConfig -> IO Application
 app cfg =
-  return $ serveWithContext api (genAuthServerContext cfg) (readerServer cfg) 
+  return $ serveWithContext marketingApi (genAuthServerContext cfg) (readerServer cfg)
 
 readerServer :: AppConfig -> Server API
 readerServer cfg = enter (readerToEither cfg) server

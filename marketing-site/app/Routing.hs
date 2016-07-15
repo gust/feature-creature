@@ -2,6 +2,7 @@
 
 module Routing
   ( API
+  , marketingApi
   , server
   , genAuthServerContext
   ) where
@@ -46,6 +47,9 @@ genAuthServerContext cfg =
 server :: ServerT API AppT
 server = Home.rootPath
     :<|> Private.showA
+
+marketingApi :: Proxy API
+marketingApi = Proxy
 
 authReqHandler :: AppConfig -> AuthHandler Request User
 authReqHandler AppConfig{..} =

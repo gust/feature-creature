@@ -45,12 +45,10 @@ authZeroJS cfg = do
 
 authZeroConfig :: AppConfig -> Text
 authZeroConfig cfg = do
-  let (Auth0.Config clientID _ _ _ basePath) = getAuthConfig cfg
-  let auth0ApiKey = clientID
-  let auth0ApiHostname = basePath
+  let (Auth0.Config auth0ApiKey _ _ _ _) = getAuthConfig cfg
   let accessCodeUrl = (getBasePath cfg) <> "/access-code"
   [embed|
-    var lock = new Auth0Lock('$auth0ApiKey', '$auth0ApiHostname');
+    var lock = new Auth0Lock('$auth0ApiKey', 'feature-creature.auth0.com');
 
     function signin() {
       lock.show({
