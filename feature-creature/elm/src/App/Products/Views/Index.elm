@@ -24,7 +24,7 @@ loadingView : List (Html a)
 loadingView =
   [ Html.div
     []
-    [ Html.text "Loading..." ]
+    [ Html.text "Loading Products..." ]
   ]
 
 errorView : String -> List (Html a)

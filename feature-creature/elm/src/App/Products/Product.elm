@@ -7,8 +7,8 @@ module App.Products.Product exposing
 import Http exposing (Error)
 
 type alias Product =
-  { id          : Int
-  , name        : String
+  { id   : Int
+  , name : String
   }
 
 type ProductMsg = FetchProductsSucceeded (List Product)
@@ -16,6 +16,6 @@ type ProductMsg = FetchProductsSucceeded (List Product)
 
 init : Int -> String -> Product
 init prodID prodName =
-  { id          = prodID
-  , name        = prodName
+  { id   = prodID
+  , name = prodName
   }
