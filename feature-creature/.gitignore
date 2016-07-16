@@ -1,4 +1,5 @@
-.stack-work
-env
-elm/elm-stuff
-public/elm.js
+frontend/elm-stuff
+
+backend/.stack-work
+backend/env
+backend/public/elm.js

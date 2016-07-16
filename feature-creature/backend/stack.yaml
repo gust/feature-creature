@@ -14,7 +14,7 @@ docker:
 packages:
   - location: .
 
-  - location: ../users-service-client
+  - location: ../../users-service-client
     extra-dep: true
 
   - location:

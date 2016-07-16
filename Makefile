@@ -5,14 +5,14 @@ build:
 	cd users-service && make build && cd - && \
 	cd auth-service && make build && cd - && \
 	cd marketing-site && make build && cd - && \
-	cd feature-creature && make build && cd -
+	cd feature-creature/backend && make build && cd -
 
 build-clean:
 	cd users-service-client && make build-clean && cd - && \
 	cd users-service && make build-clean && cd - && \
 	cd auth-service && make build-clean && cd - && \
 	cd marketing-site && make build-clean && cd - && \
-	cd feature-creature && make build-clean && cd -
+	cd feature-creature/backend && make build-clean && cd -
 
 .PHONY: test
 test:
@@ -20,7 +20,7 @@ test:
 	cd users-service && make test && cd - && \
 	cd auth-service && make test && cd - && \
 	cd marketing-site && make test && cd - && \
-	cd feature-creature && make test && cd -
+	cd feature-creature/backend && make test && cd -
 
 setupdb:
 	./users-service/scripts/setup-database.sh
@@ -39,7 +39,7 @@ server:
 	cp users-service/env/development.env $(HOME)/.fc-users-service
 	
 	mkdir -p $(HOME)/.fc-feature-creature
-	cp feature-creature/env/development.env $(HOME)/.fc-feature-creature
-	cp -R feature-creature/public $(HOME)/.fc-feature-creature
+	cp feature-creature/backend/env/development.env $(HOME)/.fc-feature-creature
+	cp -R feature-creature/backend/public $(HOME)/.fc-feature-creature
 	
 	foreman start -f Procfile.local
