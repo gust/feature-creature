@@ -79,6 +79,7 @@ executable fc-feature-creature
     Errors
     Layouts.Default
     Products.Controller
+    Repositories.Controller
     Routing
 
   ghc-options:
@@ -169,6 +170,7 @@ test-suite fc-feature-creature-test
     Helpers.TestWebServer
     Layouts.Default
     Products.Controller
+    Repositories.Controller
     Routing
 
   ghc-options:

@@ -21,6 +21,7 @@ import JWT (JWT)
 import qualified JWT
 import Network.Wai (Request, requestHeaders)
 import qualified Products.Controller as Products
+import qualified Repositories.Controller as Repositories
 import Servant
 import Servant.Server.Experimental.Auth (AuthHandler, AuthServerData, mkAuthHandler)
 import Servant.Server.Experimental.Auth()
@@ -29,9 +30,11 @@ import qualified Users.Api as Users
 
 type API = AuthProtect "auth-token-req" :> WebAppAPI
       :<|> AuthProtect "auth-token-req" :> ProductsAPI
+      :<|> AuthProtect "auth-token-req" :> RepositoriesAPI
 
-type WebAppAPI   = App.AppAPI
-type ProductsAPI = "api" :> "products" :> Products.ProductsAPI
+type WebAppAPI       = App.AppAPI
+type ProductsAPI     = "api" :> "products" :> Products.ProductsAPI
+type RepositoriesAPI = "api" :> "repositories" :> Repositories.RepositoriesAPI
 
 type instance AuthServerData (AuthProtect "auth-token-req") = User
 
@@ -42,6 +45,7 @@ genAuthServerContext cfg = (authReqHandler cfg) :. EmptyContext
 server :: ServerT API AppT
 server = App.showA
     :<|> Products.indexA
+    :<|> Repositories.indexA
 
 featureCreatureApi :: Proxy API
 featureCreatureApi = Proxy
