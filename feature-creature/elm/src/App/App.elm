@@ -1,14 +1,16 @@
 module App.App exposing
-  ( App
-  , init
+  ( init
   , update
   , view
   , urlUpdate
   )
 
 import App.AppConfig exposing (..)
+import App.AppModel exposing (App)
 import App.Products.Product as P
 import App.Products.Requests as P
+import App.Products.Views.Index as P
+import App.Products.Views.New as P
 import App.Routing exposing (Route (..), RouteMsg (..), redirectTo, routerConfig)
 import Data.External exposing (..)
 import Hop exposing (makeUrl, makeUrlFromLocation, setQuery)
@@ -16,25 +18,19 @@ import Hop.Types exposing (Location)
 import Html exposing (Html)
 import Http exposing (Error)
 import Navigation
-import UI.Layout exposing (withLayout)
-
-type alias App =
-  { appConfig : AppConfig
-  , products  : External (List P.Product)
-  , location  : Location
-  , route     : Route
-  }
+import UI.Layout as UI
 
 type AppMsg = NavigationMsg RouteMsg
             | ProductMsg P.ProductMsg
 
-init : InitialConfig -> (Route, Hop.Types.Location) -> (App, Cmd AppMsg)
+init : InitialConfig -> (Route, Location) -> (App, Cmd AppMsg)
 init initialConfig (route, location) =
   let appConfig = toAppConfig initialConfig
-      state = { appConfig = appConfig
-              , products = NotLoaded
-              , route = route
-              , location = location
+      state = { appConfig   = appConfig
+              , products    = NotLoaded
+              , route       = route
+              , location    = location
+              , currentUser = appConfig.user
               }
       cmd = Cmd.map ProductMsg (P.getProducts appConfig)
   in (state, cmd)
@@ -46,6 +42,13 @@ update msg app =
       ProductMsg (P.FetchProductsSucceeded products) -> handleProductsLoaded app products
       ProductMsg (P.FetchProductsFailed err) -> handleProductsLoadedFailure app err
       NavigationMsg msg -> navigateTo app msg
+
+view : App -> Html a
+view app = case app.route of
+  HomeRoute       -> UI.withLayout app P.loadingView
+  ProductsRoute   -> UI.withLayout app <| P.indexView app.products
+  NewProductRoute -> UI.withLayout app P.newView
+  NotFoundRoute   -> UI.withLayout app fourOhFour
 
 handleProductsLoaded : App -> List P.Product -> (App, Cmd AppMsg)
 handleProductsLoaded app products =
@@ -74,37 +77,12 @@ navigateTo app msg = case msg of
     in (app, cmd)
 
 urlUpdate : (Route, Hop.Types.Location) -> App -> (App, Cmd AppMsg)
-urlUpdate (route, location) app = ( { app | route = route, location = location }, Cmd.none )
+urlUpdate (route, location) app =
+  ({ app | route = route, location = location }, Cmd.none)
 
-view : App -> Html a
-view app = case app.route of
-  HomeRoute -> loadingView app
-  ProductsRoute -> productsView app
-  NewProductRoute -> newProductView
-  NotFoundRoute -> fourOhFour
-
-fourOhFour : Html a
-fourOhFour = withLayout
-  [ Html.div [] [ Html.text "There's nothing here. How'd you get here, anyway?" ] ]
-
-newProductView : Html a
-newProductView = withLayout
-  [ Html.div [] [ Html.text "This is where we're gonna make you a new product" ]
+fourOhFour : List (Html a)
+fourOhFour =
+  [ Html.div
+      []
+      [ Html.text "There's nothing here. How'd you get here, anyway?" ]
   ]
-
-productsView : App -> Html a
-productsView app = case app.products of
-  NotLoaded             -> loadingView app
-  LoadedWithError error -> errorView error
-  Loaded products       -> withLayout
-    [ Html.div [] [ Html.text ("You have " ++ (toString <| List.length products) ++ " products!") ]
-    , Html.ul [] (List.map (\product -> Html.li [] [ Html.text (toString product) ]) products)
-    ]
-
-loadingView : App -> Html a
-loadingView app = withLayout
-  [ Html.div [] [ Html.text ("Hi there " ++ (app.appConfig.user)) ] ]
-
-errorView : String -> Html a
-errorView error = withLayout
-  [ Html.div [] [ Html.text ("Oh no! " ++ error) ] ]
