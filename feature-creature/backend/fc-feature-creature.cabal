@@ -20,18 +20,21 @@ library
   exposed-modules:
     Config.AppConfig
     Config.Environment
+    Cookies
 
   other-modules:
 
   build-depends: base                  >= 4.7 && < 5
                , aeson                 >= 0.11.2.0 && < 0.11.3.0
                , bytestring            >= 0.10.6.0 && < 0.10.7.0
+               , containers            >= 0.5.6.2 && < 0.5.7.0
                , data-default          >= 0.5.3 && < 0.6.0
                , directory             >= 1.2.2.0 && < 1.2.3.0
                , exceptions            >= 0.8.2.1 && < 0.8.3.0
                , fast-logger           >= 2.4.6 && < 2.5.0
                , fc-users-service-client  >= 0.1.0.0 && < 0.1.1.0
                , filepath              >= 1.4.0.0 && < 1.4.1.0
+               , github                >= 0.14.1 && < 0.15.0
                , lens                  >= 4.13 && < 5.0
                , load-env              >= 0.1.1 && < 0.2.0
                , logentries            >= 0.1.0.0 && < 0.1.1.0
@@ -95,9 +98,10 @@ executable fc-feature-creature
   build-depends: base
                , aeson                 >= 0.11.2.0 && < 0.11.3.0
                , blaze-html            >= 0.8.1.1 &&  < 0.8.2.0
-               , fc-feature-creature
+               , containers            >= 0.5.6.2 && < 0.5.7.0
                , bytestring            >= 0.10.6.0 && < 0.10.7.0
                , exceptions            >= 0.8.2.1 && < 0.8.3.0
+               , fc-feature-creature
                , jwt                   >= 0.1.0.0 && < 0.1.1.0
                , lens                  >= 4.13 && < 5.0
                , logentries            >= 0.1.0.0 && < 0.1.1.0
@@ -132,6 +136,7 @@ test-suite fc-feature-creature-test
 
   hs-source-dirs:
     app
+    src
     test
 
   main-is:
@@ -142,6 +147,7 @@ test-suite fc-feature-creature-test
                , aeson-pretty          >= 0.7.2 && < 0.8.0
                , blaze-html            >= 0.8.1.1 &&  < 0.8.2.0
                , bytestring            >= 0.10.6.0 && < 0.10.7.0
+               , containers            >= 0.5.6.2 && < 0.5.7.0
                , fc-feature-creature
                , fc-users-service-client  >= 0.1.0.0 && < 0.1.1.0
                , hspec                 >= 2.2.3 && < 2.3.0
@@ -165,6 +171,8 @@ test-suite fc-feature-creature-test
     App
     App.Controller
     App.View
+    Cookies
+    CookiesSpec
     Errors
     Helpers.RequestSpecHelpers
     Helpers.TestWebServer

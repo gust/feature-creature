@@ -20,12 +20,14 @@ library
   exposed-modules:
     Config.AppConfig
     Config.Environment
+    Cookies
 
   other-modules:
 
   build-depends: base                  >= 4.7 && < 5
                , aeson                 >= 0.11.2.0 && < 0.11.3.0
                , bytestring            >= 0.10.6.0 && < 0.10.7.0
+               , containers            >= 0.5.6.2 && < 0.5.7.0
                , data-default          >= 0.5.3 && < 0.6.0
                , directory             >= 1.2.2.0 && < 1.2.3.0
                , exceptions            >= 0.8.2.1 && < 0.8.3.0
@@ -95,6 +97,7 @@ executable fc-marketing-site
   build-depends: base
                , aeson                 >= 0.11.2.0 && < 0.11.3.0
                , blaze-html            >= 0.8.1.1 &&  < 0.8.2.0
+               , containers            >= 0.5.6.2 && < 0.5.7.0
                , fc-marketing-site
                , bytestring            >= 0.10.6.0 && < 0.10.7.0
                , exceptions            >= 0.8.2.1 && < 0.8.3.0
@@ -131,6 +134,7 @@ test-suite fc-marketing-site-test
 
   hs-source-dirs:
     app
+    src
     test
 
   main-is:
@@ -141,13 +145,17 @@ test-suite fc-marketing-site-test
                , aeson-pretty          >= 0.7.2 && < 0.8.0
                , blaze-html            >= 0.8.1.1 &&  < 0.8.2.0
                , bytestring            >= 0.10.6.0 && < 0.10.7.0
+               , containers            >= 0.5.6.2 && < 0.5.7.0
+               , directory             >= 1.2.2.0 && < 1.2.3.0
                , fc-marketing-site
                , fc-users-service-client  >= 0.1.0.0 && < 0.1.1.0
+               , filepath              >= 1.4.0.0 && < 1.4.1.0
                , hspec                 >= 2.2.3 && < 2.3.0
                , hspec-wai             >= 0.6 && < 1
                , hspec-wai-json        >= 0.6.1 && < 1
                , http-types            >= 0.9 && < 1
                , jwt                   >= 0.1.0.0 && < 0.1.1.0
+               , logentries            >= 0.1.0.0 && < 0.1.1.0
                , mtl                   >= 2.2.1 && < 2.3.0
                , lens                  >= 4.13 && < 5.0
                , load-env              >= 0.1.1 && < 0.2.0
@@ -156,11 +164,16 @@ test-suite fc-marketing-site-test
                , time                  >= 1.5.0.1 && < 1.5.1.0
                , transformers          >= 0.4.2.0 && < 0.4.3.0
                , text                  >= 1.2.2.1 && < 1.2.3.0
+               , url                   >= 2.1.3 && < 2.2.0
                , wai                   >= 3.2.1.1 && < 3.2.2.0
                , wai-extra             >= 3.0.15.1 && < 3.0.16.0
 
   other-modules:
     App
+    Config.AppConfig
+    Config.Environment
+    Cookies
+    CookiesSpec
     Errors
     Helpers.RequestSpecHelpers
     Helpers.TestWebServer

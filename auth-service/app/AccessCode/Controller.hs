@@ -29,6 +29,7 @@ showA (Just code) = ask >>= \AppConfig{..} -> do
           _ <- findOrCreateNewUser user
           let headers = [ ("Location", TE.encodeUtf8 getMarketingSiteUrl)
                         , ("Set-Cookie", authCookie token)
+                        , ("Set-Cookie", accessToken token)
                         ]
           throwError $ err301 { errHeaders = headers }
 
@@ -54,7 +55,10 @@ fetchUser token = ask >>= \AppConfig{..} ->
   runAppIO $ getUser token getAuthConfig
 
 authCookie :: AccessToken -> ByteString
-authCookie AccessToken{..} = "token=" <> TE.encodeUtf8 getIdToken
+authCookie AccessToken{..} = "auth-token=" <> TE.encodeUtf8 getIdToken
+
+accessToken :: AccessToken -> ByteString
+accessToken AccessToken{..} = "access-token=" <> TE.encodeUtf8 getToken
 
 runAppIO :: MonadIO m => ExceptT e IO a -> m (Either e a)
 runAppIO f = liftIO $ runExceptT f

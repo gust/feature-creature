@@ -9,11 +9,12 @@ module Routing
 
 
 import App (AppT, AppConfig (..))
+import Cookies (parseCookies)
 import Control.Monad.Except (runExceptT, liftIO)
 import Data.ByteString (ByteString)
-import qualified Data.ByteString.Char8 as C
+import qualified Data.Map as Map
+import Data.Monoid ((<>))
 import Data.Text (Text)
-import qualified Data.Text.Encoding as TLE
 import Errors (AppError (..))
 import qualified Errors as E
 import qualified Home.Controller as Home
@@ -56,6 +57,7 @@ authReqHandler AppConfig{..} =
   let handler req = case lookup "Cookie" (requestHeaders req) of
         Nothing     -> E.raiseAppError AuthenticationRequired
         Just cookie -> do
+          liftIO $ putStrLn . show $ "All Cookies: " <> cookie
           mUser <- liftIO $ loadCurrentUser getUsersApiConfig cookie
           case mUser of
             Nothing -> E.raiseAppError AuthenticationRequired
@@ -66,7 +68,8 @@ authOptHandler :: AppConfig -> AuthHandler Request (Maybe User)
 authOptHandler AppConfig{..} =
   let handler req = case lookup "Cookie" (requestHeaders req) of
         Nothing     -> return Nothing
-        Just cookie -> liftIO $ loadCurrentUser getUsersApiConfig cookie
+        Just cookie -> do
+          liftIO $ loadCurrentUser getUsersApiConfig cookie
   in mkAuthHandler handler
 
 loadCurrentUser :: Users.Config -> ByteString -> IO (Maybe User)
@@ -75,16 +78,11 @@ loadCurrentUser cfg cookie =
     Nothing       -> return Nothing
     (Just authId) -> fetchUser cfg authId
 
--- TODO: This will not be maintainable
---       What does it look like when we have multiple cookies?
-findAuthToken :: ByteString -> Maybe ByteString
-findAuthToken allCookies =
-  case C.split '=' allCookies of
-    ("token":tok:_) -> Just tok
-    _               -> Nothing
+findAuthToken :: ByteString -> Maybe Text
+findAuthToken c = Map.lookup "auth-token" $ parseCookies c
 
-parseJWT :: ByteString -> Maybe JWT
-parseJWT encJWT = eitherToMaybe $ JWT.decodeJWT (TLE.decodeUtf8 encJWT)
+parseJWT :: Text -> Maybe JWT
+parseJWT encJWT = eitherToMaybe $ JWT.decodeJWT encJWT
 
 fetchUser :: Users.Config -> Text -> IO (Maybe User)
 fetchUser cfg authId = eitherToMaybe <$> (runExceptT $ Users.findUser authId cfg)
