@@ -30,7 +30,7 @@ import qualified Users.Api as Users
 type API = AuthProtect "auth-token-req" :> WebAppAPI
       :<|> AuthProtect "auth-token-req" :> ProductsAPI
 
-type WebAppAPI   = "products" :> App.AppAPI
+type WebAppAPI   = App.AppAPI
 type ProductsAPI = "api" :> "products" :> Products.ProductsAPI
 
 type instance AuthServerData (AuthProtect "auth-token-req") = User

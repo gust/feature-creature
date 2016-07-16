@@ -26,6 +26,8 @@ setupdb:
 	./users-service/scripts/setup-database.sh
 
 server:
+	make build
+
 	mkdir -p $(HOME)/.fc-marketing-site
 	cp marketing-site/env/development.env $(HOME)/.fc-marketing-site
 	cp -R marketing-site/public $(HOME)/.fc-marketing-site

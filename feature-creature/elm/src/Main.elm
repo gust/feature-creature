@@ -2,12 +2,14 @@ module Main exposing (..)
 
 import App.App  as App
 import App.AppConfig exposing (..)
-import Html.App as Html
+import App.Routing exposing (urlParser)
+import Navigation
 
 main : Program InitialConfig
-main = Html.programWithFlags
-  { init   = App.init
-  , update = App.update
-  , view   = App.view
+main = Navigation.programWithFlags urlParser
+  { init      = App.init
+  , update    = App.update
+  , urlUpdate = App.urlUpdate
+  , view      = App.view
   , subscriptions = \_ -> Sub.none
   }
