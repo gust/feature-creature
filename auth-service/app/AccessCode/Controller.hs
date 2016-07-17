@@ -4,7 +4,10 @@ module AccessCode.Controller
 
 import App (AppT, AppConfig (..))
 import Auth0.Access (AccessCode, AccessToken (..), exchangeAccessCode)
-import Auth0.User (User (..), getUser)
+import Auth0.User (User (..))
+import qualified Auth0.User as Auth0
+import Auth0.Identity (Identity)
+import qualified Auth0.Identity as Auth0
 import Control.Monad.Reader
 import Control.Monad.Except (ExceptT, runExceptT)
 import Data.ByteString (ByteString)
@@ -29,7 +32,7 @@ showA (Just code) = ask >>= \AppConfig{..} -> do
           _ <- findOrCreateNewUser user
           let headers = [ ("Location", TE.encodeUtf8 getMarketingSiteUrl)
                         , ("Set-Cookie", authCookie token)
-                        , ("Set-Cookie", accessToken token)
+                        , ("Set-Cookie", providerAccessToken user)
                         ]
           throwError $ err301 { errHeaders = headers }
 
@@ -52,13 +55,27 @@ fetchToken code = ask >>= \AppConfig{..} ->
 
 fetchUser :: AccessToken -> AppT (Either Text User)
 fetchUser token = ask >>= \AppConfig{..} ->
-  runAppIO $ getUser token getAuthConfig
+  runAppIO $ Auth0.getUser token getAuthConfig
 
 authCookie :: AccessToken -> ByteString
 authCookie AccessToken{..} = "auth-token=" <> TE.encodeUtf8 getIdToken
 
-accessToken :: AccessToken -> ByteString
-accessToken AccessToken{..} = "access-token=" <> TE.encodeUtf8 getToken
+providerAccessToken :: User -> ByteString
+providerAccessToken user = case identityByProvider "github" (identities user) of
+  Just identity -> case Auth0.accessToken identity of
+    (Just token) -> "access-token=" <> TE.encodeUtf8 token
+    Nothing      -> dummyToken
+  Nothing -> dummyToken
+  where
+    dummyToken = "dummy=123" -- TODO: clean up this spike
+
+identityByProvider :: Text -> [Identity] -> Maybe Identity
+identityByProvider _ [] = Nothing
+identityByProvider providerName (x:xs) =
+  if Auth0.provider x == providerName then
+    Just x
+  else
+    identityByProvider providerName xs
 
 runAppIO :: MonadIO m => ExceptT e IO a -> m (Either e a)
 runAppIO f = liftIO $ runExceptT f
