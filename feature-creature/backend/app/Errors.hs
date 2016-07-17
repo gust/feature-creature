@@ -19,14 +19,14 @@ import Servant
 data AppError = ResourceNotFound
               | BadRequest T.Text
               | AuthenticationRequired
-              | ServerError
+              | ServerError (Maybe T.Text)
   deriving (Show, Eq, Read)
 
 raiseAppError :: MonadError ServantErr m => AppError -> m a
-raiseAppError ResourceNotFound    = throwError resourceNotFound
-raiseAppError (BadRequest errMsg) = throwError $ badRequest errMsg
+raiseAppError ResourceNotFound       = throwError resourceNotFound
+raiseAppError (BadRequest errMsg)    = throwError $ badRequest errMsg
 raiseAppError AuthenticationRequired = throwError authenticationRequired
-raiseAppError ServerError         = throwError serverError
+raiseAppError (ServerError errMsg)   = throwError $ serverError errMsg
 
 authenticationRequired :: ServantErr
 authenticationRequired = err401 { errBody = "Authentication required" }
@@ -34,8 +34,9 @@ authenticationRequired = err401 { errBody = "Authentication required" }
 resourceNotFound :: ServantErr
 resourceNotFound = err404 { errBody = "The request resource could not be found" }
 
-serverError :: ServantErr
-serverError = err500 { errBody = "Internal server error" }
+serverError :: Maybe T.Text -> ServantErr
+serverError Nothing = err500 { errBody = "Internal server error" }
+serverError (Just err) = err500 { errBody = encode err }
 
 badRequest :: T.Text -> ServantErr
 badRequest msg = err400 { errBody = encode msg }
