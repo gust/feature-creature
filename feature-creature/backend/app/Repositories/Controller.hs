@@ -30,37 +30,64 @@ import qualified GitHub.Endpoints.Repos as GH
 type RepositoriesAPI = Header "Cookie" Text :> Get '[JSON] [Repository]
 
 data Repository =
-  Repository { getID       :: Int
+  Repository { getId       :: Int
              , getUrl      :: Text
              , getName     :: Text
              , getHtmlUrl  :: Text
              , getSSHUrl   :: Maybe Text
              , getCloneUrl :: Maybe Text
              , getHooksUrl :: Text
+             , getOwner    :: RepositoryOwner
              }
   deriving (Show, Eq, Ord)
 
 instance ToJSON Repository where
   toJSON Repository{..} =
-    AE.object [ "id"       .= getID
+    AE.object [ "id"       .= getId
               , "name"     .= getName
               , "url"      .= getUrl
               , "htmlUrl"  .= getHtmlUrl
               , "sshUrl"   .= getSSHUrl
               , "cloneUrl" .= getCloneUrl
               , "hooksUrl" .= getHooksUrl
+              , "owner"    .= getOwner
               ]
 
 instance FromJSON Repository where
   parseJSON = AE.withObject "repository" $ \v -> do
-    rID       <- v .:  "id"
+    rId       <- v .:  "id"
     rName     <- v .: "name"
     rUrl      <- v .: "url"
-    rHtmlurl  <- v .: "htmlUrl"
+    rHtmlUrl  <- v .: "htmlUrl"
     rSSHUrl   <- v .: "sshUrl"
     rCloneUrl <- v .: "cloneUrl"
     rHooksUrl <- v .: "hooksUrl"
-    return (Repository rID rUrl rName rHtmlurl rSSHUrl rCloneUrl rHooksUrl)
+    rOwner    <- v .: "owner"
+    return (Repository rId rUrl rName rHtmlUrl rSSHUrl rCloneUrl rHooksUrl rOwner)
+
+data RepositoryOwner =
+  RepositoryOwner { roGetId        :: Int
+                  , roGetName      :: Text
+                  , roGetUrl       :: Text
+                  , roGetAvatarUrl :: Text
+                  }
+  deriving (Show, Eq, Ord)
+
+instance ToJSON RepositoryOwner where
+  toJSON RepositoryOwner{..} =
+    AE.object [ "id"        .= roGetId
+              , "name"      .= roGetName
+              , "url"       .= roGetUrl
+              , "avatarUrl" .= roGetAvatarUrl
+              ]
+
+instance FromJSON RepositoryOwner where
+  parseJSON = AE.withObject "repository" $ \v -> do
+    rId        <- v .:  "id"
+    rName      <- v .: "name"
+    rUrl       <- v .: "url"
+    rAvatarUrl <- v .: "avatarUrl"
+    return (RepositoryOwner rId rUrl rName rAvatarUrl)
 
 toRepository :: GH.Repo -> Repository
 toRepository repo =
@@ -72,6 +99,15 @@ toRepository repo =
     (GH.repoSshUrl repo)
     (GH.repoCloneUrl repo)
     (GH.repoHooksUrl repo)
+    (toRepositoryOwner $ GH.repoOwner repo)
+
+toRepositoryOwner :: GH.SimpleOwner -> RepositoryOwner
+toRepositoryOwner owner =
+  RepositoryOwner
+    (GH.untagId $ GH.simpleOwnerId owner)
+    (GH.untagName $ GH.simpleOwnerLogin owner)
+    (GH.simpleOwnerUrl owner)
+    (GH.simpleOwnerAvatarUrl owner)
 
 fetchUserRepos :: Text -> IO (Either AppError [Repository])
 fetchUserRepos token = liftM transformResult fetchRepos

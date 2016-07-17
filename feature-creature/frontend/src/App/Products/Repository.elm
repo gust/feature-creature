@@ -1,21 +1,28 @@
 module App.Products.Repository exposing
   ( Repository
   , RepositoryMsg (..)
-  , init
+  , RepositoryOwner
   )
 
 import Http exposing (Error)
 
 type alias Repository =
-  { id   : Int
-  , name : String
+  { id       : Int
+  , name     : String
+  , url      : String
+  , htmlUrl  : String
+  , sshUrl   : Maybe String
+  , cloneUrl : Maybe String
+  , hooksUrl : String
+  , owner    : RepositoryOwner
+  }
+
+type alias RepositoryOwner =
+  { id        : Int
+  , name      : String
+  , url       : String
+  , avatarUrl : String
   }
 
 type RepositoryMsg = FetchRepositoriesSucceeded (List Repository)
                    | FetchRepositoriesFailed Error
-
-init : Int -> String -> Repository
-init repID repName =
-  { id   = repID
-  , name = repName
-  }
