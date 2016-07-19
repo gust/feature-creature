@@ -11,9 +11,9 @@ import App.Routing exposing (Route)
 
 type alias App =
   { appConfig    : AppConfig
-  , products     : External (List Product)
   , location     : Location
   , route        : Route
   , currentUser  : String
+  , products     : External (List Product)
   , productForm  : ProductForm
   }

@@ -9,14 +9,15 @@ import App.AppConfig exposing (..)
 import App.AppModel exposing (App)
 import App.Products.Product as P
 import App.Products.ProductForm as PF
-import App.Products.ProductFormView as PF
 import App.Products.Requests as P
 import App.Products.Views.Index as P
+import App.Products.Views.New as P
 import App.Routing exposing (Route (..), RouteMsg (..), redirectTo, routerConfig)
 import Data.External exposing (..)
 import Hop exposing (makeUrl, makeUrlFromLocation, setQuery)
 import Hop.Types exposing (Location)
 import Html exposing (Html)
+import Html.App as Html
 import Navigation
 import UI.Layout as UI
 
@@ -28,10 +29,10 @@ init : InitialConfig -> (Route, Location) -> (App, Cmd AppMsg)
 init initialConfig (route, location) =
   let appConfig = toAppConfig initialConfig
       state = { appConfig    = appConfig
-              , products     = NotLoaded
               , route        = route
               , location     = location
               , currentUser  = appConfig.user
+              , products     = NotLoaded
               , productForm  = PF.mkProductForm
               }
       cmd = Cmd.map ProductMsg (P.getProducts appConfig)
@@ -65,11 +66,11 @@ update msg app =
 
       NavigationMsg msg -> navigateTo app msg
 
-view : App -> Html a
+view : App -> Html AppMsg
 view app = case app.route of
   HomeRoute       -> UI.withLayout app P.loadingView
   ProductsRoute   -> UI.withLayout app <| P.indexView app.products
-  NewProductRoute -> UI.withLayout app <| PF.view app.productForm
+  NewProductRoute -> Html.map ProductFormMsg <| UI.withLayout app <| P.newView app.productForm
   NotFoundRoute   -> UI.withLayout app fourOhFour
 
 navigateTo : App -> RouteMsg -> (App, Cmd AppMsg)

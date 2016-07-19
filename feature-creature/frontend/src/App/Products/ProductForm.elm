@@ -13,9 +13,11 @@ import Data.External exposing (..)
 
 type alias ProductForm =
   { repositories : External (List Repository)
+  , selectedRepository : Maybe Repository
   }
 
 type ProductFormMsg = InitializeForm
+                    | RepositorySelected Repository
                     | RepositoryMsg R.RepositoryMsg
 
 update : ProductFormMsg -> ProductForm -> AppConfig -> (ProductForm, Cmd ProductFormMsg)
@@ -23,6 +25,9 @@ update msg pForm appConfig = case msg of
   InitializeForm ->
     let cmd = Cmd.map RepositoryMsg <| R.getRepositories appConfig
     in (pForm, cmd)
+
+  RepositorySelected repository ->
+    ({ pForm | selectedRepository = Just repository }, Cmd.none)
 
   (RepositoryMsg (R.FetchRepositoriesSucceeded rs)) ->
     ({ pForm | repositories = Loaded rs }, Cmd.none)
@@ -36,4 +41,5 @@ update msg pForm appConfig = case msg of
   Creates a default ProductForm
 -}
 mkProductForm : ProductForm
-mkProductForm = ProductForm NotLoaded
+mkProductForm =
+  ProductForm NotLoaded Nothing

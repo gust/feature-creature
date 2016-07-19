@@ -1,42 +1,41 @@
-module App.Products.ProductFormView exposing
-  ( view
+module App.Products.Views.New exposing
+  ( newView
   )
 
-import App.Products.ProductForm exposing (ProductForm)
+import App.Products.ProductForm exposing (ProductForm, ProductFormMsg (..))
 import App.Products.Repository exposing (Repository)
 import Data.External exposing (..)
 import Html exposing (Html)
 import Html as H
 import Html.Attributes as A
+import Html.Events as E
 
-view : ProductForm -> List (Html a)
-view pForm = case pForm.repositories of
+newView : ProductForm -> List (Html ProductFormMsg)
+newView pForm = case pForm.repositories of
   NotLoaded             -> loadingView
   LoadedWithError error -> errorView error
-  Loaded rs   ->
-    if List.length rs == 0 then
-      blankState
-    else
-      repositorySelectList rs
+  Loaded []             -> blankState
+  Loaded rs             -> repositorySelectList rs
 
-repositorySelectList : List Repository -> List (Html a)
+repositorySelectList : List Repository -> List (Html ProductFormMsg)
 repositorySelectList repositories =
   [ H.div [] [ H.text "Here are all of your repositories:" ]
   , H.form [] [ repositoryList repositories ]
   ]
 
-repositoryList : List Repository -> Html a
+repositoryList : List Repository -> Html ProductFormMsg
 repositoryList repositories =
   H.div
     [ A.classList [ ("list-group", True) ] ]
     (List.map repositoryListItem repositories)
 
-repositoryListItem : Repository -> Html a
+repositoryListItem : Repository -> Html ProductFormMsg
 repositoryListItem repository =
   let owner = repository.owner
   in H.button
     [ A.type' "button"
     , A.classList [ ("list-group-item", True) ]
+    , E.onClick (RepositorySelected repository)
     ]
     [ H.text repository.name
     , H.div
