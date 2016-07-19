@@ -2,25 +2,27 @@ module App.Products.Views.New exposing
   ( newView
   )
 
-import App.Products.ProductForm exposing (ProductForm, ProductFormMsg (..))
+import App.Products.ProductForm exposing (ProductForm, ProductFormMsg (..), Visiblility (..))
 import App.Products.Repository exposing (Repository)
 import Data.External exposing (..)
 import Html exposing (Html)
 import Html as H
 import Html.Attributes as A
 import Html.Events as E
+import UI.Bootstrap.Modal as BS
 
 newView : ProductForm -> List (Html ProductFormMsg)
 newView pForm = case pForm.repositories of
-  NotLoaded             -> loadingView
+  NotLoaded -> loadingView
   LoadedWithError error -> errorView error
-  Loaded []             -> blankState
-  Loaded rs             -> repositorySelectList rs
+  Loaded [] -> blankState
+  Loaded rs ->
+    [ H.div [] <| List.concat [repositorySelectList rs, confirmationModal pForm] ]
 
 repositorySelectList : List Repository -> List (Html ProductFormMsg)
 repositorySelectList repositories =
   [ H.div [] [ H.text "Here are all of your repositories:" ]
-  , H.form [] [ repositoryList repositories ]
+  , H.div [] [ repositoryList repositories ]
   ]
 
 repositoryList : List Repository -> Html ProductFormMsg
@@ -54,6 +56,17 @@ userAvatar avatarUrl =
     , (A.class "img-circle")
     ]
     []
+
+confirmationModal : ProductForm -> List (Html ProductFormMsg)
+confirmationModal pForm = case pForm.selectedRepository of
+  Nothing -> [ Html.div [] [] ]
+  (Just repository) -> case pForm.modalVisibility of
+    Hidden -> [ Html.div [] [] ]
+    Visible ->
+      let mTitle = H.text "hello"
+          mBody = H.div [] [ H.div [] [ H.text "Hi from the modal body!" ] ]
+          mFooter = H.div [] [ H.div [] [ H.text "Hi from the modal footer!" ] ]
+      in [ BS.modal mTitle mBody mFooter CloseConfirmationModal ]
 
 blankState : List (Html a)
 blankState =

@@ -70,7 +70,10 @@ view : App -> Html AppMsg
 view app = case app.route of
   HomeRoute       -> UI.withLayout app P.loadingView
   ProductsRoute   -> UI.withLayout app <| P.indexView app.products
-  NewProductRoute -> Html.map ProductFormMsg <| UI.withLayout app <| P.newView app.productForm
+  NewProductRoute ->
+    Html.map ProductFormMsg
+      <| UI.withLayout app
+      <| P.newView app.productForm
   NotFoundRoute   -> UI.withLayout app fourOhFour
 
 navigateTo : App -> RouteMsg -> (App, Cmd AppMsg)

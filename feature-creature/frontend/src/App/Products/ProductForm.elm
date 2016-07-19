@@ -1,6 +1,7 @@
 module App.Products.ProductForm exposing
   ( ProductForm
   , ProductFormMsg (..)
+  , Visiblility (..)
   , mkProductForm
   , update
   )
@@ -14,11 +15,16 @@ import Data.External exposing (..)
 type alias ProductForm =
   { repositories : External (List Repository)
   , selectedRepository : Maybe Repository
+  , modalVisibility : Visibility
   }
 
 type ProductFormMsg = InitializeForm
+                    | CloseConfirmationModal
                     | RepositorySelected Repository
                     | RepositoryMsg R.RepositoryMsg
+
+type Visibility = Hidden
+                | Visible
 
 update : ProductFormMsg -> ProductForm -> AppConfig -> (ProductForm, Cmd ProductFormMsg)
 update msg pForm appConfig = case msg of
@@ -27,7 +33,18 @@ update msg pForm appConfig = case msg of
     in (pForm, cmd)
 
   RepositorySelected repository ->
-    ({ pForm | selectedRepository = Just repository }, Cmd.none)
+    ( { pForm | selectedRepository = Just repository
+      , modalVisibility = Visible
+      }
+    , Cmd.none
+    )
+
+  CloseConfirmationModal ->
+    ( { pForm | selectedRepository = Nothing
+      , modalVisibility = Hidden
+      }
+    , Cmd.none
+    )
 
   (RepositoryMsg (R.FetchRepositoriesSucceeded rs)) ->
     ({ pForm | repositories = Loaded rs }, Cmd.none)
@@ -42,4 +59,4 @@ update msg pForm appConfig = case msg of
 -}
 mkProductForm : ProductForm
 mkProductForm =
-  ProductForm NotLoaded Nothing
+  ProductForm NotLoaded Nothing Hidden
