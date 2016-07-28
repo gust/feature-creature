@@ -1,15 +1,19 @@
+{-# LANGUAGE ExistentialQuantification #-}
+
 module Config.AppConfig
   ( AppConfig (..)
   , ConfigException (..)
   , getAppConfig
   ) where
 
+import Config.Internal.Database (ConnectionPool, makePool)
 import Config.Environment (Environment (..))
 import Control.Exception (Exception, throwIO)
 import Control.Monad (liftM)
 import Data.Maybe (fromJust)
 import Data.Text as T
 import Data.Typeable (Typeable)
+import Database.Types (DBAccess (..), db)
 import LoadEnv
 import qualified Network.URL as URL
 import qualified Network.Wai.Middleware.RequestLogger.LogEntries as LE
@@ -20,7 +24,7 @@ import qualified Users.Api as UsersApi
 
 type AppName = Text
 
-data AppConfig = AppConfig
+data AppConfig = forall m. Monad m => AppConfig
   { getAppName            :: AppName
   , getAppBasePath        :: Text
   , getAppDataDirectory   :: FilePath
@@ -29,6 +33,8 @@ data AppConfig = AppConfig
   , getLogEntriesConfig   :: LE.Config
   , getAuthUrl            :: String
   , getUsersApiConfig     :: UsersApi.Config
+  , getDBConn             :: ConnectionPool
+  , getDB                 :: DBAccess m
   }
 
 data ConfigException = ConfigException Text
@@ -44,6 +50,7 @@ getAppConfig appName env = do
   leConfig      <- logEntriesConfig
   loginUrl      <- loadLoginUrl
   usersConfig   <- usersApiConfig
+  dbPool        <- makePool env
   let webServerPort = maybe 8080 id (liftM read port)
 
   return $ AppConfig
@@ -55,6 +62,8 @@ getAppConfig appName env = do
     , getLogEntriesConfig = leConfig
     , getAuthUrl          = loginUrl
     , getUsersApiConfig   = usersConfig
+    , getDBConn           = dbPool
+    , getDB               = (db dbPool)
     }
 
   where

@@ -23,7 +23,8 @@ test:
 	cd feature-creature/backend && make test && cd -
 
 setupdb:
-	./users-service/scripts/setup-database.sh
+	./users-service/scripts/setup-database.sh; \
+	./feature-creature/backend/scripts/setup-database.sh
 
 server:
 	make build
