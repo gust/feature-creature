@@ -52,7 +52,7 @@ stdOutLogger Production  = logStdout
 
 corsPolicy :: CorsResourcePolicy
 corsPolicy =
-  let allowedMethods = simpleMethods <> ["DELETE", "PUT", "PATCH", "OPTIONS"]
+  let allowedMethods = simpleMethods <> ["DELETE", "POST", "PUT", "PATCH", "OPTIONS"]
       allowedHeaders = ["Content-Type"]
   in
     simpleCorsResourcePolicy { corsMethods = allowedMethods

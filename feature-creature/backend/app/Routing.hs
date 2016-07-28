@@ -44,7 +44,7 @@ genAuthServerContext cfg = (authReqHandler cfg) :. EmptyContext
 
 server :: ServerT API AppT
 server = App.showA
-    :<|> Products.indexA
+    :<|> Products.actions
     :<|> Repositories.indexA
 
 featureCreatureApi :: Proxy API
