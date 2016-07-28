@@ -13,6 +13,8 @@ type alias Product =
 
 type ProductMsg = FetchProductsSucceeded (List Product)
                 | FetchProductsFailed Error
+                | CreateProductsSucceeded Product
+                | CreateProductsFailed Error
 
 init : Int -> String -> Product
 init prodID prodName =

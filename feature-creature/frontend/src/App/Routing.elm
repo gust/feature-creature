@@ -15,6 +15,7 @@ import Task
 
 type Route = HomeRoute
            | ProductsRoute
+           | ProductRoute Int
            | NewProductRoute
            | NotFoundRoute
 
@@ -43,6 +44,7 @@ parseRoute route =
   case route of
     HomeRoute       -> matcherToPath homeMatcher []
     ProductsRoute   -> matcherToPath productsMatcher []
+    ProductRoute id -> matcherToPath productMatcher [toString id]
     NewProductRoute -> matcherToPath newProductMatcher []
     NotFoundRoute   -> ""
 
@@ -50,6 +52,7 @@ matchers : List (PathMatcher Route)
 matchers =
   [ homeMatcher
   , productsMatcher
+  , productMatcher
   , newProductMatcher
   ]
 
@@ -58,6 +61,9 @@ homeMatcher = match1 HomeRoute ""
 
 productsMatcher : PathMatcher Route
 productsMatcher = match1 ProductsRoute "/products"
+
+productMatcher : PathMatcher Route
+productMatcher = match2 ProductRoute "/products/" int
 
 newProductMatcher : PathMatcher Route
 newProductMatcher = match1 NewProductRoute "/products/new"

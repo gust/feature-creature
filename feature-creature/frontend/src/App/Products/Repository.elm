@@ -3,11 +3,13 @@ module App.Products.Repository exposing
   , RepositoryMsg (..)
   , RepositoryOwner
   , getRepositories
+  , encodeRepository
   )
 
 import App.AppConfig exposing (..)
 import Http as Http exposing (..)
 import Json.Decode as Json  exposing ((:=), maybe)
+import Json.Encode
 import Task as Task exposing (..)
 
 type alias Repository =
@@ -60,6 +62,11 @@ parseRepositoryOwner =
       ("name" := Json.string)
       ("url" := Json.string)
       ("avatarUrl" := Json.string)
+
+encodeRepository : Repository -> String
+encodeRepository repository =
+  Json.Encode.encode 0
+    <| Json.Encode.object [ ("id", Json.Encode.int repository.id) ]
 
 repositoriesUrl : AppConfig -> String
 repositoriesUrl appConfig = appConfig.productsApiPath ++ "/api/repositories"

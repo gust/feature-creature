@@ -11,6 +11,7 @@ import App.Products.Product as P
 import App.Products.ProductForm as PF
 import App.Products.Requests as P
 import App.Products.Views.Index as P
+import App.Products.Views.Show as P
 import App.Products.Views.New as P
 import App.Routing exposing (Route (..), RouteMsg (..), redirectTo, routerConfig)
 import Data.External exposing (..)
@@ -28,12 +29,13 @@ type AppMsg = NavigationMsg RouteMsg
 init : InitialConfig -> (Route, Location) -> (App, Cmd AppMsg)
 init initialConfig (route, location) =
   let appConfig = toAppConfig initialConfig
-      state = { appConfig    = appConfig
-              , route        = route
-              , location     = location
-              , currentUser  = appConfig.user
-              , products     = NotLoaded
-              , productForm  = PF.mkProductForm
+      state = { appConfig       = appConfig
+              , route           = route
+              , location        = location
+              , currentUser     = appConfig.user
+              , products        = NotLoaded
+              , selectedProduct = NotLoaded
+              , productForm     = PF.mkProductForm
               }
       cmd = Cmd.map ProductMsg (P.getProducts appConfig)
   in (state, cmd)
@@ -60,6 +62,20 @@ update msg app =
             result   = ({ app | products = products }, cmd)
         in logMsg' app.appConfig ("Error: " ++ toString err) result
 
+      ProductMsg (P.CreateProductsSucceeded product) -> (app, Cmd.none)
+
+      ProductMsg (P.CreateProductsFailed err) ->
+        logMsg' app.appConfig ("Unexpected event source!") (app, Cmd.none)
+
+      ProductFormMsg (PF.ProductMsg (P.CreateProductsSucceeded product)) ->
+        logMsg' app.appConfig ("Unexpected event source!") (app, Cmd.none)
+
+      ProductFormMsg (PF.ProductMsg (P.CreateProductsFailed err)) ->
+        let product = LoadedWithError "Failed to create product!"
+            cmd      = Cmd.map NavigationMsg (redirectTo ProductsRoute)
+            result   = ({ app | selectedProduct = product }, cmd)
+        in logMsg' app.appConfig ("Error: " ++ toString err) result
+
       ProductFormMsg msg ->
         let (pForm, pFormMsg) = PF.update msg app.productForm app.appConfig
         in ({ app | productForm = pForm}, Cmd.map ProductFormMsg pFormMsg)
@@ -70,6 +86,7 @@ view : App -> Html AppMsg
 view app = case app.route of
   HomeRoute       -> UI.withLayout app P.loadingView
   ProductsRoute   -> UI.withLayout app <| P.indexView app.products
+  ProductRoute id -> UI.withLayout app <| P.showView app.selectedProduct
   NewProductRoute ->
     Html.map ProductFormMsg
       <| UI.withLayout app

@@ -9,6 +9,6 @@ function init(env, productsApiPath, userName) {
     const app = Elm.Main.fullscreen(initialState);
 
     // disable bootstrap transition animations
-    $.support.transition = false;
+    // $.support.transition = false;
   });
 }
