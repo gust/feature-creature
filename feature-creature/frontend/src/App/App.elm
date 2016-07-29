@@ -62,7 +62,8 @@ update msg app =
             result   = ({ app | products = products }, cmd)
         in logMsg' app.appConfig ("Error: " ++ toString err) result
 
-      ProductMsg (P.CreateProductsSucceeded product) -> (app, Cmd.none)
+      ProductMsg (P.CreateProductsSucceeded product) ->
+        (app, Cmd.map ProductMsg (P.getProducts app.appConfig))
 
       ProductMsg (P.CreateProductsFailed err) ->
         logMsg' app.appConfig ("Unexpected event source!") (app, Cmd.none)

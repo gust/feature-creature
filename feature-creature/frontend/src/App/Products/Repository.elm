@@ -66,7 +66,10 @@ parseRepositoryOwner =
 encodeRepository : Repository -> String
 encodeRepository repository =
   Json.Encode.encode 0
-    <| Json.Encode.object [ ("id", Json.Encode.int repository.id) ]
+    <| Json.Encode.object
+      [ ("id", Json.Encode.int repository.id)
+      , ("name", Json.Encode.string repository.name)
+      ]
 
 repositoriesUrl : AppConfig -> String
 repositoriesUrl appConfig = appConfig.productsApiPath ++ "/api/repositories"
