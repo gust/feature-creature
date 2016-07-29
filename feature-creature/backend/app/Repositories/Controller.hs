@@ -14,6 +14,7 @@ import Data.Aeson
   , (.:)
   )
 import qualified Data.Aeson as AE
+import Data.Int (Int64)
 import qualified Data.Map as Map
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -30,7 +31,7 @@ import qualified GitHub.Endpoints.Repos as GH
 type RepositoriesAPI = Header "Cookie" Text :> Get '[JSON] [Repository]
 
 data Repository =
-  Repository { getId       :: Int
+  Repository { getId       :: Int64
              , getUrl      :: Text
              , getName     :: Text
              , getHtmlUrl  :: Text
@@ -66,7 +67,7 @@ instance FromJSON Repository where
     return (Repository rId rUrl rName rHtmlUrl rSSHUrl rCloneUrl rHooksUrl rOwner)
 
 data RepositoryOwner =
-  RepositoryOwner { roGetId        :: Int
+  RepositoryOwner { roGetId        :: Int64
                   , roGetName      :: Text
                   , roGetUrl       :: Text
                   , roGetAvatarUrl :: Text
@@ -92,7 +93,7 @@ instance FromJSON RepositoryOwner where
 toRepository :: GH.Repo -> Repository
 toRepository repo =
   Repository
-    (GH.untagId $ GH.repoId repo)
+    (toID . GH.untagId $ GH.repoId repo)
     (GH.repoUrl repo)
     (GH.untagName $ GH.repoName repo)
     (GH.repoHtmlUrl repo)
@@ -104,7 +105,7 @@ toRepository repo =
 toRepositoryOwner :: GH.SimpleOwner -> RepositoryOwner
 toRepositoryOwner owner =
   RepositoryOwner
-    (GH.untagId $ GH.simpleOwnerId owner)
+    (toID . GH.untagId $ GH.simpleOwnerId owner)
     (GH.untagName $ GH.simpleOwnerLogin owner)
     (GH.simpleOwnerUrl owner)
     (GH.simpleOwnerAvatarUrl owner)
@@ -135,3 +136,6 @@ indexA _ (Just cookies) = do
 raiseMissingAccessTokenError :: AppT a
 raiseMissingAccessTokenError =
   raiseAppError (BadRequest "Missing access-token cookie")
+
+toID :: Int -> Int64
+toID = fromIntegral

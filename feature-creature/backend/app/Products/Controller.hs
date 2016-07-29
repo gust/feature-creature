@@ -5,18 +5,17 @@ module Products.Controller
   , createA
   ) where
 
-import App (AppT)
-import Data.Aeson
-  ( ToJSON
-  , FromJSON
-  , (.=)
-  , (.:)
-  )
-import qualified Data.Aeson as AE
-import Data.Text (Text)
+import App (AppT, AppConfig (..))
+import Control.Monad.Reader
+import Data.Time.Clock as Clock
 import Errors
+import qualified Models as M
+import Products.Api (Product (..), ProductForm (..))
+import qualified Products.Api as P
+import Products.Query as Q
 import Servant
-import Users.Api
+import Users.Api (User)
+import qualified Users.Api as U
 
 type ProductsAPI = Get '[JSON] [Product]
               :<|> ReqBody '[JSON] ProductForm :> Post '[JSON] Product
@@ -24,41 +23,19 @@ type ProductsAPI = Get '[JSON] [Product]
 actions :: User -> ServerT ProductsAPI AppT
 actions user = indexA user :<|> createA user
 
-data Product =
-  Product { getID :: Int
-          , getName :: Text
-          }
-  deriving (Show, Eq, Ord)
-
-data ProductForm =
-  ProductForm { getRepositoryID :: Int
-              }
-  deriving (Show, Eq, Ord)
-
-instance ToJSON Product where
-  toJSON Product{..} =
-    AE.object [ "id"   .= getID
-              , "name" .= getName
-              ]
-
-instance FromJSON Product where
-  parseJSON = AE.withObject "product" $ \v -> do
-    pID   <- v .:  "id"
-    pName <- v .: "name"
-    return (Product pID pName)
-
-
-instance ToJSON ProductForm where
-  toJSON ProductForm{..} =
-    AE.object [ "id" .= getRepositoryID ]
-
-instance FromJSON ProductForm where
-  parseJSON = AE.withObject "productForm" $ \v -> do
-    rID <- v .:  "id"
-    return (ProductForm rID)
-
 indexA :: User -> AppT [Product]
-indexA _ = return []
+indexA _ = ask >>= \AppConfig{..} ->
+  fmap (map Q.toApiProduct) (Q.findAll getDB)
 
 createA :: User -> ProductForm -> AppT Product
-createA _ _ = raiseAppError (ServerError $ Just "I'm not implemented yet!")
+createA currentUser productForm =
+  if P.hasValidationErrors productForm then
+    raiseAppError $ BadRequest (P.formValidationErrors productForm)
+  else
+    createNewProduct currentUser productForm
+
+createNewProduct :: User -> ProductForm -> AppT Product
+createNewProduct user ProductForm{..} = ask >>= \AppConfig{..} -> do
+  now       <- liftIO Clock.getCurrentTime
+  productId <- Q.create (M.Product getRepositoryID (U.id user) getRepositoryName now) getDB
+  return $ Product productId getRepositoryName

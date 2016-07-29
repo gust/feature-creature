@@ -23,6 +23,7 @@ library
     Cookies
     Database.Types
     Models
+    Products.Api
 
   other-modules:
     Config.Internal.Database
@@ -90,6 +91,7 @@ executable fc-feature-creature
     Errors
     Layouts.Default
     Products.Controller
+    Products.Query
     Repositories.Controller
     Routing
 
@@ -116,6 +118,7 @@ executable fc-feature-creature
                , logentries            >= 0.1.0.0 && < 0.1.1.0
                , mtl                   >= 2.2.1 && < 2.3.0
                , monad-logger          >= 0.3.18 && < 0.4.0
+               , persistent-postgresql >= 2.2.2 && < 2.3.0
                , QuasiText             >= 0.1.2.6 && < 0.1.3.0
                , servant-blaze         >= 0.7.1 && < 0.8.0
                , servant-server        >= 0.7.1 && < 0.8.0

@@ -5,6 +5,7 @@ import qualified App as App
 import Config.Environment (Environment(..), getCurrentEnvironment)
 import Data.Monoid ((<>))
 import qualified Data.Text as T
+import qualified Models as M
 import Network.Wai as Wai
 import Network.Wai.Handler.Warp
 import Network.Wai.Middleware.Cors
@@ -27,6 +28,9 @@ main = do
 
   putStrLn $ "\nLoading " ++ show env ++ " " ++ show appName ++ " configuration..."
   cfg <- App.getAppConfig appName env
+
+  putStrLn "\nRunning database migrations..."
+  M.runMigrations $ App.getDBConn cfg
 
   putStrLn $ "\nWeb server running on port " <> show (App.getPort cfg) <> "..."
   run (App.getPort cfg) (app cfg)
