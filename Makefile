@@ -5,6 +5,7 @@ build:
 	cd users-service && make build && cd - && \
 	cd auth-service && make build && cd - && \
 	cd marketing-site && make build && cd - && \
+	cd features-worker && make build && cd - && \
 	cd feature-creature/backend && make build && cd -
 
 build-clean:
@@ -12,6 +13,7 @@ build-clean:
 	cd users-service && make build-clean && cd - && \
 	cd auth-service && make build-clean && cd - && \
 	cd marketing-site && make build-clean && cd - && \
+	cd features-worker && make build-clean && cd - && \
 	cd feature-creature/backend && make build-clean && cd -
 
 .PHONY: test
@@ -20,6 +22,7 @@ test:
 	cd users-service && make test && cd - && \
 	cd auth-service && make test && cd - && \
 	cd marketing-site && make test && cd - && \
+	cd features-worker && make test && cd - && \
 	cd feature-creature/backend && make test && cd -
 
 setupdb:
@@ -28,6 +31,9 @@ setupdb:
 
 server:
 	make build
+
+	mkdir -p $(HOME)/.fc-features-worker
+	cp features-worker/env/development.env $(HOME)/.fc-features-worker
 
 	mkdir -p $(HOME)/.fc-marketing-site
 	cp marketing-site/env/development.env $(HOME)/.fc-marketing-site
