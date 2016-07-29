@@ -10,13 +10,12 @@ import Html as H
 import Html.Attributes as A
 import Html.Events as E
 
-newView : ProductForm -> List (Html ProductFormMsg)
+newView : ProductForm -> Html ProductFormMsg
 newView pForm = case pForm.repositories of
   NotLoaded -> loadingView
   LoadedWithError error -> errorView error
   Loaded [] -> blankState
-  Loaded rs ->
-    [ H.div [] (repositorySelectList rs) ]
+  Loaded rs -> H.div [] (repositorySelectList rs)
 
 repositorySelectList : List Repository -> List (Html ProductFormMsg)
 repositorySelectList repositories =
@@ -56,14 +55,14 @@ userAvatar avatarUrl =
     ]
     []
 
-blankState : List (Html a)
+blankState : Html a
 blankState =
-  [ H.div [] [ H.text "It doesn't look like you have any repositories available" ] ]
+  H.div [] [ H.text "It doesn't look like you have any repositories available" ]
 
-loadingView : List (Html a)
+loadingView : Html a
 loadingView =
-  [ H.div [] [ H.text "Loading Repositories..." ] ]
+  H.div [] [ H.text "Loading Repositories..." ]
 
-errorView : String -> List (Html a)
+errorView : String -> Html a
 errorView error =
-  [ H.div [] [ H.text ("Oh no! " ++ error) ] ]
+  H.div [] [ H.text ("Oh no! " ++ error) ]

@@ -21,7 +21,7 @@ createProduct appConfig repository =
   Utils.Http.jsonPostRequest (productsUrl appConfig) (Repository.encodeRepository repository)
     |> Http.send Http.defaultSettings
     |> Http.fromJson parseProduct
-    |> Task.perform CreateProductsFailed CreateProductsSucceeded
+    |> Task.perform CreateProductFailed CreateProductSucceeded
 
 
 parseProducts : Json.Decoder (List Product)
