@@ -95,6 +95,7 @@ executable fc-feature-creature
     Products.Controller
     Products.Query
     Repositories.Controller
+    Repositories.Query
     Routing
 
   ghc-options:
