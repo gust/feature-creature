@@ -80,12 +80,12 @@ toRepository :: GH.Repo -> Repository
 toRepository repo =
   Repository
     (toID . GH.untagId $ GH.repoId repo)
-    (GH.repoUrl repo)
+    (GH.getUrl . GH.repoUrl $ repo)
     (GH.untagName $ GH.repoName repo)
-    (GH.repoHtmlUrl repo)
-    (GH.repoSshUrl repo)
-    (GH.repoCloneUrl repo)
-    (GH.repoHooksUrl repo)
+    (GH.getUrl . GH.repoHtmlUrl $ repo)
+    (fmap GH.getUrl $ GH.repoSshUrl repo)
+    (fmap GH.getUrl $ GH.repoCloneUrl repo)
+    (GH.getUrl . GH.repoHooksUrl $ repo)
     (toRepositoryOwner $ GH.repoOwner repo)
 
 toRepositoryOwner :: GH.SimpleOwner -> RepositoryOwner
@@ -93,8 +93,8 @@ toRepositoryOwner owner =
   RepositoryOwner
     (toID . GH.untagId $ GH.simpleOwnerId owner)
     (GH.untagName $ GH.simpleOwnerLogin owner)
-    (GH.simpleOwnerUrl owner)
-    (GH.simpleOwnerAvatarUrl owner)
+    (GH.getUrl . GH.simpleOwnerUrl $ owner)
+    (GH.getUrl . GH.simpleOwnerAvatarUrl $ owner)
 
 toID :: Int -> Int64
 toID = fromIntegral

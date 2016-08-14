@@ -4,6 +4,7 @@ module Errors
   ( AppError (..)
   , authenticationRequired
   , raiseAppError
+  , raiseMissingAccessTokenError
   , resourceNotFound
   , serverError
   , badRequest
@@ -27,6 +28,9 @@ raiseAppError ResourceNotFound       = throwError resourceNotFound
 raiseAppError (BadRequest errMsg)    = throwError $ badRequest errMsg
 raiseAppError AuthenticationRequired = throwError authenticationRequired
 raiseAppError (ServerError errMsg)   = throwError $ serverError errMsg
+
+raiseMissingAccessTokenError :: MonadError ServantErr m => m a
+raiseMissingAccessTokenError = raiseAppError (BadRequest "Missing access-token cookie")
 
 authenticationRequired :: ServantErr
 authenticationRequired = err401 { errBody = "Authentication required" }

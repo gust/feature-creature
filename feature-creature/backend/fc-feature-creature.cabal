@@ -40,7 +40,7 @@ library
                , fast-logger           >= 2.4.6 && < 2.5.0
                , fc-users-service-client  >= 0.1.0.0 && < 0.1.1.0
                , filepath              >= 1.4.0.0 && < 1.4.1.0
-               , github                >= 0.14.1 && < 0.15.0
+               , github                >= 0.15.0 && < 0.16.0
                , lens                  >= 4.13 && < 5.0
                , load-env              >= 0.1.1 && < 0.2.0
                , logentries            >= 0.1.0.0 && < 0.1.1.0
@@ -87,6 +87,7 @@ executable fc-feature-creature
     Main.hs
 
   other-modules:
+    AccessTokens
     App
     App.Controller
     App.View
@@ -113,9 +114,10 @@ executable fc-feature-creature
                , blaze-html            >= 0.8.1.1 &&  < 0.8.2.0
                , containers            >= 0.5.6.2 && < 0.5.7.0
                , bytestring            >= 0.10.6.0 && < 0.10.7.0
+               , directory             >= 1.2.2.0 && < 1.2.3.0
                , exceptions            >= 0.8.2.1 && < 0.8.3.0
                , fc-feature-creature
-               , github                >= 0.14.1 && < 0.15.0
+               , github                >= 0.15.0 && < 0.16.0
                , jwt                   >= 0.1.0.0 && < 0.1.1.0
                , lens                  >= 4.13 && < 5.0
                , logentries            >= 0.1.0.0 && < 0.1.1.0
@@ -141,6 +143,7 @@ executable fc-feature-creature
   default-extensions:
     DataKinds
     DeriveGeneric
+    FlexibleContexts
     GeneralizedNewtypeDeriving
     OverloadedStrings
     RecordWildCards

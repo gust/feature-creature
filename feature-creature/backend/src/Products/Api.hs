@@ -15,6 +15,7 @@ import qualified Data.Aeson as AE
 import Data.Int (Int64)
 import Data.Text (Text)
 import qualified Data.Text as T
+import Repositories
 
 data Product =
   Product { getID :: Int64
@@ -22,10 +23,7 @@ data Product =
           }
   deriving (Show, Eq, Ord)
 
-data ProductForm =
-  ProductForm { getRepositoryID :: Int64
-              , getRepositoryName :: Text
-              }
+data ProductForm = ProductForm { getRepository :: Repository }
   deriving (Show, Eq, Ord)
 
 instance ToJSON Product where
@@ -42,24 +40,15 @@ instance FromJSON Product where
 
 
 instance ToJSON ProductForm where
-  toJSON ProductForm{..} =
-    AE.object [ "id" .= getRepositoryID
-              , "name" .= getRepositoryName
-              ]
+  toJSON ProductForm{..} = AE.object [ "repository" .= getRepository ]
 
 instance FromJSON ProductForm where
   parseJSON = AE.withObject "productForm" $ \v -> do
-    rID   <- v .:  "id"
-    rName <- v .:  "name"
-    return (ProductForm rID rName)
+    r <- v .:  "repository"
+    return (ProductForm r)
 
 hasValidationErrors :: ProductForm -> Bool
-hasValidationErrors ProductForm{..} =
-  T.null getRepositoryName
+hasValidationErrors _ = False -- TODO: validate form
 
 formValidationErrors :: ProductForm -> Text
-formValidationErrors form =
-  if hasValidationErrors form then
-    "Repository name required."
-  else
-    T.empty
+formValidationErrors _ = T.empty
