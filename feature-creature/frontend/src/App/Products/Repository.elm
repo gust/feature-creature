@@ -77,6 +77,10 @@ encodedRepository repository =
       [ ("id", Json.Encode.int repository.id)
       , ("name", Json.Encode.string repository.name)
       , ("ownerName", Json.Encode.string owner.name)
+      , ("url", Json.Encode.string repository.url)
+      , ("htmlUrl", Json.Encode.string repository.htmlUrl)
+      , ("sshUrl", Maybe.withDefault Json.Encode.null (Maybe.map Json.Encode.string repository.sshUrl))
+      , ("cloneUrl", Maybe.withDefault Json.Encode.null (Maybe.map Json.Encode.string repository.cloneUrl))
       ]
 
 repositoriesUrl : AppConfig -> String

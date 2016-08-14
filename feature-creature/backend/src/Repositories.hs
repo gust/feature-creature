@@ -11,6 +11,7 @@ import Data.Aeson
   , FromJSON
   , (.=)
   , (.:)
+  , (.:?)
   )
 import qualified Data.Aeson as AE
 import Data.Int (Int64)
@@ -81,6 +82,10 @@ data RepositoryForm =
   RepositoryForm { getRepositoryFormId :: Int64
                  , getRepositoryFormName :: Text
                  , getRepositoryFormOwnerName :: Text
+                 , getRepositoryFormUrl :: Text
+                 , getRepositoryFormHtmlUrl :: Text
+                 , getRepositoryFormSSHUrl :: Maybe Text
+                 , getRepositoryFormCloneUrl :: Maybe Text
                  }
   deriving (Show, Eq, Ord)
 
@@ -89,7 +94,11 @@ instance FromJSON RepositoryForm where
     rId        <- v .: "id"
     rName      <- v .: "name"
     rOwnerName <- v .: "ownerName"
-    return (RepositoryForm rId rName rOwnerName)
+    rUrl       <- v .: "url"
+    rHtmlUrl   <- v .: "htmlUrl"
+    rSSHUrl    <- v .:? "sshUrl"
+    rCloneUrl  <- v .:? "cloneUrl"
+    return (RepositoryForm rId rName rOwnerName rUrl rHtmlUrl rSSHUrl rCloneUrl)
 
 toRepository :: GH.Repo -> Repository
 toRepository repo =
