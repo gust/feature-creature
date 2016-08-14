@@ -31,7 +31,7 @@ update msg pForm appConfig = case msg of
 
   RepositorySelected repository ->
     ( { pForm | selectedRepository = Just repository }
-    , Cmd.map ProductMsg <| P.createProduct appConfig repository
+    , Cmd.map ProductMsg <| P.createProduct appConfig (P.NewProduct repository)
     )
 
   (RepositoryMsg (R.FetchRepositoriesSucceeded rs)) ->

@@ -4,6 +4,7 @@ module App.Products.Repository exposing
   , RepositoryOwner
   , getRepositories
   , encodeRepository
+  , encodedRepository
   )
 
 import App.AppConfig exposing (..)
@@ -65,10 +66,17 @@ parseRepositoryOwner =
 
 encodeRepository : Repository -> String
 encodeRepository repository =
-  Json.Encode.encode 0
-    <| Json.Encode.object
+    Json.Encode.encode 0
+      <| encodedRepository repository
+
+encodedRepository : Repository -> Json.Encode.Value
+encodedRepository repository =
+  let owner = repository.owner
+  in
+    Json.Encode.object
       [ ("id", Json.Encode.int repository.id)
       , ("name", Json.Encode.string repository.name)
+      , ("ownerName", Json.Encode.string owner.name)
       ]
 
 repositoriesUrl : AppConfig -> String

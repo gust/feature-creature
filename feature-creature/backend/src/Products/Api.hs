@@ -23,7 +23,7 @@ data Product =
           }
   deriving (Show, Eq, Ord)
 
-data ProductForm = ProductForm { getRepository :: Repository }
+data ProductForm = ProductForm { getRepositoryForm :: RepositoryForm }
   deriving (Show, Eq, Ord)
 
 instance ToJSON Product where
@@ -38,13 +38,9 @@ instance FromJSON Product where
     pName <- v .: "name"
     return (Product pID pName)
 
-
-instance ToJSON ProductForm where
-  toJSON ProductForm{..} = AE.object [ "repository" .= getRepository ]
-
 instance FromJSON ProductForm where
   parseJSON = AE.withObject "productForm" $ \v -> do
-    r <- v .:  "repository"
+    r <- v .:  "repositoryForm"
     return (ProductForm r)
 
 hasValidationErrors :: ProductForm -> Bool

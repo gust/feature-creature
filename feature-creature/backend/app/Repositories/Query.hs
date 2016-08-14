@@ -14,7 +14,11 @@ import qualified Data.Text.Encoding as TE
 import Data.Vector (Vector)
 import qualified Data.Vector as V
 import Errors (AppError (..), raiseAppError)
-import Repositories (Repository, toRepository, getName, getOwner, roGetName)
+import Repositories
+  ( Repository
+  , RepositoryForm (..)
+  , toRepository
+  )
 import Servant (ServantErr)
 import System.Directory (getHomeDirectory)
 
@@ -35,21 +39,21 @@ fetchUserRepos' token = liftM transformResult fetchRepos
     transformResult = either (Left . toAppError) (Right . toAppRepos)
     fetchRepos = GH.currentUserRepos (GH.OAuth $ TE.encodeUtf8 token) GH.RepoPublicityAll
 
-createDeployKey :: (Monad m, MonadIO m, MonadError ServantErr m) => Text -> Repository -> m GH.RepoDeployKey
-createDeployKey token repo = (liftIO $ createDeployKey' token repo) >>= \eDeployKey ->
+createDeployKey :: (Monad m, MonadIO m, MonadError ServantErr m) => Text -> RepositoryForm -> m GH.RepoDeployKey
+createDeployKey token repoForm = (liftIO $ createDeployKey' token repoForm) >>= \eDeployKey ->
   case eDeployKey of
     Left err -> raiseAppError err
     Right key -> return key
 
-createDeployKey' :: Text -> Repository -> IO (Either AppError GH.RepoDeployKey)
-createDeployKey' token repo = liftM transformResult createKey
+createDeployKey' :: Text -> RepositoryForm -> IO (Either AppError GH.RepoDeployKey)
+createDeployKey' token repoForm = liftM transformResult createKey
   where
     transformResult = either (Left . toAppError) Right
     createKey = deployKey >>= \newDeployKey ->
       GH.createRepoDeployKey'
         (GH.OAuth $ TE.encodeUtf8 token)
-        (GH.N (roGetName . getOwner $ repo))
-        (GH.N (getName repo))
+        (GH.N (getRepositoryFormOwnerName repoForm))
+        (GH.N (getRepositoryFormName repoForm))
         newDeployKey
 
 deployKey :: IO GH.NewRepoDeployKey
@@ -60,7 +64,7 @@ deployKey =
       return $ GH.NewRepoDeployKey key title readOnly
 
 publicKey :: IO String
-publicKey = liftM (<> "/id_rsa_feature_creature.pub") getHomeDirectory
+publicKey = liftM (<> "/.ssh/id_rsa_feature_creature.pub") getHomeDirectory
 
 toAppRepos :: Vector GH.Repo -> [Repository]
 toAppRepos = V.toList . (V.map toRepository)

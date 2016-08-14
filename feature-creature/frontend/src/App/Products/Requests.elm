@@ -4,8 +4,7 @@ module App.Products.Requests exposing
   )
 
 import App.AppConfig        exposing (..)
-import App.Products.Product as Product exposing (Product, ProductMsg (..))
-import App.Products.Repository as Repository exposing (Repository)
+import App.Products.Product as Product exposing (Product, NewProduct, ProductMsg (..))
 import Json.Decode as Json  exposing ((:=), maybe)
 import Http as Http         exposing (..)
 import Task as Task         exposing (..)
@@ -16,9 +15,9 @@ getProducts appConfig =
   Http.get parseProducts (productsUrl appConfig)
     |> Task.perform FetchProductsFailed FetchProductsSucceeded
 
-createProduct : AppConfig -> Repository -> Cmd ProductMsg
-createProduct appConfig repository =
-  Utils.Http.jsonPostRequest (productsUrl appConfig) (Repository.encodeRepository repository)
+createProduct : AppConfig -> NewProduct -> Cmd ProductMsg
+createProduct appConfig newProduct =
+  Utils.Http.jsonPostRequest (productsUrl appConfig) (Product.encodeNewProduct newProduct)
     |> Http.send Http.defaultSettings
     |> Http.fromJson parseProduct
     |> Task.perform CreateProductFailed CreateProductSucceeded

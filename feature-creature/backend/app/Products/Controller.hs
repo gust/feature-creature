@@ -44,11 +44,11 @@ createA currentUser (Just cookies) productForm =
     raiseAppError $ BadRequest (P.formValidationErrors productForm)
   else
     withAccessToken cookies (\token ->
-      R.createDeployKey token (getRepository productForm)
+      R.createDeployKey token (getRepositoryForm productForm)
         >> createNewProduct currentUser productForm)
 
 createNewProduct :: User -> ProductForm -> AppT Product
 createNewProduct user (ProductForm repo)= ask >>= \AppConfig{..} -> do
   now       <- liftIO Clock.getCurrentTime
-  productId <- Q.create (M.Product (R.getId repo) (U.id user) (R.getName repo) now) getDB
-  return $ Product productId (R.getName repo)
+  productId <- Q.create (M.Product (R.getRepositoryFormId repo) (U.id user) (R.getRepositoryFormName repo) now) getDB
+  return $ Product productId (R.getRepositoryFormName repo)

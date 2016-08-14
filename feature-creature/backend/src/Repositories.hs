@@ -1,5 +1,6 @@
 module Repositories
 ( Repository (..)
+, RepositoryForm (..)
 , RepositoryOwner (..)
 , toRepository
 , toRepositoryOwner
@@ -75,6 +76,20 @@ instance FromJSON RepositoryOwner where
     rUrl       <- v .: "url"
     rAvatarUrl <- v .: "avatarUrl"
     return (RepositoryOwner rId rUrl rName rAvatarUrl)
+
+data RepositoryForm =
+  RepositoryForm { getRepositoryFormId :: Int64
+                 , getRepositoryFormName :: Text
+                 , getRepositoryFormOwnerName :: Text
+                 }
+  deriving (Show, Eq, Ord)
+
+instance FromJSON RepositoryForm where
+  parseJSON = AE.withObject "repositoryForm" $ \v -> do
+    rId        <- v .: "id"
+    rName      <- v .: "name"
+    rOwnerName <- v .: "ownerName"
+    return (RepositoryForm rId rName rOwnerName)
 
 toRepository :: GH.Repo -> Repository
 toRepository repo =
