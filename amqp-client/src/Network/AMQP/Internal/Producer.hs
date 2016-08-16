@@ -12,7 +12,7 @@ import qualified Network.AMQP as AMQP
 
 produceTopicMessage :: ToJSON a => TopicName -> Message a -> WithConn ()
 produceTopicMessage topic msg = ask >>= \conn ->
-  let exchangeName = ExchangeName $ Config.getExchangeName (getConfig conn)
+  let exchangeName = ExchangeName $ Config.getExchangeNameConfig (getConfig conn)
       message      = buildMessage msg
       channel      = getChannel conn
   in liftIO $ publishMessage channel exchangeName topic message

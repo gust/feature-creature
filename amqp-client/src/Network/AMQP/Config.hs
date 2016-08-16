@@ -9,11 +9,11 @@ import Data.Text (Text, pack)
 import System.Environment (getEnv)
 
 data RabbitMQConfig =
-  RabbitMQConfig { getHost :: Text
-                 , getPath :: Text
-                 , getUser :: Text
-                 , getPass :: Text
-                 , getExchangeName :: Text
+  RabbitMQConfig { getHostConfig :: Text
+                 , getPathConfig :: Text
+                 , getUserConfig :: Text
+                 , getPassConfig :: Text
+                 , getExchangeNameConfig :: Text
                  } deriving (Show, Read, Eq)
 
 readRabbitMQConfig :: IO RabbitMQConfig

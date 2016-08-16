@@ -15,7 +15,7 @@ subscribe :: QueueName -> TopicName -> WithConn ()
 subscribe (QueueName q) (TopicName t) =
   ask >>= \conn ->
     let ch = getChannel conn
-        exchName = Config.getExchangeName (getConfig conn)
+        exchName = Config.getExchangeNameConfig (getConfig conn)
     in liftIO $ AMQP.bindQueue ch q exchName t
 
 getTopicMessages :: QueueName -> MessageHandler -> WithConn ()
