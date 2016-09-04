@@ -42,9 +42,11 @@ createA _ Nothing _ = raiseMissingAccessTokenError
 createA currentUser (Just cookies) productForm =
   if P.hasValidationErrors productForm then
     raiseAppError $ BadRequest (P.formValidationErrors productForm)
-  else
-    withAccessToken cookies createDeployKey
-      >> createNewProduct currentUser productForm
+  else do
+    prod <- createNewProduct currentUser productForm
+    _    <- withAccessToken cookies createDeployKey
+    _    <- queueNewProductMessage prod
+    return prod
   where
     createDeployKey token =
       R.createDeployKey token (getRepositoryForm productForm)
@@ -54,3 +56,7 @@ createNewProduct user (ProductForm repo)= ask >>= \AppConfig{..} -> do
   now       <- liftIO Clock.getCurrentTime
   productId <- Q.create (M.Product (R.getRepositoryFormId repo) (U.id user) (R.getRepositoryFormName repo) now) getDB
   return $ Product productId (R.getRepositoryFormName repo)
+
+queueNewProductMessage :: Product -> AppT ()
+queueNewProductMessage prod = undefined
+

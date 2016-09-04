@@ -22,6 +22,7 @@ library
     Config.Environment
     Cookies
     Database.Types
+    Messaging
     Models
     Products.Api
     Repositories

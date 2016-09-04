@@ -5,6 +5,7 @@ import qualified App as App
 import Config.Environment (Environment(..), getCurrentEnvironment)
 import Data.Monoid ((<>))
 import qualified Data.Text as T
+import qualified Messaging as M
 import qualified Models as M
 import Network.Wai as Wai
 import Network.Wai.Handler.Warp
@@ -14,6 +15,8 @@ import Network.Wai.Middleware.RequestLogger.LogEntries (logEntriesLogger)
 import Routing
 import Servant
 import qualified System.Environment as Env
+
+import qualified Network.AMQP.MessageBus as MB
 
 type WholeAPI = API
            :<|> "public" :> Raw
@@ -31,6 +34,11 @@ main = do
 
   putStrLn "\nRunning database migrations..."
   M.runMigrations $ App.getDBConn cfg
+
+  putStrLn "\nCreating message queues..."
+  let rabbitMQConfig = App.getRabbitMQConfig cfg
+  _ <- MB.withConn rabbitMQConfig $
+        M.createTopicExchange rabbitMQConfig >> M.createProductsQueue
 
   putStrLn $ "\nWeb server running on port " <> show (App.getPort cfg) <> "..."
   run (App.getPort cfg) (app cfg)
