@@ -89,6 +89,17 @@ data RepositoryForm =
                  }
   deriving (Show, Eq, Ord)
 
+instance ToJSON RepositoryForm where
+  toJSON RepositoryForm{..} =
+    AE.object [ "id"         .= getRepositoryFormId
+              ,  "name"      .= getRepositoryFormName
+              ,  "ownerName" .= getRepositoryFormOwnerName
+              ,  "url"       .= getRepositoryFormUrl
+              ,  "htmlUrl"   .= getRepositoryFormHtmlUrl
+              ,  "sshUrl"    .= getRepositoryFormSSHUrl
+              ,  "cloneUrl"  .= getRepositoryFormCloneUrl
+              ]
+
 instance FromJSON RepositoryForm where
   parseJSON = AE.withObject "repositoryForm" $ \v -> do
     rId        <- v .: "id"
