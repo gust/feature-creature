@@ -14,6 +14,9 @@ docker:
 packages:
   - location: .
 
+  - location: ../../amqp-client
+    extra-dep: true
+
   - location: ../../users-service-client
     extra-dep: true
 

@@ -15,6 +15,7 @@ import Data.Text as T
 import Data.Typeable (Typeable)
 import Database.Types (DBAccess (..), db)
 import LoadEnv
+import Network.AMQP.Config (RabbitMQConfig (..))
 import qualified Network.URL as URL
 import qualified Network.Wai.Middleware.RequestLogger.LogEntries as LE
 import System.Directory (getAppUserDataDirectory)
@@ -35,6 +36,7 @@ data AppConfig = forall m. Monad m => AppConfig
   , getUsersApiConfig     :: UsersApi.Config
   , getDBConn             :: ConnectionPool
   , getDB                 :: DBAccess m
+  , getRabbitMQConfig     :: RabbitMQConfig
   }
 
 data ConfigException = ConfigException Text
@@ -51,6 +53,7 @@ getAppConfig appName env = do
   loginUrl      <- loadLoginUrl
   usersConfig   <- usersApiConfig
   dbPool        <- makePool env
+  rabbitMQConfig <- readRabbitMQConfig
   let webServerPort = maybe 8080 id (liftM read port)
 
   return $ AppConfig
@@ -64,6 +67,7 @@ getAppConfig appName env = do
     , getUsersApiConfig   = usersConfig
     , getDBConn           = dbPool
     , getDB               = (db dbPool)
+    , getRabbitMQConfig   = rabbitMQConfig
     }
 
   where
@@ -92,6 +96,18 @@ logEntriesConfig = do
   port     <- read <$> Env.getEnv "APP_LOGENTRIES_DATA_PORT"
   token    <- (fromJust . LE.fromString) <$> Env.getEnv "APP_LOGENTRIES_LOG_KEY"
   return $ LE.Config hostname port token
+
+readRabbitMQConfig :: IO RabbitMQConfig
+readRabbitMQConfig =
+  RabbitMQConfig
+    <$> getEnvAsText "FC_RABBITMQ_HOST"
+    <*> getEnvAsText "FC_RABBITMQ_PATH"
+    <*> getEnvAsText "FC_RABBITMQ_USER"
+    <*> getEnvAsText "FC_RABBITMQ_PASS"
+    <*> getEnvAsText "FC_RABBITMQ_EXCHANGE_NAME"
+
+getEnvAsText :: String -> IO Text
+getEnvAsText varName = T.pack <$> (Env.getEnv varName)
 
 -- laodEnvVars will look for configuration files matching the lowercase
 -- environment name in the user's data directory

@@ -43,9 +43,11 @@ createA currentUser (Just cookies) productForm =
   if P.hasValidationErrors productForm then
     raiseAppError $ BadRequest (P.formValidationErrors productForm)
   else
-    withAccessToken cookies (\token ->
+    withAccessToken cookies createDeployKey
+      >> createNewProduct currentUser productForm
+  where
+    createDeployKey token =
       R.createDeployKey token (getRepositoryForm productForm)
-        >> createNewProduct currentUser productForm)
 
 createNewProduct :: User -> ProductForm -> AppT Product
 createNewProduct user (ProductForm repo)= ask >>= \AppConfig{..} -> do
