@@ -55,7 +55,16 @@ fetchToken code = ask >>= \AppConfig{..} ->
 
 fetchUser :: AccessToken -> AppT (Either Text User)
 fetchUser token = ask >>= \AppConfig{..} ->
-  runAppIO $ Auth0.getUser token getAuthConfig
+  getAuth0User getAuthConfig >>= eitherReturnOrGetFullProfile getAuthConfig
+  where
+    getAuth0User cfg =
+      runAppIO $ Auth0.getUser token cfg
+
+    getAuth0FullProfile cfg u =
+      runAppIO $ Auth0.getUserProfile token cfg u
+
+    eitherReturnOrGetFullProfile _ (Left err) = return $ Left err
+    eitherReturnOrGetFullProfile cfg (Right user) = getAuth0FullProfile cfg user >>= return
 
 authCookie :: AccessToken -> ByteString
 authCookie AccessToken{..} = "auth-token=" <> TE.encodeUtf8 getIdToken
