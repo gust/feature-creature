@@ -45,7 +45,7 @@ authZeroJS cfg = do
 
 authZeroConfig :: AppConfig -> Text
 authZeroConfig cfg = do
-  let (Auth0.Config auth0ApiKey _ _ _ _) = getAuthConfig cfg
+  let (Auth0.Config auth0ApiKey _ _ _ _ _) = getAuthConfig cfg
   let accessCodeUrl = (getBasePath cfg) <> "/access-code"
   [embed|
     var lock = new Auth0Lock('$auth0ApiKey', 'feature-creature.auth0.com');

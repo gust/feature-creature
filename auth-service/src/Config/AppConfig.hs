@@ -62,6 +62,7 @@ auth0Config = do
   redirectURI  <- T.pack <$> Env.getEnv "APP_AUTH_ZERO_REDIRECT_URI"
   grantType    <- T.pack <$> Env.getEnv "APP_AUTH_ZERO_GRANT_TYPE"
   basePath     <- T.pack <$> Env.getEnv "APP_AUTH_ZERO_BASE_PATH"
+  apiToken     <- T.pack <$> Env.getEnv "APP_AUTH_ZERO_API_TOKEN"
 
   return $ Auth0.Config
     clientID
@@ -69,6 +70,7 @@ auth0Config = do
     redirectURI
     grantType
     basePath
+    apiToken
 
 -- The unsafe call to :fromJust is acceptable here
 -- since we are bootstrapping the application.

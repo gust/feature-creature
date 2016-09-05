@@ -61,7 +61,7 @@ fetchUser token = ask >>= \AppConfig{..} ->
       runAppIO $ Auth0.getUser token cfg
 
     getAuth0FullProfile cfg u =
-      runAppIO $ Auth0.getUserProfile token cfg u
+      runAppIO $ Auth0.getUserProfile cfg u
 
     eitherReturnOrGetFullProfile _ (Left err) = return $ Left err
     eitherReturnOrGetFullProfile cfg (Right user) = getAuth0FullProfile cfg user >>= return
