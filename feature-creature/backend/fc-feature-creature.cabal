@@ -23,8 +23,6 @@ library
     Cookies
     Database.Types
     Models
-    Products.Api
-    Repositories
 
   other-modules:
     Config.Internal.Database

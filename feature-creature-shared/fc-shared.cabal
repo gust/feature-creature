@@ -17,6 +17,8 @@ library
 
   exposed-modules:
     Messaging
+    Products.Api
+    Repositories
 
   ghc-options:
     -Wall
@@ -38,6 +40,8 @@ library
   build-depends: base >= 4.7 && < 5
                , aeson >= 0.11.2.0 && < 0.11.3.0
                , fc-amqp-client >= 0.1.0.0 && < 0.1.1.0
+               , github >= 0.15.0 && < 0.16.0
+               , text >= 1.2.2.1 && < 1.2.3.0
 
 test-suite feature-creature-shared-test
   type:                exitcode-stdio-1.0

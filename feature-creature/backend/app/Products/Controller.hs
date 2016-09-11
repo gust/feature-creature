@@ -8,11 +8,13 @@ module Products.Controller
 import AccessTokens (withAccessToken)
 import App (AppT, AppConfig (..))
 import Control.Monad.Reader
+import Data.Aeson as Aeson
 import Data.Text (Text)
 import Data.Time.Clock as Clock
 import Errors (AppError (..), raiseAppError, raiseMissingAccessTokenError)
 import Messaging
 import qualified Models as M
+import qualified Network.AMQP.MessageBus as MB
 import Products.Api (Product (..), ProductForm (..))
 import qualified Products.Api as P
 import Products.Query as Q
@@ -22,10 +24,6 @@ import Servant
 import Users.Api (User)
 import qualified Users.Api as U
 
-import Data.Aeson as Aeson
-import GHC.Generics (Generic)
-import qualified Network.AMQP.MessageBus as MB
-
 type ProductsAPI = ProductsIndex
               :<|> CreateProduct
 
@@ -34,14 +32,6 @@ type ProductsIndex = Get '[JSON] [Product]
 type CreateProduct = Header "Cookie" Text
                   :> ReqBody '[JSON] ProductForm
                   :> Post '[JSON] Product
-
--- TODO: Move to shared lib once we have a consumer for
--- this job type
-data ProductCreatedJob = ProductCreatedJob Product R.RepositoryForm
-  deriving (Show, Eq, Generic)
-
-instance ToJSON ProductCreatedJob
-instance FromJSON ProductCreatedJob
 
 actions :: User -> ServerT ProductsAPI AppT
 actions user = indexA user :<|> createA user

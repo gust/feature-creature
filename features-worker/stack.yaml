@@ -14,6 +14,11 @@ packages:
   - location: ../feature-creature-shared
     extra-dep: true
 
+  - location:
+      git: https://github.com/toddmohney/github.git
+      commit: bbe1ddfe53a5dc4e1ff7fa17c49a39544cc3b6dd
+    extra-dep: true
+
 # Packages to be pulled from upstream that are not in the resolver (e.g., acme-missiles-0.3)
 extra-deps: []
 
