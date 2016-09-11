@@ -22,7 +22,6 @@ library
     Config.Environment
     Cookies
     Database.Types
-    Messaging
     Models
     Products.Api
     Repositories
@@ -33,7 +32,8 @@ library
 
   build-depends: base                  >= 4.7 && < 5
                , aeson                 >= 0.11.2.0 && < 0.11.3.0
-               , fc-amqp-client           >= 0.1.0.0 && < 0.1.1.0
+               , fc-amqp-client        >= 0.1.0.0 && < 0.2.0.0
+               , fc-shared             >= 0.1.0.0 && < 0.1.1.0
                , bytestring            >= 0.10.6.0 && < 0.10.7.0
                , containers            >= 0.5.6.2 && < 0.5.7.0
                , data-default          >= 0.5.3 && < 0.6.0
@@ -113,7 +113,8 @@ executable fc-feature-creature
 
   build-depends: base
                , aeson                 >= 0.11.2.0 && < 0.11.3.0
-               , fc-amqp-client           >= 0.1.0.0 && < 0.1.1.0
+               , fc-amqp-client        >= 0.1.0.0 && < 0.1.1.0
+               , fc-shared             >= 0.1.0.0 && < 0.1.1.0
                , blaze-html            >= 0.8.1.1 &&  < 0.8.2.0
                , containers            >= 0.5.6.2 && < 0.5.7.0
                , bytestring            >= 0.10.6.0 && < 0.10.7.0

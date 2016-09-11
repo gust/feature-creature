@@ -4,9 +4,9 @@ module Config.AppConfig
   ) where
 
 import Config.Environment (Environment (..))
-import Config.RabbitMQ (RabbitMQConfig, readRabbitMQConfig)
 import Data.Text as T
 import LoadEnv
+import Network.AMQP.Config (RabbitMQConfig, readRabbitMQConfig)
 import System.Directory (getAppUserDataDirectory)
 import System.FilePath.Posix ((</>), (<.>))
 
@@ -15,7 +15,7 @@ data AppConfig =
             , getAppName          :: AppName
             , getEnv              :: Environment
             , getRabbitMQConfig   :: RabbitMQConfig
-            }
+            } deriving (Show, Eq)
 
 type AppName = Text
 

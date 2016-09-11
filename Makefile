@@ -1,6 +1,7 @@
 all: build
 
 build:
+	cd feature-creature-shared && make build && cd - && \
 	cd amqp-client && make build && cd - && \
 	cd users-service-client && make build && cd - && \
 	cd users-service && make build && cd - && \
@@ -10,6 +11,7 @@ build:
 	cd feature-creature/backend && make build && cd -
 
 build-clean:
+	cd feature-creature-shared && make build-clean && cd - && \
 	cd amqp-client && make build-clean && cd - && \
 	cd users-service-client && make build-clean && cd - && \
 	cd users-service && make build-clean && cd - && \
@@ -20,6 +22,7 @@ build-clean:
 
 .PHONY: test
 test:
+	cd feature-creature-shared && make test && cd - && \
 	cd amqp-client && make test && cd - && \
 	cd users-service-client && make test && cd - && \
 	cd users-service && make test && cd - && \

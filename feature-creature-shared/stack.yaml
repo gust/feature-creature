@@ -1,0 +1,19 @@
+resolver: lts-6.4
+
+packages:
+  - '.'
+
+  - location: ../amqp-client
+    extra-dep: true
+
+  - location:
+      git: "https://github.com/lwm/tasty-discover.git"
+      commit: "HEAD"
+    extra-dep: true
+
+extra-deps:
+  - "tasty-th-0.1.4"
+
+flags: {}
+
+extra-package-dbs: []

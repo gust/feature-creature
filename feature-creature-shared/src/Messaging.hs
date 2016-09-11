@@ -34,3 +34,4 @@ createProductsQueue :: MB.WithConn MB.QueueStatus
 createProductsQueue =
   let queue = MB.Queue "products" False True
   in MB.createQueue queue
+

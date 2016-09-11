@@ -17,6 +17,9 @@ packages:
   - location: ../../amqp-client
     extra-dep: true
 
+  - location: ../../feature-creature-shared
+    extra-dep: true
+
   - location: ../../users-service-client
     extra-dep: true
 
