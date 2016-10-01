@@ -2,4 +2,5 @@ feature-creature/backend/env/development.env
 feature-creature/backend/env/test.env
 marketing-site/env/development.env
 marketing-site/env/test.env
+users-service/env/development.env
 users-service/env/test.env
