@@ -2,6 +2,7 @@ auth-service/env/development.env
 auth-service/env/test.env
 feature-creature/backend/env/development.env
 feature-creature/backend/env/test.env
+features-worker/env/development.env
 marketing-site/env/development.env
 marketing-site/env/test.env
 users-service/env/development.env
