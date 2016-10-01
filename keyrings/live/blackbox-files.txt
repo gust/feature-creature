@@ -1,3 +1,4 @@
+auth-service/env/development.env
 auth-service/env/test.env
 feature-creature/backend/env/development.env
 feature-creature/backend/env/test.env
