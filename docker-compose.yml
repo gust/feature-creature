@@ -1,0 +1,29 @@
+version: '2'
+
+services:
+  postgres:
+    image: postgres:9.6
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=featurecreature
+      - POSTGRES_PASSWORD=featurecreature
+      - POSTGRES_DB=featurecreature
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./.data/postgres:/var/lib/postgresql/data/pgdata
+
+  rabbitmq:
+    image: rabbitmq:3.6-management
+    restart: unless-stopped
+    hostname: featurecreature
+    environment:
+      - RABBITMQ_DEFAULT_USER=featurecreature
+      - RABBITMQ_DEFAULT_PASS=featurecreature
+      - RABBITMQ_ERLANG_COOKIE='secret cookie here'
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - ./.data/rabbitmq:/var/lib/rabbitmq
