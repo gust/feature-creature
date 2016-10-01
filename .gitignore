@@ -18,6 +18,9 @@ cabal.sandbox.config
 *.prof
 *.aux
 *.hp
-scripts/development/aws-env.sh
-scripts/development/aws.env
-ScratchPad.hs
+/feature-creature/backend/env/development.env
+/users-service/env/test.env
+/users-service/env/development.env
+/auth-service/env/test.env
+/auth-service/env/development.env
+/features-worker/env/development.env
