@@ -24,3 +24,6 @@ cabal.sandbox.config
 /auth-service/env/test.env
 /auth-service/env/development.env
 /features-worker/env/development.env
+/keyrings/live/pubring.gpg~
+/keyrings/live/pubring.kbx~
+/keyrings/live/secring.gpg
